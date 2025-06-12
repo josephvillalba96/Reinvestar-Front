@@ -1,0 +1,112 @@
+.container {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    color: #333;
+  }
+  
+  .mainTitle {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 20px;
+  }
+  
+  .tab {
+    padding: 8px 16px;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  
+  .activeTab {
+    composes: tab;
+    border-bottom: 3px solid #1a73e8;
+    font-weight: bold;
+  }
+  
+  .detailsContainer {
+    display: flex;
+    margin-bottom: 20px;
+  }
+  
+  .detailSection {
+    flex: 2;
+    padding-right: 20px;
+  }
+  
+  .optionsSection {
+    flex: 1;
+  }
+  
+  .detailItem {
+    margin-bottom: 15px;
+  }
+  
+  .label {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 3px;
+  }
+  
+  .value {
+    display: block;
+    font-size: 16px;
+  }
+  
+  .optionsRow {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  
+  .optionButton {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  .checkbox {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #999;
+    margin-right: 8px;
+    border-radius: 3px;
+  }
+  
+  .dataSection {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+  
+  .dataItem {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .dataLabel {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .dataValue {
+    font-size: 14px;
+    font-weight: 500;
+  }
