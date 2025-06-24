@@ -1,0 +1,5 @@
+.container_section_request {
+    max-height: calc(100vh - 18rem);
+    overflow: auto;
+    padding: 1rem;
+}

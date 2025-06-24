@@ -1,6 +1,6 @@
 import Logo from "../../assets/logo.png";
 import { NavLink, Outlet } from "react-router-dom";
-import styles from "./Layout.module.css";
+import styles from "./style.module.css";
 
 import Logout from "../../assets/Logout.svg";
 
@@ -31,7 +31,7 @@ const routes = [
   },
   {
     id: 3,
-    link: "/Clients",
+    link: "/clients",
     name: "Clientes",
     icon: UserIcon,
   },
@@ -49,11 +49,11 @@ const routes = [
       {
         id: 5,
         link: "/users",
-        name: "Usuarios",
+        name: "Sistema",
       },
       {
         id: 6,
-        link: "/sales",
+        link: "/sellers",
         name: "Vendeores",
       },
       {
@@ -144,14 +144,14 @@ const Layout = ({ children }) => {
 
       {/* Main section */}
       <div className="flex-grow-1">
-        <header className="header">
+        <header className={`${"header"} ${styles.header_border_none}`}>
           <div className="user-info">
             <span>Hola, Neida</span>
             <img src={UserProfile} alt="User avatar"/>
           </div>
         </header>
 
-        <main className="main-content">
+        <main className="main-content bg-white">
          <Outlet />
         </main>
       </div>

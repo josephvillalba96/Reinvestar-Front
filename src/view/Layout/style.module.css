@@ -1,3 +1,7 @@
 .font_title_section{
     font-family: 'Mulish Bold', sans-serif !important;
 }
+
+.header_border_none {
+    border: none;
+}
