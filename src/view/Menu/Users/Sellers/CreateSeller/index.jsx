@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Back from "../../../../../assets/back.svg"; 
 import { useNavigate } from "react-router-dom";
 import styles from "./style.module.css";
+import { createSeller } from "../../../../../Api/seller";
+import { getCompanies } from "../../../../../Api/admin";
 
 const CreateSeller = () => {
   const navegate = useNavigate(); 
@@ -13,8 +15,25 @@ const CreateSeller = () => {
     direccion: "",
     contrasena: "",
     confirmarContrasena: "",
+    company_id: ""
   });
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [companyError, setCompanyError] = useState("");
+  const [roleError, setRoleError] = useState("");
 
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const data = await getCompanies({ skip: 0, limit: 100 });
+        setCompanies(data);
+      } catch (e) {
+        setCompanies([]);
+      }
+    };
+    fetchCompanies();
+  }, []);
 
   const handleback = () => {
     navegate('/sellers')
@@ -28,10 +47,50 @@ const CreateSeller = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Datos del formulario:", formData);
-    alert("Formulario enviado (datos en consola)");
+    setLoading(true);
+    setFeedback("");
+    setCompanyError("");
+    setRoleError("");
+    // Validación básica
+    if (!formData.nombreCompleto || !formData.email || !formData.celular || !formData.identificacion || !formData.direccion || !formData.contrasena || !formData.company_id) {
+      if (!formData.company_id) setCompanyError("Debes seleccionar una compañía");
+      setFeedback("Todos los campos son obligatorios, incluyendo la compañía");
+      setLoading(false);
+      return;
+    }
+    if (formData.contrasena !== formData.confirmarContrasena) {
+      setFeedback("Las contraseñas no coinciden");
+      setLoading(false);
+      return;
+    }
+    // Mapeo de campos al formato esperado por la API
+    const payload = {
+      full_name: formData.nombreCompleto,
+      email: formData.email,
+      phone: formData.celular,
+      identification: formData.identificacion,
+      address: formData.direccion,
+      password: formData.contrasena,
+      company_id: String(formData.company_id),
+      role: "Vendedor"
+    };
+    if (!payload.role) {
+      setRoleError("El campo rol es obligatorio");
+      setLoading(false);
+      return;
+    }
+    try {
+      await createSeller(payload);
+      setFeedback("¡Vendedor creado exitosamente!");
+      setTimeout(() => {
+        navegate('/sellers');
+      }, 1500);
+    } catch (error) {
+      setFeedback("Error al crear el vendedor. Inténtalo de nuevo.");
+    }
+    setLoading(false);
   };
 
   const handleImageUpload = (e) => {
@@ -60,12 +119,9 @@ const CreateSeller = () => {
         <div className="row">
           {/* Form Column */}
           <div className="col-md-7 col-lg-6">
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="row mb-2">
                 <div className="col-md-6 mb-3">
-                  {/* <label className="form-label text-muted small">
-                    Nombre completo
-                  </label> */}
                   <input
                     type="text"
                     placeholder="Nombre completo"
@@ -73,12 +129,9 @@ const CreateSeller = () => {
                     name="nombreCompleto"
                     value={formData.nombreCompleto}
                     onChange={handleInputChange}
-                   
                   />
                 </div>
                 <div className="col-md-6 mb-3">
-                  {/* <label className="form-label text-muted small">Email</label> */}
-
                   <input
                     type="email"
                     placeholder="Email"
@@ -86,14 +139,12 @@ const CreateSeller = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                   
                   />
                 </div>
               </div>
 
               <div className="row mb-3">
                 <div className="col-md-6 mb-3">
-                  {/* <label className="form-label text-muted small">Celular</label> */}
                   <input
                     type="tel"
                     placeholder="Celular"
@@ -101,13 +152,9 @@ const CreateSeller = () => {
                     name="celular"
                     value={formData.celular}
                     onChange={handleInputChange}
-                   
                   />
                 </div>
                 <div className="col-md-6 mb-2">
-                  {/* <label className="form-label text-muted small">
-                    Identificación
-                  </label> */}
                   <input
                     type="text"
                     placeholder="Identificación"
@@ -115,16 +162,12 @@ const CreateSeller = () => {
                     name="identificacion"
                     value={formData.identificacion}
                     onChange={handleInputChange}
-                   
                   />
                 </div>
               </div>
 
               <div className="row mb-4">
                 <div className="col-12 mb-2">
-                  {/* <label className="form-label text-muted small">
-                    Dirección
-                  </label> */}
                   <input
                     type="text"
                     placeholder=" Dirección"
@@ -132,16 +175,33 @@ const CreateSeller = () => {
                     name="direccion"
                     value={formData.direccion}
                     onChange={handleInputChange}
-                   
                   />
                 </div>
               </div>
 
+              <div className="row mb-4">
+                <div className="col-12 mb-2">
+                  <select
+                    className={`form-select ${styles.input} ${companyError ? 'is-invalid' : ''}`}
+                    name="company_id"
+                    value={formData.company_id}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="">Seleccione una compañía</option>
+                    {companies && companies.map(({ id, name }) => (
+                      <option value={id} key={id}>{name}</option>
+                    ))}
+                  </select>
+                  {companyError && <div className="invalid-feedback d-block">{companyError}</div>}
+                </div>
+              </div>
+              {roleError && (
+                <div className="alert alert-danger py-2 mb-3">{roleError}</div>
+              )}
+
               <div className="row mb-5">
                 <div className="col-md-6 mb-3">
-                  {/* <label className="form-label text-muted small">
-                    Contraseña
-                  </label> */}
                   <input
                     type="password"
                     placeholder="Contraseña"
@@ -149,13 +209,9 @@ const CreateSeller = () => {
                     name="contrasena"
                     value={formData.contrasena}
                     onChange={handleInputChange}
-                   
                   />
                 </div>
                 <div className="col-md-6 mb-3">
-                  {/* <label className="form-label text-muted small">
-                    Confirmar contraseña
-                  </label> */}
                   <input
                     type="password"
                     placeholder="Confirmar contraseña"
@@ -163,14 +219,17 @@ const CreateSeller = () => {
                     name="confirmarContrasena"
                     value={formData.confirmarContrasena}
                     onChange={handleInputChange}
-                   
                   />
                 </div>
               </div>
 
+              {feedback && (
+                <div className={`alert ${feedback.includes("exitosamente") ? "alert-success" : "alert-danger"} py-2 mb-3`}>{feedback}</div>
+              )}
+
               <button
-                type="button"
-                onClick={handleSubmit}
+                type="submit"
+                disabled={loading}
                 className="btn text-white fw-semibold px-3 py-2 rounded-pill "
                 style={{
                   backgroundColor: "#2c3e50",
@@ -179,7 +238,7 @@ const CreateSeller = () => {
                   minWidth: "180px",
                 }}
               >
-                CREAR
+                {loading ? "Creando..." : "CREAR"}
               </button>
             </form>
           </div>

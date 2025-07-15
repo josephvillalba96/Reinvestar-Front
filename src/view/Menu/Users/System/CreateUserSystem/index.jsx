@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Back from "../../../../../assets/back.svg"; 
 import { useNavigate } from "react-router-dom";
 import styles from "./style.module.css";
-import { createCoordinator } from "../../../../../Api/coordinator";
-import { getCompanies } from "../../../../../Api/admin";
+import { createAdmin } from "../../../../../Api/admin";
 
-const CreateCoordinators = () => {
+const CreateUserSystem = () => {
   const navegate = useNavigate(); 
   const [formData, setFormData] = useState({
     nombreCompleto: "",
@@ -15,29 +14,13 @@ const CreateCoordinators = () => {
     direccion: "",
     contrasena: "",
     confirmarContrasena: "",
-    company_id: ""
   });
-  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
-  const [companyError, setCompanyError] = useState("");
   const [roleError, setRoleError] = useState("");
 
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const data = await getCompanies({ skip: 0, limit: 100 });
-        setCompanies(data);
-      } catch (e) {
-        setCompanies([]);
-      }
-    };
-    fetchCompanies();
-  }, []);
-
-
   const handleback = () => {
-    navegate('/coordinators')
+    navegate('/users')
   }
 
   const handleInputChange = (e) => {
@@ -52,12 +35,10 @@ const CreateCoordinators = () => {
     e.preventDefault();
     setLoading(true);
     setFeedback("");
-    setCompanyError("");
     setRoleError("");
     // Validación básica
-    if (!formData.nombreCompleto || !formData.email || !formData.celular || !formData.identificacion || !formData.direccion || !formData.contrasena || !formData.company_id) {
-      if (!formData.company_id) setCompanyError("Debes seleccionar una compañía");
-      setFeedback("Todos los campos son obligatorios, incluyendo la compañía");
+    if (!formData.nombreCompleto || !formData.email || !formData.celular || !formData.identificacion || !formData.direccion || !formData.contrasena) {
+      setFeedback("Todos los campos son obligatorios");
       setLoading(false);
       return;
     }
@@ -74,8 +55,7 @@ const CreateCoordinators = () => {
       identification: formData.identificacion,
       address: formData.direccion,
       password: formData.contrasena,
-      company_id: String(formData.company_id),
-      role: "Coordinador"
+      role: "Admin"
     };
     if (!payload.role) {
       setRoleError("El campo rol es obligatorio");
@@ -83,13 +63,26 @@ const CreateCoordinators = () => {
       return;
     }
     try {
-      await createCoordinator(payload);
-      setFeedback("¡Coordinador creado exitosamente!");
+      await createAdmin(payload);
+      setFeedback("¡Administrador creado exitosamente!");
       setTimeout(() => {
-        navegate('/coordinators');
+        navegate('/users');
       }, 1500);
     } catch (error) {
-      setFeedback("Error al crear el coordinador. Inténtalo de nuevo.");
+      // Manejo de errores específicos
+      if (error.response && error.response.data && error.response.data.detail) {
+        setFeedback(`Error: ${error.response.data.detail}`);
+      } else if (error.response?.status === 422) {
+        setFeedback("Error de validación en los datos enviados.");
+      } else if (error.response?.status === 400) {
+        setFeedback("Error en los datos enviados. Revisa la información.");
+      } else if (error.response?.status === 401) {
+        setFeedback("No autorizado. Verifica tu sesión.");
+      } else if (error.response?.status === 500) {
+        setFeedback("Error del servidor. Inténtalo más tarde.");
+      } else {
+        setFeedback("Error al crear el administrador. Inténtalo de nuevo.");
+      }
     }
     setLoading(false);
   };
@@ -110,7 +103,7 @@ const CreateCoordinators = () => {
               <img src={Back} alt="back" width={35} />
             </button>
             <h2 className={`${styles.title} fw-bolder my_title_color`}>
-              Crear Coordinador
+              Crear Administrador
             </h2>
           </div>
         </div>
@@ -133,7 +126,7 @@ const CreateCoordinators = () => {
                     name="nombreCompleto"
                     value={formData.nombreCompleto}
                     onChange={handleInputChange}
-                    disabled={loading}
+                   
                   />
                 </div>
                 <div className="col-md-6 mb-3">
@@ -146,7 +139,7 @@ const CreateCoordinators = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    disabled={loading}
+                   
                   />
                 </div>
               </div>
@@ -161,7 +154,7 @@ const CreateCoordinators = () => {
                     name="celular"
                     value={formData.celular}
                     onChange={handleInputChange}
-                    disabled={loading}
+                   
                   />
                 </div>
                 <div className="col-md-6 mb-2">
@@ -175,7 +168,7 @@ const CreateCoordinators = () => {
                     name="identificacion"
                     value={formData.identificacion}
                     onChange={handleInputChange}
-                    disabled={loading}
+                   
                   />
                 </div>
               </div>
@@ -192,7 +185,7 @@ const CreateCoordinators = () => {
                     name="direccion"
                     value={formData.direccion}
                     onChange={handleInputChange}
-                    disabled={loading}
+                   
                   />
                 </div>
               </div>
@@ -209,7 +202,7 @@ const CreateCoordinators = () => {
                     name="contrasena"
                     value={formData.contrasena}
                     onChange={handleInputChange}
-                    disabled={loading}
+                   
                   />
                 </div>
                 <div className="col-md-6 mb-3">
@@ -223,35 +216,10 @@ const CreateCoordinators = () => {
                     name="confirmarContrasena"
                     value={formData.confirmarContrasena}
                     onChange={handleInputChange}
-                    disabled={loading}
+                   
                   />
                 </div>
               </div>
-
-              <div className="row mb-4">
-                <div className="col-12 mb-2">
-                  <select
-                    className={`form-select ${styles.input} ${companyError ? 'is-invalid' : ''}`}
-                    name="company_id"
-                    value={formData.company_id}
-                    onChange={handleInputChange}
-                    required
-                    disabled={loading}
-                  >
-                    <option value="">Seleccione una compañía</option>
-                    {companies && companies.map(({ id, name }) => (
-                      <option value={id} key={id}>{name}</option>
-                    ))}
-                  </select>
-                  {companyError && <div className="invalid-feedback d-block">{companyError}</div>}
-                </div>
-              </div>
-              {roleError && (
-                <div className="alert alert-danger py-2 mb-3">{roleError}</div>
-              )}
-              {feedback && (
-                <div className={`alert ${feedback.includes('exitosamente') ? 'alert-success' : 'alert-danger'} py-2 mb-3`}>{feedback}</div>
-              )}
 
               <button
                 type="button"
@@ -267,6 +235,12 @@ const CreateCoordinators = () => {
               >
                 {loading ? "CREANDO..." : "CREAR"}
               </button>
+            {roleError && (
+              <div className="alert alert-danger py-2 mb-3">{roleError}</div>
+            )}
+            {feedback && (
+              <div className={`alert ${feedback.includes('exitosamente') ? 'alert-success' : 'alert-danger'} py-2 mb-3`}>{feedback}</div>
+            )}
             </form>
           </div>
 
@@ -332,4 +306,4 @@ const CreateCoordinators = () => {
   );
 };
 
-export default CreateCoordinators;
+export default CreateUserSystem;

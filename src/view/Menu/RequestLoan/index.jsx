@@ -1,42 +1,73 @@
 import FilterIcon from "../../../assets/filter.svg";
 import LoupeIcon from "../../../assets/Loupe.svg";
-import Eye from "../../../assets/eye.svg"; 
-import BookCheck from "../../../assets/book-check.svg"; 
+import Eye from "../../../assets/eye.svg";
+import BookCheck from "../../../assets/book-check.svg";
 import styles from "./style.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Pagination from "../../../components/Pagination";
+
+import * as apiFixflip from "../../../api/fixflip";
+import * as apiDscr from "../../../Api/dscr";
+import * as apiConstruction from "../../../Api/construction";
 
 const RequestLoan = () => {
   // Estado para la paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+  const [requestType, setRequestType] = useState("");
+  const [requestsData, setRequestsData] = useState(null);
   const navegate = useNavigate();
 
   const handleRedired = () => {
     navegate("/requests/new-request");
   };
 
+  const handleRequestTypeChange = (e) => {
+    setRequestType(e.target.value);
+    console.log("Tipo de solicitud:", e.target.value);
+  };
+
+  const handleRequests = async (requestType) => {
+    if ("fixflip" === requestType) {
+      const data = await apiFixflip.getFixflips({
+        skip: (currentPage - 1) * itemsPerPage,
+        limit: itemsPerPage,
+      });
+      setRequestsData(data);
+      // Aquí puedes manejar los datos obtenidos de fixflip
+    } else if ("dscr" === requestType) {
+      const data = await apiDscr.getDscrs({
+        skip: (currentPage - 1) * itemsPerPage,
+        limit: itemsPerPage,
+      });
+      setRequestsData(data);
+      // Aquí puedes manejar los datos obtenidos de dscr
+    } else if ("construction" === requestType) {
+      const data = await apiConstruction.getConstructions({
+        skip: (currentPage - 1) * itemsPerPage,
+        limit: itemsPerPage,
+      });
+      setRequestsData(data);
+      // Aquí puedes manejar los datos obtenidos de construction
+    } else {
+      setRequestsData([]); // Si no hay tipo de solicitud seleccionado, resetea los datos
+    }
+  };
+
+  useEffect(() => {
+    handleRequests("dscr");
+  }, []);
+
   // Datos de ejemplo para la tabla (reemplaza con tus datos reales)
-  const clientsData = Array.from({ length: 50 }, (_, i) => ({
-    id: i + 1,
-    nombre: `Cliente ${i + 1}`,
-    email: `cliente${i + 1}@example.com`,
-    telefono: `300123456${i.toString().padStart(2, "0")}`,
-    producto: `producto-${i}`,
-    monto_alquiler: `$${(i + 1) * 1000}`,
-    valor_tasa: `${(i + 1) * 5}%`,
-    ltv: `$${(i + 1) * 5000}`,
-    estado: i % 5 === 0 ? "Inactivo" : "Activo",
-  }));
 
-  // Lógica de paginación
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = clientsData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(clientsData.length / itemsPerPage);
+  // // Lógica de paginación
+  // const indexOfLastItem = currentPage * itemsPerPage;
+  // const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  // const currentItems = clientsData.slice(indexOfFirstItem, indexOfLastItem);
+  // const totalPages = Math.ceil(clientsData.length / itemsPerPage);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div
@@ -49,7 +80,13 @@ const RequestLoan = () => {
         </p>
       </div>
       <div className="d-flex justify-content-between w-100 mb-4 px-4">
-        <div>
+        <div className="d-flex align-items-center gap-3">
+          <select name="" id="" onChange={handleRequestTypeChange}>
+            <option value="">-Tipos de solicitud-</option>
+            <option value="fixflip">Fix & Flip</option>
+            <option value="dscr">DSCR</option>
+            <option value="construction">Construcción</option>
+          </select>
           <button
             className="btn btn-primary d-flex align-items-center"
             onClick={handleRedired}
@@ -87,9 +124,7 @@ const RequestLoan = () => {
       </div>
 
       {/* Tabla de clientes */}
-      <div
-        className={`${"w-100 px-4 mb-3"} table_height`}
-      >
+      <div className={`${"w-100 px-4 mb-3"} table_height`}>
         <table className="table table-bordered table-hover">
           <thead className="sticky-top">
             <tr>
@@ -106,7 +141,45 @@ const RequestLoan = () => {
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((client) => (
+            {/* Aquí deberías mapear tus datos reales */}
+            {requestsData && requestsData.length > 0 ? (
+              requestsData.map((request) => (
+                <tr key={request.id}>
+                  <td>{request.id}</td>
+                  {/* <td>{request.nombre_completo}</td>
+                  <td>{request.email}</td>
+                  <td>{request.celular}</td>
+                  <td>{request.producto}</td>
+                  <td>{request.monto_alquiler}</td>
+                  <td>{request.valor_tasa}</td>
+                  <td>{request.ltv_solicitado}</td> */}
+                  <td colSpan={9}>
+                    <span className={`text-black`}>{request.estado}</span>
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-sm me-1"
+                      style={{ backgroundColor: "#1B2559" }}
+                    >
+                      <img src={BookCheck} alt="check-data" width={15} />
+                    </button>
+                    <button
+                      className="btn btn-sm"
+                      style={{ backgroundColor: "#1B2559" }}
+                    >
+                      <img src={Eye} alt="detail-client" width={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={10}>{`No hay solicitudes ${
+                  requestType === null ? "" : requestType
+                }`}</td>
+              </tr>
+            )}
+            {/* {currentItems.map((client) => (
               <tr key={client.id}>
                 <td>{client.id}</td>
                 <td>{client.nombre}</td>
@@ -138,11 +211,11 @@ const RequestLoan = () => {
                   </button>
                 </td>
               </tr>
-            ))}
+            ))} */}
           </tbody>
         </table>
       </div>
-      <Pagination currentPage={currentPage} totalPages={totalPages} handlePaginate={paginate}/>
+      {/* <Pagination currentPage={currentPage} totalPages={totalPages} handlePaginate={paginate}/> */}
     </div>
   );
 };

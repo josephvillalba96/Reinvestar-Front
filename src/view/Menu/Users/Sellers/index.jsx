@@ -3,36 +3,81 @@ import LoupeIcon from "../../../../assets/Loupe.svg";
 import Eye from "../../../../assets/eye.svg"; 
 import BookCheck from "../../../../assets/book-check.svg"; 
 import styles from "./style.module.css";
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Pagination from "../../../../components/Pagination";
+import { getSellers } from "../../../../Api/seller";
+import { getCompanies } from "../../../../Api/admin";
 
 const Sellers = () => {
-  // Estado para la paginación
+  // Estado para la paginación y filtros
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+  const [sellersData, setSellersData] = useState([]);
+  const [totalSellers, setTotalSellers] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [estado, setEstado] = useState("");
+  const [companies, setCompanies] = useState([]);
+  const [companyMap, setCompanyMap] = useState({});
   const navegate = useNavigate();
+
+  useEffect(() => {
+    fetchSellers();
+    // eslint-disable-next-line
+  }, [currentPage, search, estado]);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const data = await getCompanies({ skip: 0, limit: 100 });
+        setCompanies(data);
+        // Crear un diccionario para acceso rápido por id
+        const map = {};
+        data.forEach(c => { map[c.id] = c.name; });
+        setCompanyMap(map);
+      } catch (e) {
+        setCompanies([]);
+        setCompanyMap({});
+      }
+    };
+    fetchCompanies();
+  }, []);
+
+  const fetchSellers = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        skip: (currentPage - 1) * itemsPerPage,
+        limit: itemsPerPage,
+      };
+      if (search) params.search = search;
+      // El filtro de estado depende de cómo lo maneje tu backend
+      // Si el backend soporta un filtro por estado, descomenta la siguiente línea:
+      // if (estado && estado !== "Estado") params.estado = estado;
+      const data = await getSellers(params);
+      setSellersData(Array.isArray(data.items) ? data.items : []);
+      setTotalSellers(typeof data.total === 'number' ? data.total : 0);
+    } catch (error) {
+      setSellersData([]);
+      setTotalSellers(0);
+    }
+    setLoading(false);
+  };
 
   const handleRedired = () => {
     navegate("/sellers/new-seller");
   };
 
-  // Datos de ejemplo para la tabla (reemplaza con tus datos reales)
-  const clientsData = Array.from({ length: 50 }, (_, i) => ({
-    id: i + 1,
-    nombre: `Vendedor ${i + 1}`,
-    email: `vendedor${i + 1}@reinvestar.com`,
-    celular: `300123456${i.toString().padStart(2, "0")}`,
-    iniciales: `jv-${i}`,
-    identificacion: `${"18338000" + (i + 1)}`,
-    estado: i % 5 === 0 ? "Inactivo" : "Activo",
-  }));
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
 
-  // Lógica de paginación
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = clientsData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(clientsData.length / itemsPerPage);
+  const handleEstadoChange = (e) => {
+    setEstado(e.target.value);
+    setCurrentPage(1);
+  };
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -62,29 +107,21 @@ const Sellers = () => {
           <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
           </button>
-          {/* <select className="form-select my_title_color" name="Vendedor" id="">
-            <option value="Vendedor">Vendedor</option>
-            <option value="Vendedor1">Vendedor 1</option>
-            <option value="Vendedor2">Vendedor 2</option>
-            <option value="Vendedor3">Vendedor 3</option>
-          </select> */}
-          <select className="form-select my_title_color" name="Estado" id="">
-            <option value="Estado">Estado</option>
+          <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange}>
+            <option value="">Estado</option>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
-            {/* <option value="Pendiente">Pendiente</option> */}
           </select>
-
           <div className="input-group">
-            <input type="text" className="form-control" placeholder="Buscar" />
-            <button className="btn btn-primary" type="button">
+            <input type="text" className="form-control" placeholder="Buscar" value={search} onChange={handleSearchChange} />
+            <button className="btn btn-primary" type="button" onClick={fetchSellers}>
               <img src={LoupeIcon} alt="" width={18} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Tabla de clientes */}
+      {/* Tabla de vendedores */}
       <div
         className={`${"w-100 px-4 mb-3"} table_height`}
       >
@@ -94,43 +131,51 @@ const Sellers = () => {
               <th style={{ color: "#1B2559" }}>ID</th>
               <th style={{ color: "#1B2559" }}>Nombre Completo</th>
               <th style={{ color: "#1B2559" }}>Email</th>
-              <th style={{ color: "#1B2559" }}>Celular</th>
-              <th style={{ color: "#1B2559" }}>Iniciales</th>
               <th style={{ color: "#1B2559" }}>Identificación</th>
-              <th style={{ color: "#1B2559" }}>Estado</th>
+              <th style={{ color: "#1B2559" }}>Dirección</th>
+              <th style={{ color: "#1B2559" }}>Celular</th>
+              <th style={{ color: "#1B2559" }}>Compañía</th>
+              <th style={{ color: "#1B2559" }}>Rol</th>
               <th style={{ color: "#1B2559" }}>Opciones</th>
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((client) => (
-              <tr key={client.id}>
-                <td>{client.id}</td>
-                <td>{client.nombre}</td>
-                <td>{client.email}</td>
-                <td>{client.celular}</td>
-                <td>{client.iniciales}</td>
-                <td>{client.identificacion}</td>
-                <td>{client.estado}</td>
-                <td>
-                  <button
-                    className="btn btn-sm me-1"
-                    style={{ backgroundColor: "#1B2559" }}
-                  >
-                    <img src={BookCheck} alt="check-data" width={15} />
-                  </button>
-                  <button
-                    className="btn btn-sm"
-                    style={{ backgroundColor: "#1B2559" }}
-                  >
-                    <img src={Eye} alt="detail-client" width={18}/>
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {loading ? (
+              <tr><td colSpan={9}>Cargando...</td></tr>
+            ) : sellersData.length === 0 ? (
+              <tr><td colSpan={9}>No hay vendedores</td></tr>
+            ) : (
+              sellersData.map((seller) => (
+                <tr key={seller.id}>
+                  <td>{seller.id}</td>
+                  <td>{seller.full_name}</td>
+                  <td>{seller.email}</td>
+                  <td>{seller.identification}</td>
+                  <td>{seller.address}</td>
+                  <td>{seller.phone}</td>
+                  <td>{companyMap[seller.company_id] || '-'}</td>
+                  <td>{Array.isArray(seller.roles) && seller.roles.length > 0 ? seller.roles[0] : '-'}</td>
+                  <td>
+                    <button
+                      className="btn btn-sm me-1"
+                      style={{ backgroundColor: "#1B2559" }}
+                    >
+                      <img src={BookCheck} alt="check-data" width={15} />
+                    </button>
+                    <button
+                      className="btn btn-sm"
+                      style={{ backgroundColor: "#1B2559" }}
+                    >
+                      <img src={Eye} alt="detail-client" width={18}/>
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-      <Pagination currentPage={currentPage} totalPages={totalPages} handlePaginate={paginate}/>
+      <Pagination currentPage={currentPage} totalPages={Math.ceil(totalSellers / itemsPerPage)} handlePaginate={paginate}/>
     </div>
   );
 };

@@ -1,0 +1,44 @@
+.input, .select, .textarea {
+  border-radius: 30px !important;
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.97rem;
+  color: #444;
+  margin-bottom: 0.55rem;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 38px;
+  max-width: 100%;
+}
+
+.textarea {
+  min-height: 60px;
+  resize: none;
+}
+
+.checkbox {
+  border-radius: 30px;
+  accent-color: #1e295a;
+  width: 16px;
+  height: 16px;
+}
+
+.button {
+  border-radius: 30px;
+  background: #1e3a8a;
+  color: #fff;
+  border: none;
+  padding: 0.55rem 0;
+  font-weight: bold;
+  font-size: 0.98rem;
+  width: 100%;
+  letter-spacing: 1px;
+  transition: background 0.2s;
+  cursor: pointer;
+  min-height: 38px;
+}
+
+.button:hover {
+  background: #16205a;
+} 

@@ -4,6 +4,7 @@ import styles from "./createRequest.module.css";
 import { useNavigate } from "react-router-dom";
 import FormRequest from "./FormRequest";
 import DocumentsRequest from "./DocumentsRequest";
+import PipelineRequest from "./PipelineRequest";
 
 const CreateRequest = () => {
   const navegate = useNavigate();
@@ -93,7 +94,7 @@ const CreateRequest = () => {
               role="tabpanel"
               aria-labelledby="contact-tab"
             >
-              ...
+              <PipelineRequest />
             </div>
           </div>
         </div>

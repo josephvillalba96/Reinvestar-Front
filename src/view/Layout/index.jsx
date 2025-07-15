@@ -1,5 +1,5 @@
 import Logo from "../../assets/logo.png";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import styles from "./style.module.css";
 
 import Logout from "../../assets/Logout.svg";
@@ -77,6 +77,12 @@ const routes = [
 ];
 
 const Layout = ({ children }) => {
+  const navigate = useNavigate();
+  const handleLogout = (e) => {
+    e.preventDefault();
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
   return (
     <div className="layout">
       {/* Sidebar */}
@@ -136,6 +142,7 @@ const Layout = ({ children }) => {
         <a
           href="#"
           className="nav-link d-flex justify-content-center align-items-center"
+          onClick={handleLogout}
         >
           <img src={Logout} alt="" className="me-3" />
           <span>Cerrar sesión</span>

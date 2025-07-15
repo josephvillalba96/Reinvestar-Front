@@ -3,16 +3,58 @@ import FilterIcon from "../../../assets/filter.svg";
 import LoupeIcon from "../../../assets/Loupe.svg";
 import Eye from "../../../assets/eye.svg"; 
 import BookCheck from "../../../assets/book-check.svg"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../../components/Pagination";
-
+import { getClients } from "../../../Api/client";
+import { getCompanies } from "../../../Api/admin";
 
 const Clients = () => {
-  // Estado para la paginación
+  // Estado para la paginación y filtros
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+  const [clientsData, setClientsData] = useState([]);
+  const [totalClients, setTotalClients] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [companyId, setCompanyId] = useState("");
+  const [companies, setCompanies] = useState([]);
   const navegate = useNavigate(); 
+
+  useEffect(() => {
+    fetchClients();
+    // eslint-disable-next-line
+  }, [currentPage, search, companyId]);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const data = await getCompanies({ skip: 0, limit: 100 });
+        setCompanies(data);
+      } catch (e) {
+        setCompanies([]);
+      }
+    };
+    fetchCompanies();
+  }, []);
+
+  const fetchClients = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        skip: (currentPage - 1) * itemsPerPage,
+        limit: itemsPerPage,
+      };
+      if (search) params.search = search;
+      if (companyId) params.company_id = companyId;
+      const data = await getClients(params);
+      setClientsData(data);
+      setTotalClients(data.length < itemsPerPage && currentPage === 1 ? data.length : currentPage * itemsPerPage + (data.length === itemsPerPage ? itemsPerPage : 0));
+    } catch (error) {
+      setClientsData([]);
+    }
+    setLoading(false);
+  };
 
   const handlerRedirectCreate = () => {
     navegate('/clients/new-client')
@@ -22,25 +64,15 @@ const Clients = () => {
     navegate(`/clients/${id}/details`)
   } 
 
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
 
-  // Datos de ejemplo para la tabla (reemplaza con tus datos reales)
-  const clientsData = Array.from({ length: 100 }, (_, i) => ({
-    id: i + 1,
-    nombre: `Cliente ${i + 1}`,
-    email: `cliente${i + 1}@example.com`,
-    telefono: `300123456${i.toString().padStart(2, '0')}`,
-    producto: i,
-    monto_alquiler:i,
-    valor_tasa: i,
-    ltv: i,
-    estado: i % 5 === 0 ? 'Inactivo' : 'Activo',
-  }));
-
-  // Lógica de paginación
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = clientsData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(clientsData.length / itemsPerPage);
+  const handleCompanyChange = (e) => {
+    setCompanyId(e.target.value);
+    setCurrentPage(1);
+  };
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -63,28 +95,24 @@ const Clients = () => {
           <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18}/>
           </button>
-          <select className="form-select my_title_color" name="Vendedor" id="">
-            <option value="Vendedor">Vendedor</option>
-            <option value="Vendedor1">Vendedor 1</option>
-            <option value="Vendedor2">Vendedor 2</option>
-            <option value="Vendedor3">Vendedor 3</option>
+          <select className="form-select my_title_color" name="company" value={companyId} onChange={handleCompanyChange}>
+            <option value="">Empresa</option>
+            {companies && companies.map(({ id, name }) => (
+              <option value={id} key={id}>{name}</option>
+            ))}
           </select>
-          <select className="form-select my_title_color" name="Estado" id="">
-            <option value="Estado">Estado</option>
-            <option value="Activo">Activo</option>
-            <option value="Inactivo">Inactivo</option>
-            <option value="Pendiente">Pendiente</option>
-          </select>
-
           <div className="input-group">
             <input
               type="text"
               className="form-control"
               placeholder="Buscar"
+              value={search}
+              onChange={handleSearchChange}
             />
             <button
               className="btn btn-primary"
               type="button"
+              onClick={fetchClients}
             >
               <img src={LoupeIcon} alt="" width={18}/>
             </button>
@@ -101,44 +129,50 @@ const Clients = () => {
               <th style={{color:"#1B2559"}}>Nombre Completo</th>
               <th style={{color:"#1B2559"}}>Email</th>
               <th style={{color:"#1B2559"}}>Celular</th>
+              <th style={{color:"#1B2559"}}>Dirección</th>
               <th style={{color:"#1B2559"}}>Cant. propiedades</th>
               <th style={{color:"#1B2559"}}>Tot. Solicitudes</th>
               <th style={{color:"#1B2559"}}>Solicitudes activas</th>
-              {/* <th style={{color:"#1B2559"}}>LTV Solicitado</th> */}
               <th style={{color:"#1B2559"}}>Estado</th>
               <th style={{color:"#1B2559"}}>Opciones</th>
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((client) => (
-              <tr key={client.id}>
-                <td>{client.id}</td>
-                <td>{client.nombre}</td>
-                <td>{client.email}</td>
-                <td>{client.telefono}</td>
-                <td>{client.producto}</td>
-                <td>{client.monto_alquiler}</td>
-                <td>{client.valor_tasa}</td>
-                {/* <td>{client.ltv}</td>  */}
-                 <td>
-                  <span>
-                    {client.estado}
-                  </span>
-                </td>
-                <td>
-                  <button className="btn btn-sm me-1" style={{backgroundColor:"#1B2559"}}>
-                    <img src={BookCheck} alt="check-data" width={15}/>
-                  </button>
-                  <button className="btn btn-sm" style={{backgroundColor:"#1B2559"}} onClick={() => handleViewDetails(client.id)}>
-                    <img src={Eye} alt="detail-client" width={18}/>
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {loading ? (
+              <tr><td colSpan={9}>Cargando...</td></tr>
+            ) : clientsData.length === 0 ? (
+              <tr><td colSpan={9}>No hay clientes</td></tr>
+            ) : (
+              clientsData.map((client) => (
+                <tr key={client.id}>
+                  <td>{client.id}</td>
+                  <td>{client.full_name}</td>
+                  <td>{client.email}</td>
+                  <td>{client.phone}</td>
+                  <td>{client.address}</td>
+                  <td>{client.producto || '-'}</td>
+                  <td>{client.monto_alquiler || '-'}</td>
+                  <td>{client.valor_tasa || '-'}</td>
+                  <td>
+                    <span>
+                      {client.estado || '-'}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="btn btn-sm me-1" style={{backgroundColor:"#1B2559"}}>
+                      <img src={BookCheck} alt="check-data" width={15}/>
+                    </button>
+                    <button className="btn btn-sm" style={{backgroundColor:"#1B2559"}} onClick={() => handleViewDetails(client.id)}>
+                      <img src={Eye} alt="detail-client" width={18}/>
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-      <Pagination currentPage={currentPage} totalPages={totalPages} handlePaginate={paginate}/>
+      <Pagination currentPage={currentPage} totalPages={Math.ceil(totalClients / itemsPerPage)} handlePaginate={paginate}/>
     </div>
   );
 };
