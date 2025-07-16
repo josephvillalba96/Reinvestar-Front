@@ -15,6 +15,7 @@ import UserIcon from "../../assets/User.svg";
 import ProductIcon from "../../assets/ProductIcon.svg"; 
 import UserAndDolar from "../../assets/UserAndDolar.svg";
 import Settings from "../../assets/Settings.svg"; 
+import { useEffect, useState } from "react";
 
 const routes = [
   {
@@ -78,11 +79,22 @@ const routes = [
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(""); 
+
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user"); 
+    setUser(JSON.parse(userData)); 
+  }, [])
+
   const handleLogout = (e) => {
     e.preventDefault();
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/login");
   };
+
+
   return (
     <div className="layout">
       {/* Sidebar */}
@@ -153,7 +165,7 @@ const Layout = ({ children }) => {
       <div className="flex-grow-1">
         <header className={`${"header"} ${styles.header_border_none}`}>
           <div className="user-info">
-            <span>Hola, Neida</span>
+            <span>Hola, {user.full_name}</span>
             <img src={UserProfile} alt="User avatar"/>
           </div>
         </header>

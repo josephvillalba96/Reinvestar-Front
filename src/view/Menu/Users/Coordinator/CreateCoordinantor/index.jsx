@@ -197,6 +197,25 @@ const CreateCoordinators = () => {
                 </div>
               </div>
 
+              <div className="row mb-4">
+                <div className="col-12 mb-2">
+                  <select
+                    className={`form-select ${styles.input} ${companyError ? 'is-invalid' : ''}`}
+                    name="company_id"
+                    value={formData.company_id}
+                    onChange={handleInputChange}
+                    required
+                    disabled={loading}
+                  >
+                    <option value="">Seleccione una compañía</option>
+                    {companies && companies.map(({ id, name }) => (
+                      <option value={id} key={id}>{name}</option>
+                    ))}
+                  </select>
+                  {companyError && <div className="invalid-feedback d-block">{companyError}</div>}
+                </div>
+              </div>
+
               <div className="row mb-5">
                 <div className="col-md-6 mb-3">
                   {/* <label className="form-label text-muted small">
@@ -228,24 +247,7 @@ const CreateCoordinators = () => {
                 </div>
               </div>
 
-              <div className="row mb-4">
-                <div className="col-12 mb-2">
-                  <select
-                    className={`form-select ${styles.input} ${companyError ? 'is-invalid' : ''}`}
-                    name="company_id"
-                    value={formData.company_id}
-                    onChange={handleInputChange}
-                    required
-                    disabled={loading}
-                  >
-                    <option value="">Seleccione una compañía</option>
-                    {companies && companies.map(({ id, name }) => (
-                      <option value={id} key={id}>{name}</option>
-                    ))}
-                  </select>
-                  {companyError && <div className="invalid-feedback d-block">{companyError}</div>}
-                </div>
-              </div>
+              
               {roleError && (
                 <div className="alert alert-danger py-2 mb-3">{roleError}</div>
               )}

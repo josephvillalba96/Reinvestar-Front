@@ -1,378 +1,350 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./style.module.css";
+import FixflipForm from "./Fixflip";
+import ConstructionForm from "./Construction";
+import DscrForm from "./Dscr";
+import { getClients, createClient } from "../../../../../Api/client";
+import { getCompanies } from "../../../../../Api/admin";
 
-const initialState = {
-  tipoProducto: "",
-  fecha: "",
+const initialClient = {
   nombre: "",
   correo: "",
   telefono: "",
   direccion: "",
-  compraRefinanciacion: "",
-  hipoteca: false,
-  morosidad: false,
-  impuestos: false,
-  hoi: false,
-  llc: false,
-  fico: "",
-  estadoResidencia: "",
-  usoPropiedad: "",
-  montoAlquiler: "",
-  penalidad: "",
-  pagoMensual: "",
-  valorTasacion: "",
-  unidades: "",
-  notas: "",
-  dscr: "",
-  tipoTransaccion: ""
+  empresa: "",
+  tipoProducto: "",
+  fechaRegistro: "",
 };
 
 const FormRequest = () => {
-  const [form, setForm] = useState(initialState);
+  const [form, setForm] = useState(initialClient);
+  const [clientId, setClientId] = useState("");
+  const [clienteEncontrado, setClienteEncontrado] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [companies, setCompanies] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value
-    }));
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const data = await getCompanies({ skip: 0, limit: 100 });
+        setCompanies(data);
+      } catch (e) {
+        setCompanies([]);
+      }
+    };
+    fetchCompanies();
+  }, []);
+
+  // Buscar clientes por email (search) en vivo
+  const handleCorreoChange = async (e) => {
+    const value = e.target.value;
+    setForm(prev => ({ ...prev, correo: value }));
+    setClienteEncontrado(false);
+    setClientId("");
+    setFeedback("");
+    if (value.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    try {
+      const res = await getClients({ search: value });
+      if (res && res.length > 0) {
+        setSuggestions(res);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
   };
 
-  const handleSubmit = (e) => {
+  // Al seleccionar un cliente de la lista
+  const handleSuggestionClick = (cliente) => {
+    setForm(prev => ({
+      ...prev,
+      correo: cliente.email || cliente.correo || "",
+      nombre: cliente.full_name || cliente.nombre || "",
+      telefono: cliente.phone || cliente.telefono || "",
+      direccion: cliente.address || cliente.direccion || "",
+      empresa: cliente.company_id ? String(cliente.company_id) : "",
+    }));
+    setClientId(cliente.id);
+    setClienteEncontrado(true);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setFeedback("Cliente encontrado y cargado");
+  };
+
+  // Manejar cambios en el resto del formulario
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Registrar cliente si no existe
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(form);
+    setFeedback("");
+    setLoading(true);
+    if (!form.nombre || !form.correo || !form.direccion) {
+      setFeedback("Nombre, correo y dirección son obligatorios");
+      setLoading(false);
+      return;
+    }
+    if (clienteEncontrado) {
+      setFeedback("Cliente ya existe. Puedes continuar con la solicitud.");
+      setLoading(false);
+      return;
+    }
+    try {
+      const nuevo = await createClient({
+        full_name: form.nombre,
+        email: form.correo,
+        phone: form.telefono,
+        address: form.direccion,
+        company_id: form.empresa ? Number(form.empresa) : undefined,
+      });
+      setClientId(nuevo.id);
+      setClienteEncontrado(true);
+      setFeedback("Cliente registrado exitosamente");
+    } catch (err) {
+      setFeedback("Error al registrar el cliente");
+    }
+    setLoading(false);
   };
 
   return (
-    <form className="container-fluid p-4" onSubmit={handleSubmit}>
-      <div className="row gy-1">
-        {/* Primera fila */}
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Tipo de producto</label>
-          <select
-            className={styles.select}
-            name="tipoProducto"
-            value={form.tipoProducto}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccionar...</option>
-            <option value="casa">Casa</option>
-            <option value="apartamento">Apartamento</option>
-            <option value="terreno">Terreno</option>
-          </select>
+    <div className="container-fluid ">
+      <div className={`row`}>
+        <div className="col-6">
+          <div className="w-100 d-flex flex-column">
+            <label htmlFor="pruduct_type">Tipo de producto</label>
+            <select
+              name="tipoProducto"
+              id="product_type"
+              className={styles.input}
+              value={form.tipoProducto}
+              onChange={handleChange}
+            >
+              <option value="">seleccione un producto</option>
+              <option value="fixflip">FixFlip</option>
+              <option value="dscr">Dscr</option>
+              <option value="construction">Contruction</option>
+            </select>
+          </div>
         </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Fecha de diligenciamiento</label>
-          <input
-            type="date"
-            className={styles.input}
-            name="fecha"
-            value={form.fecha}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="col-md-4 mb-2"></div>
-      </div>
-      <div className="row gy-1">
-        {/* Segunda fila */}
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Nombre del cliente</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="nombre"
-            value={form.nombre}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Correo electrónico</label>
-          <input
-            type="email"
-            className={styles.input}
-            name="correo"
-            value={form.correo}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Número de teléfono</label>
-          <input
-            type="tel"
-            className={styles.input}
-            name="telefono"
-            value={form.telefono}
-            onChange={handleChange}
-            required
-          />
+        <div className="col-6">
+          <div className="w-100 d-flex flex-column">
+            <label htmlFor="fecha_registro">Fecha de registor</label>
+            <input type="date" id="fecha_registro" className={styles.input} />
+          </div>
         </div>
       </div>
-      <div className="row gy-1">
-        {/* Tercera fila */}
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small">Dirección de la propiedad</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="direccion"
-            value={form.direccion}
-            onChange={handleChange}
-            required
-          />
+      <hr />
+      <form className={styles.form} onSubmit={handleSubmit} autoComplete="off">
+        <div className="row">
+          <div className="col-4">
+            <div className="w-100 d-flex flex-column position-relative">
+              <label htmlFor="correo">Email</label>
+              <input
+                type="email"
+                placeholder="Correo electrónico"
+                className={styles.input}
+                name="correo"
+                id="correo"
+                value={form.correo}
+                onChange={handleCorreoChange}
+                required
+                autoComplete="off"
+              />
+              {/* Sugerencias de email */}
+              {showSuggestions && suggestions.length > 0 && (
+                <ul style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  right: 0,
+                  zIndex: 10,
+                  background: "#fff",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  maxHeight: 180,
+                  overflowY: "auto",
+                  margin: 0,
+                  padding: 0,
+                  listStyle: "none"
+                }}>
+                  {suggestions.map(cliente => (
+                    <li
+                      key={cliente.id}
+                      style={{ padding: 8, cursor: "pointer" }}
+                      onClick={() => handleSuggestionClick(cliente)}
+                    >
+                      {cliente.email || cliente.correo}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+          <div className="col-4">
+            <div className="w-100 d-flex flex-column">
+              <label htmlFor="correo">Nombre del cliente</label>
+              <input
+                type="text"
+                placeholder="Nombre del cliente"
+                className={styles.input}
+                name="nombre"
+                value={form.nombre}
+                onChange={handleChange}
+                required
+                disabled={clienteEncontrado}
+              />
+            </div>
+          </div>
+          {/* --------------EMPRESAS--------------- */}
+          <div className="col-4">
+            <div className="w-100 d-flex flex-column">
+              <label htmlFor="options_companies">Empresa</label>
+              <select
+                name="empresa"
+                id="options_companies"
+                className={styles.input}
+                value={form.empresa}
+                onChange={handleChange}
+                required
+                disabled={clienteEncontrado}
+              >
+                <option value="">Seleccione una empresa</option>
+                {companies && companies.map(({ id, name }) => (
+                  <option value={id} key={id}>{name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small">¿Compra o refinanciación?</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="compraRefinanciacion"
-            value={form.compraRefinanciacion}
-            onChange={handleChange}
-            required
-          />
+        <div className="row">
+          <div className="col-6">
+            <div className="w-100 d-flex flex-column">
+              <label htmlFor="telefono">Número de teléfono</label>
+              <input
+                type="tel"
+                placeholder="Número de teléfono"
+                className={styles.input}
+                name="telefono"
+                value={form.telefono}
+                onChange={handleChange}
+                disabled={clienteEncontrado}
+              />
+            </div>
+          </div>
+          <div className="col-6">
+            <div className="w-100 d-flex flex-column">
+              <label htmlFor="direccion">Dirección de la propiedad</label>
+              <input
+                type="text"
+                placeholder="Dirección de la propiedad"
+                className={styles.input}
+                name="direccion"
+                value={form.direccion}
+                onChange={handleChange}
+                required
+                disabled={clienteEncontrado}
+              />
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="row gy-1">
-        {/* Fila de checkboxes */}
-        <div className="col-md-2 mb-2">
-          <div className="form-check">
+        {/* <div className={`${styles.row} mb-4`}>
+          <label className={styles.checkboxContainer}>
             <input
-              className={styles.checkbox}
               type="checkbox"
-              id="hipoteca"
+              name="compraRefinanciacion"
+              checked={form.compraRefinanciacion}
+              onChange={handleChange}
+              disabled={clienteEncontrado}
+            />
+            <span>¿Compra o refinanciación?</span>
+          </label>
+          <label className={styles.checkboxContainer}>
+            <input
+              type="checkbox"
               name="hipoteca"
               checked={form.hipoteca}
               onChange={handleChange}
+              disabled={clienteEncontrado}
             />
-            <label className="form-check-label text-muted small" htmlFor="hipoteca">
-              ¿Tiene hipoteca?
-            </label>
-          </div>
-        </div>
-        <div className="col-md-2 mb-2">
-          <div className="form-check">
+            <span>¿Tiene hipoteca?</span>
+          </label>
+          <label className={styles.checkboxContainer}>
             <input
-              className={styles.checkbox}
               type="checkbox"
-              id="morosidad"
               name="morosidad"
               checked={form.morosidad}
               onChange={handleChange}
+              disabled={clienteEncontrado}
             />
-            <label className="form-check-label text-muted small" htmlFor="morosidad">
-              ¿Tiene morosidad?
-            </label>
-          </div>
-        </div>
-        <div className="col-md-2 mb-2">
-          <div className="form-check">
+            <span>¿Tiene morosidad?</span>
+          </label>
+          <label className={styles.checkboxContainer}>
             <input
-              className={styles.checkbox}
               type="checkbox"
-              id="impuestos"
               name="impuestos"
               checked={form.impuestos}
               onChange={handleChange}
+              disabled={clienteEncontrado}
             />
-            <label className="form-check-label text-muted small" htmlFor="impuestos">
-              ¿Paga impuestos?
-            </label>
-          </div>
-        </div>
-        <div className="col-md-3 mb-2">
-          <div className="form-check">
+            <span>¿Paga impuestos?</span>
+          </label>
+          <label className={styles.checkboxContainer}>
             <input
-              className={styles.checkbox}
               type="checkbox"
-              id="hoi"
-              name="hoi"
-              checked={form.hoi}
+              name="hoa"
+              checked={form.hoa}
               onChange={handleChange}
+              disabled={clienteEncontrado}
             />
-            <label className="form-check-label text-muted small" htmlFor="hoi">
-              ¿HOI vigente?
-            </label>
-          </div>
-        </div>
-        <div className="col-md-3 mb-2">
-          <div className="form-check">
+            <span>¿HOA vigente?</span>
+          </label>
+          <label className={styles.checkboxContainer}>
             <input
-              className={styles.checkbox}
               type="checkbox"
-              id="llc"
               name="llc"
               checked={form.llc}
               onChange={handleChange}
+              disabled={clienteEncontrado}
             />
-            <label className="form-check-label text-muted small" htmlFor="llc">
-              ¿Sujeto bajo LLC?
-            </label>
+            <span>¿Sujeto bajo LLC?</span>
+          </label>
+        </div> */}
+        {feedback && (
+          <div style={{
+            color: feedback.includes("Error") ? 'red' : 'green',
+            marginBottom: 10,
+            padding: '10px',
+            borderRadius: '5px',
+            backgroundColor: feedback.includes("Error") ? '#ffe6e6' : '#e6ffe6'
+          }}>
+            {feedback}
           </div>
-        </div>
-      </div>
-      <div className="row gy-1">
-        {/* Quinta fila */}
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">FICO Score</label>
-          <input
-            type="number"
-            className={styles.input}
-            name="fico"
-            value={form.fico}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Estado de residencia</label>
-          <select
-            className={styles.select}
-            name="estadoResidencia"
-            value={form.estadoResidencia}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccionar estado...</option>
-            <option value="ca">California</option>
-            <option value="ny">New York</option>
-            <option value="tx">Texas</option>
-            <option value="fl">Florida</option>
-          </select>
-        </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Uso de la propiedad</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="usoPropiedad"
-            value={form.usoPropiedad}
-            onChange={handleChange}
-            required
-          />
-        </div>
-      </div>
-      <div className="row gy-1">
-        {/* Sexta fila */}
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Monto de alquiler</label>
-          <input
-            type="number"
-            className={styles.input}
-            name="montoAlquiler"
-            value={form.montoAlquiler}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Penalidad por prepago (años)</label>
-          <input
-            type="number"
-            className={styles.input}
-            name="penalidad"
-            value={form.penalidad}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Importe del pago mensual</label>
-          <input
-            type="number"
-            className={styles.input}
-            name="pagoMensual"
-            value={form.pagoMensual}
-            onChange={handleChange}
-            required
-          />
-        </div>
-      </div>
-      <div className="row gy-1">
-        {/* Séptima fila */}
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Valor de tasación</label>
-          <input
-            type="number"
-            className={styles.input}
-            name="valorTasacion"
-            value={form.valorTasacion}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">N° de unidades de propiedad</label>
-          <select
-            className={styles.select}
-            name="unidades"
-            value={form.unidades}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccionar...</option>
-            <option value="1">1 unidad</option>
-            <option value="2">2 unidades</option>
-            <option value="3">3 unidades</option>
-            <option value="4">4+ unidades</option>
-          </select>
-        </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small">Notas</label>
-          <textarea
-            className={styles.textarea}
-            name="notas"
-            rows="3"
-            value={form.notas}
-            onChange={handleChange}
-          ></textarea>
-        </div>
-      </div>
-      <div className="row gy-1">
-        {/* Octava fila */}
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small">Porcentaje DSCR</label>
-          <input
-            type="number"
-            className={styles.input}
-            name="dscr"
-            value={form.dscr}
-            onChange={handleChange}
-            step="0.01"
-            required
-          />
-        </div>
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small">Tipo de transacción</label>
-          <select
-            className={styles.select}
-            name="tipoTransaccion"
-            value={form.tipoTransaccion}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccionar tipo...</option>
-            <option value="compra">Compra</option>
-            <option value="refinanciacion">Refinanciación</option>
-            <option value="cashout">Cash-out</option>
-          </select>
-        </div>
-      </div>
-      <div className="row">
-        <div className="col-12 mt-3">
-          <button
-            type="submit"
-            className={styles.button}
-            style={{ minWidth: "200px" }}
-          >
-            <span className="text-white">CREAR</span>
-          </button>
-        </div>
-      </div>
-    </form>
+        )}
+        <hr />
+        {/* Formulario de producto solo si hay cliente y tipo de producto */}
+        {form.tipoProducto && (
+          <div className="mt-4">
+            {form.tipoProducto === "fixflip" && <FixflipForm client_id={clientId} />}
+            {form.tipoProducto === "construction" && <ConstructionForm client_id={clientId} />}
+            {form.tipoProducto === "dscr" && <DscrForm client_id={clientId} />}
+          </div>
+        )}
+      </form>
+    </div>
   );
 };
 

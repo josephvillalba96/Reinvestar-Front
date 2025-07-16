@@ -18,14 +18,15 @@ import Procesors from './view/Menu/Users/Procesors'
 import CreateProcesor from './view/Menu/Users/Procesors/CreateProcesor'
 import System from './view/Menu/Users/System'
 import CreateUserSystem from './view/Menu/Users/System/CreateUserSystem'
+import PrivateRoute from './components/PrivateRouter'
 
 const Dashboard = () => <h1>DashBoard</h1>
 const Parameters = () => <h1>Parameters</h1>
 
-function PrivateRoute() {
-  const token = localStorage.getItem('token');
-  return token ? <Outlet /> : <Navigate to="/login" replace />;
-}
+// function PrivateRoute() {
+//   const token = localStorage.getItem('token');
+//   return token ? <Outlet /> : <Navigate to="/login" replace />;
+// }
 
 function App() {
   return (
