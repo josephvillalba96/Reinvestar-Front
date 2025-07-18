@@ -1,25 +1,69 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Back from "../../../../../assets/back.svg"; 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import styles from "./style.module.css";
-import { createProcessor } from "../../../../../Api/procesor";
+import { getSellerById, updateSeller } from "../../../../../Api/seller";
+import { getCompanies } from "../../../../../Api/admin";
 
-const CreateProcesor = () => {
+const DetailSeller = () => {
   const navegate = useNavigate(); 
+  const { id } = useParams();
   const [formData, setFormData] = useState({
-    nombreCompleto: "",
+    full_name: "",
     email: "",
-    celular: "",
-    identificacion: "",
-    direccion: "",
-    contrasena: "",
+    phone: "",
+    identification: "",
+    address: "",
+    company_id: "",
+    url_profile_photo: "",
+    password: "",
     confirmarContrasena: "",
+    role: "Vendedor"
   });
+  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [companyError, setCompanyError] = useState("");
+  const [roleError, setRoleError] = useState("");
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const data = await getCompanies({ skip: 0, limit: 100 });
+        setCompanies(data);
+      } catch (e) {
+        setCompanies([]);
+      }
+    };
+    fetchCompanies();
+  }, []);
+
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      getSellerById(id)
+        .then((data) => {
+          setFormData({
+            full_name: data.full_name || "",
+            email: data.email || "",
+            phone: data.phone || "",
+            identification: data.identification || "",
+            address: data.address || "",
+            company_id: data.company_id ? String(data.company_id) : "",
+            url_profile_photo: data.url_profile_photo || "",
+            password: "",
+            confirmarContrasena: "",
+            role: data.role || "Vendedor"
+          });
+        })
+        .catch(() => setFeedback("Error al cargar el vendedor"))
+        .finally(() => setLoading(false));
+    }
+  }, [id]);
 
   const handleback = () => {
-    navegate('/process')
+    navegate('/sellers')
   }
 
   const handleInputChange = (e) => {
@@ -30,39 +74,55 @@ const CreateProcesor = () => {
     }));
   };
 
+  const handleUpdate = () => {
+    setEditMode(true);
+    setFeedback("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setFeedback("");
+    setCompanyError("");
+    setRoleError("");
     // Validación básica
-    if (!formData.nombreCompleto || !formData.email || !formData.celular || !formData.identificacion || !formData.direccion || !formData.contrasena) {
-      setFeedback("Todos los campos son obligatorios");
+    if (!formData.full_name || !formData.phone || !formData.identification || !formData.address || !formData.company_id) {
+      if (!formData.company_id) setCompanyError("Debes seleccionar una compañía");
+      setFeedback("Todos los campos son obligatorios, incluyendo la compañía");
       setLoading(false);
       return;
     }
-    if (formData.contrasena !== formData.confirmarContrasena) {
+    if (formData.password && formData.password !== formData.confirmarContrasena) {
       setFeedback("Las contraseñas no coinciden");
       setLoading(false);
       return;
     }
-    // Mapeo de campos al formato esperado por la API
+    // Payload con los nombres exactos
     const payload = {
-      full_name: formData.nombreCompleto,
+      full_name: formData.full_name,
       email: formData.email,
-      phone: formData.celular,
-      identification: formData.identificacion,
-      address: formData.direccion,
-      password: formData.contrasena,
-      role: "Procesador"
+      phone: formData.phone,
+      identification: formData.identification,
+      address: formData.address,
+      company_id: Number(formData.company_id),
+      url_profile_photo: formData.url_profile_photo,
+      role: formData.role,
     };
+    if (formData.password) payload.password = formData.password;
+    if (!payload.role) {
+      setRoleError("El campo rol es obligatorio");
+      setLoading(false);
+      return;
+    }
     try {
-      await createProcessor(payload);
-      setFeedback("¡Procesador creado exitosamente!");
+      await updateSeller(id, payload);
+      setFeedback("¡Vendedor actualizado exitosamente!");
+      setEditMode(false);
       setTimeout(() => {
-        navegate('/process');
+        navegate('/sellers');
       }, 1500);
     } catch (error) {
-      setFeedback("Error al crear el procesador. Inténtalo de nuevo.");
+      setFeedback("Error al actualizar el vendedor. Inténtalo de nuevo.");
     }
     setLoading(false);
   };
@@ -70,7 +130,9 @@ const CreateProcesor = () => {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      console.log("Imagen seleccionada:", file.name);
+      // Aquí podrías subir la imagen y obtener la URL
+      // Por ahora solo guardamos el nombre como ejemplo
+      setFormData((prev) => ({ ...prev, url_profile_photo: file.name }));
       alert(`Imagen "${file.name}" seleccionada`);
     }
   };
@@ -83,7 +145,7 @@ const CreateProcesor = () => {
               <img src={Back} alt="back" width={35} />
             </button>
             <h2 className={`${styles.title} fw-bolder my_title_color`}>
-              Crear Procesador
+              {id ? "Detalle del vendedor" : "Crear vendedor"}
             </h2>
           </div>
         </div>
@@ -93,17 +155,18 @@ const CreateProcesor = () => {
         <div className="row">
           {/* Form Column */}
           <div className="col-md-7 col-lg-6">
-            <form>
+            
+            <form onSubmit={handleSubmit} autoComplete="off">
               <div className="row mb-2">
                 <div className="col-md-6 mb-3">
                   <input
                     type="text"
                     placeholder="Nombre completo"
                     className={`form-control  ${styles.input}`}
-                    name="nombreCompleto"
-                    value={formData.nombreCompleto}
+                    name="full_name"
+                    value={formData.full_name}
                     onChange={handleInputChange}
-                    disabled={loading}
+                    disabled={!editMode}
                   />
                 </div>
                 <div className="col-md-6 mb-3">
@@ -113,8 +176,7 @@ const CreateProcesor = () => {
                     className={`form-control  ${styles.input}`}
                     name="email"
                     value={formData.email}
-                    onChange={handleInputChange}
-                    disabled={loading}
+                    disabled
                   />
                 </div>
               </div>
@@ -125,10 +187,10 @@ const CreateProcesor = () => {
                     type="tel"
                     placeholder="Celular"
                     className={`form-control  ${styles.input}`}
-                    name="celular"
-                    value={formData.celular}
+                    name="phone"
+                    value={formData.phone}
                     onChange={handleInputChange}
-                    disabled={loading}
+                    disabled={!editMode}
                   />
                 </div>
                 <div className="col-md-6 mb-2">
@@ -136,10 +198,10 @@ const CreateProcesor = () => {
                     type="text"
                     placeholder="Identificación"
                     className={`form-control  ${styles.input}`}
-                    name="identificacion"
-                    value={formData.identificacion}
+                    name="identification"
+                    value={formData.identification}
                     onChange={handleInputChange}
-                    disabled={loading}
+                    disabled={!editMode}
                   />
                 </div>
               </div>
@@ -148,15 +210,37 @@ const CreateProcesor = () => {
                 <div className="col-12 mb-2">
                   <input
                     type="text"
-                    placeholder=" Dirección"
+                    placeholder="Dirección"
                     className={`form-control  ${styles.input}`}
-                    name="direccion"
-                    value={formData.direccion}
+                    name="address"
+                    value={formData.address}
                     onChange={handleInputChange}
-                    disabled={loading}
+                    disabled={!editMode}
                   />
                 </div>
               </div>
+
+              <div className="row mb-4">
+                <div className="col-12 mb-2">
+                  <select
+                    className={`form-select ${styles.input} ${companyError ? 'is-invalid' : ''}`}
+                    name="company_id"
+                    value={formData.company_id}
+                    onChange={handleInputChange}
+                    required
+                    disabled={!editMode}
+                  >
+                    <option value="">Seleccione una compañía</option>
+                    {companies && companies.map(({ id, name }) => (
+                      <option value={id} key={id}>{name}</option>
+                    ))}
+                  </select>
+                  {companyError && <div className="invalid-feedback d-block">{companyError}</div>}
+                </div>
+              </div>
+              {roleError && (
+                <div className="alert alert-danger py-2 mb-3">{roleError}</div>
+              )}
 
               <div className="row mb-5">
                 <div className="col-md-6 mb-3">
@@ -164,10 +248,10 @@ const CreateProcesor = () => {
                     type="password"
                     placeholder="Contraseña"
                     className={`form-control  ${styles.input}`}
-                    name="contrasena"
-                    value={formData.contrasena}
+                    name="password"
+                    value={formData.password}
                     onChange={handleInputChange}
-                    disabled={loading}
+                    disabled={!editMode}
                   />
                 </div>
                 <div className="col-md-6 mb-3">
@@ -178,30 +262,42 @@ const CreateProcesor = () => {
                     name="confirmarContrasena"
                     value={formData.confirmarContrasena}
                     onChange={handleInputChange}
-                    disabled={loading}
+                    disabled={!editMode}
                   />
                 </div>
               </div>
 
               {feedback && (
-                <div className={`alert ${feedback.includes('exitosamente') ? 'alert-success' : 'alert-danger'} py-2 mb-3`}>{feedback}</div>
+                <div className={`alert ${feedback.includes("exitosamente") ? "alert-success" : "alert-danger"} py-2 mb-3`}>{feedback}</div>
               )}
 
+              {editMode && (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn text-white fw-semibold px-3 py-2 rounded-pill "
+                  style={{
+                    backgroundColor: "#2c3e50",
+                    border: "none",
+                    fontSize: "16px",
+                    minWidth: "180px",
+                  }}
+                >
+                  {loading ? "Guardando..." : "GUARDAR CAMBIOS"}
+                </button>
+              )}
+            </form>
+
+            {!editMode && (
               <button
                 type="button"
-                onClick={handleSubmit}
-                className="btn text-white fw-semibold px-3 py-2 rounded-pill "
-                style={{
-                  backgroundColor: "#2c3e50",
-                  border: "none",
-                  fontSize: "16px",
-                  minWidth: "180px",
-                }}
-                disabled={loading}
+                className="btn btn-warning fw-semibold px-3 py-2 rounded-pill me-3 mb-3"
+                style={{ minWidth: "180px" }}
+                onClick={handleUpdate}
               >
-                {loading ? "CREANDO..." : "CREAR"}
+                ACTUALIZAR
               </button>
-            </form>
+            )}
           </div>
 
           {/* Image Upload Column */}
@@ -266,4 +362,4 @@ const CreateProcesor = () => {
   );
 };
 
-export default CreateProcesor;
+export default DetailSeller;

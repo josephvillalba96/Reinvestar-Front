@@ -19,6 +19,10 @@ import CreateProcesor from './view/Menu/Users/Procesors/CreateProcesor'
 import System from './view/Menu/Users/System'
 import CreateUserSystem from './view/Menu/Users/System/CreateUserSystem'
 import PrivateRoute from './components/PrivateRouter'
+import DetailSeller from './view/Menu/Users/Sellers/DetailsSeller'
+import DetailCoordinator from './view/Menu/Users/Coordinator/DetailCoordinantor'
+import DetailUserSystem from './view/Menu/Users/System/DetailUserSystem'
+import DetailProcesor from './view/Menu/Users/Procesors/DetailProcesor'
 
 const Dashboard = () => <h1>DashBoard</h1>
 const Parameters = () => <h1>Parameters</h1>
@@ -50,12 +54,16 @@ function App() {
             <Route path="requests/new-request" element={<CreateRequest/>} />
             <Route path="sellers" element={<Sellers/>}/>
             <Route path="sellers/new-seller" element={<CreateSeller/>}/>
+            <Route path="sellers/:id/details" element={<DetailSeller/>}/>
             <Route path='coordinators' element={<Coordinators/>} />
             <Route path='coordinators/new-coordinator' element={<CreateCoordinators/>} />
+            <Route path='/coordinators/:id/details' element={<DetailCoordinator/>} />
             <Route path='process' element={<Procesors/>}/>
             <Route path='process/new-process' element={<CreateProcesor/>}/>
+            <Route path='process/:id/details' element={<DetailProcesor/>}/>
             <Route path='users' element={<System/>}/>
             <Route path='users/new-admin' element={<CreateUserSystem/>}/>
+            <Route path='users/:id/details' element={<DetailUserSystem/>}/>
             <Route path="*" element={<h1>404 Not Found</h1>} />
           </Route>
         </Route>

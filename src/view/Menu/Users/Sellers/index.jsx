@@ -22,6 +22,11 @@ const Sellers = () => {
   const [companyMap, setCompanyMap] = useState({});
   const navegate = useNavigate();
 
+
+  const handleRedirectDetails = (id) =>{
+      navegate(`/sellers/${id}/details`)
+  }
+
   useEffect(() => {
     fetchSellers();
     // eslint-disable-next-line
@@ -165,6 +170,7 @@ const Sellers = () => {
                     <button
                       className="btn btn-sm"
                       style={{ backgroundColor: "#1B2559" }}
+                      onClick={() => handleRedirectDetails(seller.id)}
                     >
                       <img src={Eye} alt="detail-client" width={18}/>
                     </button>

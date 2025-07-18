@@ -19,6 +19,10 @@ const System = () => {
   const [estado, setEstado] = useState("");
   const navegate = useNavigate();
 
+  const handleRedirect = (id) => {
+    navegate(`/users/${id}/details`); 
+  }
+
   useEffect(() => {
     fetchAdmins();
     // eslint-disable-next-line
@@ -140,6 +144,7 @@ const System = () => {
                     <button
                       className="btn btn-sm"
                       style={{ backgroundColor: "#1B2559" }}
+                      onClick={()=>handleRedirect(admin.id)}
                     >
                       <img src={Eye} alt="detail-client" width={18}/>
                     </button>

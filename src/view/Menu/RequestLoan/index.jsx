@@ -29,7 +29,11 @@ const RequestLoan = () => {
   };
 
   const handleRequests = async (requestType) => {
+
+    setRequestsData([]);
+
     if ("fixflip" === requestType) {
+
       const data = await apiFixflip.getFixflips({
         skip: (currentPage - 1) * itemsPerPage,
         limit: itemsPerPage,
@@ -55,9 +59,19 @@ const RequestLoan = () => {
     }
   };
 
+  // Lógica de paginación
+  const totalItems = requestsData && requestsData.total ? requestsData.total : (Array.isArray(requestsData) ? requestsData.length : 0);
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    handleRequests(requestType || "dscr");
+  };
+
   useEffect(() => {
-    handleRequests("dscr");
-  }, []);
+    handleRequests(requestType || "dscr");
+    // eslint-disable-next-line
+  }, [currentPage, requestType]);
 
   // Datos de ejemplo para la tabla (reemplaza con tus datos reales)
 
@@ -68,6 +82,163 @@ const RequestLoan = () => {
   // const totalPages = Math.ceil(clientsData.length / itemsPerPage);
 
   // const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Formateador de moneda USD
+  const formatUSD = (value) => {
+    if (!value || isNaN(Number(value))) return "$0.00";
+    return Number(value).toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  };
+  // Formateador de porcentaje
+  const formatPercent = (value) => {
+    if (!value || isNaN(Number(value))) return "0%";
+    return `${Number(value).toFixed(2)}%`;
+  };
+
+  // Renderiza la tabla según el tipo de solicitud
+  const renderTable = () => {
+    // Usar los datos de DSCR para todas las tablas temporalmente
+    const data = requestsData;
+    if (requestType === "fixflip") {
+      return (
+        <table className="table table-bordered table-hover">
+          <thead className="sticky-top">
+            <tr>
+              <th style={{ color: "#1B2559" }}>Radicado</th>
+              <th style={{ color: "#1B2559" }}>Nombre Completo</th>
+              <th style={{ color: "#1B2559" }}>Email</th>
+              <th style={{ color: "#1B2559" }}>Celular</th>
+              <th style={{ color: "#1B2559" }}>Monto del préstamo</th>
+              <th style={{ color: "#1B2559" }}>Precio de compra</th>
+              <th style={{ color: "#1B2559" }}>ARV</th>
+              <th style={{ color: "#1B2559" }}>Estado</th>
+              <th style={{ color: "#1B2559" }}>Opciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data && data.length > 0 ? (
+              data.map((request) => (
+                <tr key={request.id}>
+                  <td>{request.radicado}</td>
+                  <td>{request?.client?.full_name}</td>
+                  <td>{request?.client?.email}</td>
+                  <td>{request?.client?.phone}</td>
+                  <td>{request.loan_amount === 0 ? "Pending" : request.loan_amount}</td>
+                  <td>{request.purchase_price === 0 ? "Pending" : request.purchase_price}</td>
+                  <td>{request.arv === 0 ? "Pending" : request.arv}</td>
+                  <td>{request.status}</td>
+                  <td>
+                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }}>
+                      <img src={BookCheck} alt="check-data" width={15} />
+                    </button>
+                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }}>
+                      <img src={Eye} alt="detail-client" width={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={9}>No hay solicitudes fixflip</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      );
+    } else if (requestType === "construction") {
+      return (
+        <table className="table table-bordered table-hover">
+          <thead className="sticky-top">
+            <tr>
+              <th style={{ color: "#1B2559" }}>Radicado</th>
+              <th style={{ color: "#1B2559" }}>Nombre Completo</th>
+              <th style={{ color: "#1B2559" }}>Email</th>
+              <th style={{ color: "#1B2559" }}>Celular</th>
+              <th style={{ color: "#1B2559" }}>Monto del préstamo</th>
+              <th style={{ color: "#1B2559" }}>Valor de la propiedad</th>
+              <th style={{ color: "#1B2559" }}>Costo de construcción</th>
+              <th style={{ color: "#1B2559" }}>Estado</th>
+              <th style={{ color: "#1B2559" }}>Opciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data && data.length > 0 ? (
+              data.map((request) => (
+                <tr key={request.id}>
+                  <td>{request.radicado}</td>
+                  <td>{request?.client?.full_name}</td>
+                  <td>{request?.client?.email}</td>
+                  <td>{request?.client?.phone}</td>
+                  <td>{request.loan_amount === 0 ? "Pending" : request.loan_amount}</td>
+                  <td>{request.property_value === 0 ? "Pending" : request.property_value}</td>
+                  <td>{request.construction_cost === 0 ? "Pending" : request.construction_cost}</td>
+                  <td>{request.status}</td>
+                  <td>
+                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }}>
+                      <img src={BookCheck} alt="check-data" width={15} />
+                    </button>
+                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }}>
+                      <img src={Eye} alt="detail-client" width={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={9}>No hay solicitudes construction</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      );
+    } else {
+      // Por defecto DSCR
+      return (
+        <table className="table table-bordered table-hover">
+          <thead className="sticky-top">
+            <tr>
+              <th style={{ color: "#1B2559" }}>Radicado</th>
+              <th style={{ color: "#1B2559" }}>Nombre Completo</th>
+              <th style={{ color: "#1B2559" }}>Email</th>
+              <th style={{ color: "#1B2559" }}>Celular</th>
+              <th style={{ color: "#1B2559" }}>Monto Alquiler</th>
+              <th style={{ color: "#1B2559" }}>Valor de tasación</th>
+              <th style={{ color: "#1B2559" }}>LTV Solicitado</th>
+              <th style={{ color: "#1B2559" }}>Estado</th>
+              <th style={{ color: "#1B2559" }}>Opciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data && data.length > 0 ? (
+              data.map((request) => (
+                <tr key={request.id}>
+                  <td>{request.radicado}</td>
+                  <td>{request?.client.full_name}</td>
+                  <td>{request?.client.email}</td>
+                  <td>{request?.client.phone}</td>
+                  <td>{formatUSD(request.rent_amount)}</td>
+                  <td>{formatUSD(request.appraisal_value)}</td>
+                  <td>{formatPercent(request.ltv_request)}</td>
+                  <td>{request.status}</td>
+                  <td>
+                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }}>
+                      <img src={BookCheck} alt="check-data" width={15} />
+                    </button>
+                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }}>
+                      <img src={Eye} alt="detail-client" width={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={9}>No hay solicitudes dscr</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      );
+    }
+  };
 
   return (
     <div
@@ -81,12 +252,6 @@ const RequestLoan = () => {
       </div>
       <div className="d-flex justify-content-between w-100 mb-4 px-4">
         <div className="d-flex align-items-center gap-3">
-          <select name="" id="" onChange={handleRequestTypeChange}>
-            <option value="">-Tipos de solicitud-</option>
-            <option value="fixflip">Fix & Flip</option>
-            <option value="dscr">DSCR</option>
-            <option value="construction">Construcción</option>
-          </select>
           <button
             className="btn btn-primary d-flex align-items-center"
             onClick={handleRedired}
@@ -96,6 +261,12 @@ const RequestLoan = () => {
               Crear solicitud
             </span>
           </button>
+          <select name="" id="" onChange={handleRequestTypeChange} value={requestType || "dscr"}>
+            <option value="dscr">DSCR</option>
+            <option value="fixflip">Fix & Flip</option>
+            <option value="construction">Construcción</option>
+          </select>
+
         </div>
         <div className={`${"d-flex gap-3"}`}>
           <button className="btn d-flex align-items-center">
@@ -125,97 +296,9 @@ const RequestLoan = () => {
 
       {/* Tabla de clientes */}
       <div className={`${"w-100 px-4 mb-3"} table_height`}>
-        <table className="table table-bordered table-hover">
-          <thead className="sticky-top">
-            <tr>
-              <th style={{ color: "#1B2559" }}>ID</th>
-              <th style={{ color: "#1B2559" }}>Nombre Completo</th>
-              <th style={{ color: "#1B2559" }}>Email</th>
-              <th style={{ color: "#1B2559" }}>Celular</th>
-              <th style={{ color: "#1B2559" }}>Producto</th>
-              <th style={{ color: "#1B2559" }}>Monto Alquiler</th>
-              <th style={{ color: "#1B2559" }}>Valor de tasa</th>
-              <th style={{ color: "#1B2559" }}>LTV Solicitado</th>
-              <th style={{ color: "#1B2559" }}>Estado</th>
-              <th style={{ color: "#1B2559" }}>Opciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Aquí deberías mapear tus datos reales */}
-            {requestsData && requestsData.length > 0 ? (
-              requestsData.map((request) => (
-                <tr key={request.id}>
-                  <td>{request.id}</td>
-                  {/* <td>{request.nombre_completo}</td>
-                  <td>{request.email}</td>
-                  <td>{request.celular}</td>
-                  <td>{request.producto}</td>
-                  <td>{request.monto_alquiler}</td>
-                  <td>{request.valor_tasa}</td>
-                  <td>{request.ltv_solicitado}</td> */}
-                  <td colSpan={9}>
-                    <span className={`text-black`}>{request.estado}</span>
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-sm me-1"
-                      style={{ backgroundColor: "#1B2559" }}
-                    >
-                      <img src={BookCheck} alt="check-data" width={15} />
-                    </button>
-                    <button
-                      className="btn btn-sm"
-                      style={{ backgroundColor: "#1B2559" }}
-                    >
-                      <img src={Eye} alt="detail-client" width={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={10}>{`No hay solicitudes ${
-                  requestType === null ? "" : requestType
-                }`}</td>
-              </tr>
-            )}
-            {/* {currentItems.map((client) => (
-              <tr key={client.id}>
-                <td>{client.id}</td>
-                <td>{client.nombre}</td>
-                <td>{client.email}</td>
-                <td>{client.telefono}</td>
-                <td>{client.producto}</td>
-                <td>{client.monto_alquiler}</td>
-                <td>{client.valor_tasa}</td>
-                <td>{client.ltv}</td>
-                <td>
-                  <span
-                    className={`text-black`}
-                  >
-                    {client.estado}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    className="btn btn-sm me-1"
-                    style={{ backgroundColor: "#1B2559" }}
-                  >
-                    <img src={BookCheck} alt="check-data" width={15} />
-                  </button>
-                  <button
-                    className="btn btn-sm"
-                    style={{ backgroundColor: "#1B2559" }}
-                  >
-                    <img src={Eye} alt="detail-client" width={18}/>
-                  </button>
-                </td>
-              </tr>
-            ))} */}
-          </tbody>
-        </table>
+        {renderTable()}
       </div>
-      {/* <Pagination currentPage={currentPage} totalPages={totalPages} handlePaginate={paginate}/> */}
+      <Pagination currentPage={currentPage} totalPages={totalPages} handlePaginate={paginate} />
     </div>
   );
 };

@@ -22,6 +22,10 @@ const Coordinator = () => {
   const [companyMap, setCompanyMap] = useState({});
   const navegate = useNavigate();
 
+  const handleRedirectDetail = (id) => {
+    navegate(`/coordinators/${id}/details`)
+  }
+
   useEffect(() => {
     fetchCoordinators();
     // eslint-disable-next-line
@@ -164,6 +168,7 @@ const Coordinator = () => {
                     <button
                       className="btn btn-sm"
                       style={{ backgroundColor: "#1B2559" }}
+                      onClick={() => handleRedirectDetail(coordinator.id)}
                     >
                       <img src={Eye} alt="detail-client" width={18}/>
                     </button>

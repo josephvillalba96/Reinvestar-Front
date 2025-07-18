@@ -157,7 +157,7 @@ const DetailClient = () => {
               <h2 className={`${styles.title} fw-bolder my_title_color`}>
                 {`Detalles cliente - `}
               </h2>
-              <span className="placeholder col-4"></span>
+              {/* <span className="placeholder col-4"></span> */}
             </div>
           </div>
         )}
@@ -285,30 +285,9 @@ const DetailClient = () => {
             </fieldset>
           </form>
         ) : (
-          <form className={styles.form}>
-            <div className={styles.row}>
-              <span className="placeholder col-6 mb-3"></span>
-              <span className="placeholder col-6 mb-3"></span>
-            </div>
-            <div className={styles.row}>
-              <span className="placeholder col-6 mb-3"></span>
-              <span className="placeholder col-6 mb-3"></span>
-            </div>
-            <div className={`${styles.row} mb-4`}>
-              <span className="placeholder col-8 mb-3 me-4"></span>
-              <span className="placeholder col-4 mb-3"></span>
-            </div>
-            <div className={`${styles.checkboxGroup} mb-4`}>
-              <span className="placeholder col-4 mb-2 d-block"></span>
-              <span className="placeholder col-4 mb-2 d-block"></span>
-              <span className="placeholder col-4 mb-2 d-block"></span>
-              <span className="placeholder col-4 mb-2 d-block"></span>
-              <span className="placeholder col-4 mb-2 d-block"></span>
-            </div>
-            <div className="d-grid">
-              <span className="placeholder col-6 mx-auto py-3"></span>
-            </div>
-          </form>
+          <div className="text-center w-100 py-5 text-muted">
+            No se encontraron datos del cliente.
+          </div>
         )}
         <Notification show={show} message={message}/>
         <Modal show={modalShow} setShow={setModalShow} title={"¡Cambios sin Guardar!"}>

@@ -30,7 +30,7 @@ const Login = () => {
 
   return (
     <div className="d-flex justify-content-center align-items-center bg-dark text-center vh-100" style={{ backgroundColor: '#1d1b37' }}>
-      <div className="bg-white rounded-4 d-flex flex-column justify-content-space-between p-4" style={{ width: '17%', height:'55%'}}>
+      <div className="bg-white rounded-4 d-flex flex-column justify-content-space-between p-4">
         <img
           src={logo}
           alt="Logo"
