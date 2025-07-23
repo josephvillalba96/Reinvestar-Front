@@ -46,6 +46,7 @@ function App() {
             <Route path="request-details" element={<DetalleSolicitud />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="requests" element={<RequestLoan />} />
+            <Route path="requests/:type/:id/details" element={<DetalleSolicitud />} />
             <Route path="products" element={<Productos />} />
             <Route path="clients" element={<Clients />} />
             <Route path="clients/:id/details" element={<ClientDetails />} />

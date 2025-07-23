@@ -58,7 +58,8 @@ const DocumentsRequest = ({ requestId, requestType }) => {
         dscr_request_id: requestType === "dscr" ? requestId : undefined,
         fixflip_request_id: requestType === "fixflip" ? requestId : undefined,
         construction_request_id: requestType === "construction" ? requestId : undefined,
-        file_path: ""
+        file_path: "",
+        name: form.file ? form.file.name : ""
       };
       const created = await createDocument(docData);
       // 2. Subir archivo

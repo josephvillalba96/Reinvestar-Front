@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../style.module.css";
 import { NumericFormat } from "react-number-format";
+import { createFixflip } from "../../../../../../Api/fixflip";
+import { createRequestLink } from "../../../../../../Api/requestLink";
 
 const initialState = {
   property_type: "",
@@ -17,6 +19,12 @@ const initialState = {
 
 const FixflipForm = ({ client_id, goToDocumentsTab }) => {
   const [form, setForm] = useState({ ...initialState });
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState("");
+
+  useEffect(() => {
+    setForm({ ...initialState });
+  }, [client_id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,20 +37,30 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const dataToSend = {
-      ...form,
-      client_id: Number(client_id),
-      loan_amount: form.loan_amount ? Number(form.loan_amount) : 0,
-      purchase_price: form.purchase_price ? Number(form.purchase_price) : 0,
-      rehab_cost: form.rehab_cost ? Number(form.rehab_cost) : 0,
-      arv: form.arv ? Number(form.arv) : 0,
-    };
-    // Aquí puedes enviar dataToSend a la API y obtener el id de la solicitud creada
-    // Simulación:
-    const fakeId = Math.floor(Math.random() * 10000) + 1;
-    if (typeof goToDocumentsTab === 'function') {
-      goToDocumentsTab(fakeId, 'fixflip');
+    setLoading(true);
+    setFeedback("");
+    try {
+      const dataToSend = {
+        ...form,
+        client_id: Number(client_id)
+      };
+      const response = await createFixflip(dataToSend);
+      setFeedback("¡Fixflip creado exitosamente!");
+      // Crear link automáticamente con 30 días
+      await createRequestLink({
+        valid_days: 30,
+        dscr_request_id: 0,
+        construction_request_id: 0,
+        fixflip_request_id: response.id
+      });
+      if (typeof goToDocumentsTab === 'function') {
+        goToDocumentsTab(response.id, 'fixflip');
+      }
+      setForm({ ...initialState }); // Limpiar formulario después de crear
+    } catch (error) {
+      setFeedback("Error al crear el Fixflip. Inténtalo de nuevo.");
     }
+    setLoading(false);
   };
 
   return (
@@ -195,9 +213,13 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
             type="submit"
             className={styles.button}
             style={{ minWidth: "200px" }}
+            disabled={loading}
           >
-            <span className="text-white">CREAR FIXFLIP</span>
+            {loading ? "Creando..." : "CREAR FIXFLIP"}
           </button>
+          {feedback && (
+            <div className="mt-2 text-center text-success">{feedback}</div>
+          )}
         </div>
       </div>
     </form>

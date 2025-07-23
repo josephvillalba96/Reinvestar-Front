@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../style.module.css";
 import { NumericFormat } from "react-number-format";
+import { createConstruction } from "../../../../../../Api/construction";
+import { createRequestLink } from "../../../../../../Api/requestLink";
 
 const initialState = {
   property_type: "",
@@ -17,6 +19,12 @@ const initialState = {
 
 const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
   const [form, setForm] = useState({ ...initialState });
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState("");
+
+  useEffect(() => {
+    setForm({ ...initialState });
+  }, [client_id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,20 +37,30 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const dataToSend = {
-      ...form,
-      client_id: Number(client_id),
-      loan_amount: form.loan_amount ? Number(form.loan_amount) : 0,
-      property_value: form.property_value ? Number(form.property_value) : 0,
-      construction_cost: form.construction_cost ? Number(form.construction_cost) : 0,
-      land_cost: form.land_cost ? Number(form.land_cost) : 0,
-    };
-    // Aquí puedes enviar dataToSend a la API y obtener el id de la solicitud creada
-    // Simulación:
-    const fakeId = Math.floor(Math.random() * 10000) + 1;
-    if (typeof goToDocumentsTab === 'function') {
-      goToDocumentsTab(fakeId, 'construction');
+    setLoading(true);
+    setFeedback("");
+    try {
+      const dataToSend = {
+        ...form,
+        client_id: Number(client_id)
+      };
+      const response = await createConstruction(dataToSend);
+      setFeedback("¡Construction creado exitosamente!");
+      // Crear link automáticamente con 30 días
+      await createRequestLink({
+        valid_days: 30,
+        dscr_request_id: 0,
+        construction_request_id: response.id,
+        fixflip_request_id: 0
+      });
+      if (typeof goToDocumentsTab === 'function') {
+        goToDocumentsTab(response.id, 'construction');
+      }
+      setForm({ ...initialState }); // Limpiar formulario después de crear
+    } catch (error) {
+      setFeedback("Error al crear el Construction. Inténtalo de nuevo.");
     }
+    setLoading(false);
   };
 
   return (
@@ -195,9 +213,13 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
             type="submit"
             className={styles.button}
             style={{ minWidth: "200px" }}
+            disabled={loading}
           >
-            <span className="text-white">CREAR CONSTRUCTION</span>
+            {loading ? "Creando..." : "CREAR CONSTRUCTION"}
           </button>
+          {feedback && (
+            <div className="mt-2 text-center text-success">{feedback}</div>
+          )}
         </div>
       </div>
     </form>

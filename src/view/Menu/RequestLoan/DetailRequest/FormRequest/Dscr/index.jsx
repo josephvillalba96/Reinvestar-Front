@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../style.module.css";
 import { NumericFormat } from "react-number-format";
-import { createDscr } from "../../../../../../Api/dscr";
+import { createDscr, updateDscr } from "../../../../../../Api/dscr";
 import { createRequestLink } from "../../../../../../Api/requestLink";
 
 const initialState = {
@@ -23,8 +23,8 @@ const initialState = {
   payoff_amount: ""
 };
 
-const DscrForm = ({ client_id }) => {
-  const [form, setForm] = useState({ ...initialState });
+const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = true }) => {
+  const [form, setForm] = useState(initialState);
   const [ficoError, setFicoError] = useState("");
   const [assignToClient, setAssignToClient] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,6 +32,32 @@ const DscrForm = ({ client_id }) => {
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [createdDscrId, setCreatedDscrId] = useState(null);
   const [linkForm, setLinkForm] = useState({ valid_days: 7 });
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Inicializar el formulario con los datos de la solicitud si existen
+  useEffect(() => {
+    if (solicitud) {
+      setForm({
+        type_request: solicitud.type_request || "TYPE1",
+        property_address: solicitud.property_address || "",
+        fico: solicitud.fico || "",
+        rent_amount: solicitud.rent_amount || "",
+        appraisal_value: solicitud.appraisal_value || "",
+        ltv_request: solicitud.ltv_request || "",
+        residency_status: solicitud.residency_status || "OWNER",
+        prepayment_penalty: solicitud.prepayment_penalty || "",
+        property_units: solicitud.property_units || "",
+        type_of_transaction: solicitud.type_of_transaction || "PURCHASE",
+        primary_own_or_rent: solicitud.primary_own_or_rent || "",
+        mortgage_late_payments: solicitud.mortgage_late_payments || "",
+        prop_taxes: solicitud.prop_taxes || "",
+        hoi: solicitud.hoi || "",
+        subject_prop_under_llc: solicitud.subject_prop_under_llc || "",
+        payoff_amount: solicitud.payoff_amount || ""
+      });
+      setIsEditMode(false);
+    }
+  }, [solicitud]);
 
   // Maneja cambios generales
   const handleChange = (e) => {
@@ -63,45 +89,39 @@ const DscrForm = ({ client_id }) => {
     return "";
   };
 
+  // Guardar cambios (update)
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setFeedback("");
+    try {
+      await updateDscr(solicitud.id, form);
+      setFeedback("¡Solicitud actualizada exitosamente!");
+      setIsEditMode(false);
+    } catch (error) {
+      setFeedback("Error al actualizar la solicitud. Inténtalo de nuevo.");
+    }
+    setLoading(false);
+  };
+
+  // Guardar nuevo (create, solo si no hay solicitud)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.fico && (Number(form.fico) < 300 || Number(form.fico) > 850)) {
       setFicoError("El valor de FICO debe estar entre 300 y 850");
       return;
     }
-
     setLoading(true);
     setFeedback("");
-
     try {
-      // Al enviar, convierte los campos de moneda y porcentaje a número puro
       const dataToSend = {
-        type_request: "TYPE1",
-        property_address: form.property_address || "",
-        fico: form.fico ? Number(form.fico) : 0,
-        rent_amount: form.rent_amount ? Number(form.rent_amount) : 0,
-        appraisal_value: form.appraisal_value ? Number(form.appraisal_value) : 0,
-        ltv_request: form.ltv_request ? Number(form.ltv_request) : 0,
-        residency_status: form.residency_status || "OWNER",
-        prepayment_penalty: form.prepayment_penalty ? Number(form.prepayment_penalty) : 0,
-        property_units: form.property_units ? Number(form.property_units) : 0,
-        type_of_transaction: form.type_of_transaction || "PURCHASE",
-        primary_own_or_rent: form.primary_own_or_rent || "",
-        mortgage_late_payments: form.mortgage_late_payments ? Number(form.mortgage_late_payments) : 0,
-        prop_taxes: form.prop_taxes ? Number(form.prop_taxes) : 0,
-        hoi: form.hoi ? Number(form.hoi) : 0,
-        subject_prop_under_llc: form.subject_prop_under_llc || "",
-        payoff_amount: form.payoff_amount ? Number(form.payoff_amount) : 0,
+        ...form,
         client_id: Number(client_id)
       };
-
       const response = await createDscr(dataToSend);
       setCreatedDscrId(response.id);
       setFeedback("¡DSCR creado exitosamente!");
-      
-      if (assignToClient) {
-        setShowLinkForm(true);
-      } else if (typeof goToDocumentsTab === 'function') {
+      if (typeof goToDocumentsTab === 'function') {
         goToDocumentsTab(response.id, 'dscr');
       }
     } catch (error) {
@@ -116,21 +136,21 @@ const DscrForm = ({ client_id }) => {
 
     try {
       const emptyData = {
-  type_request: "TYPE1",
-  property_address: "",
-  fico: 0,
-  rent_amount: 0,
-  appraisal_value: 0,
-  ltv_request: 0,
-  residency_status: "OWNER",
-  prepayment_penalty: 0,
-  property_units: 0,
-  type_of_transaction: "PURCHASE",
-  primary_own_or_rent: "",
-  mortgage_late_payments: 0,
-  prop_taxes: 0,
-  hoi: 0,
-  subject_prop_under_llc: "",
+        type_request: "TYPE1",
+        property_address: "",
+        fico: 0,
+        rent_amount: 0,
+        appraisal_value: 0,
+        ltv_request: 0,
+        residency_status: "OWNER",
+        prepayment_penalty: 0,
+        property_units: 0,
+        type_of_transaction: "PURCHASE",
+        primary_own_or_rent: "",
+        mortgage_late_payments: 0,
+        prop_taxes: 0,
+        hoi: 0,
+        subject_prop_under_llc: "",
         payoff_amount: 0,
         client_id: Number(client_id)
       };
@@ -169,38 +189,70 @@ const DscrForm = ({ client_id }) => {
 
   return (
     <>
-    <form className="container-fluid" onSubmit={handleSubmit}>
-      <div className="row gy-1">
-        <div className="col-md-6 mb-2">
+      <form className="container-fluid" onSubmit={solicitud ? handleUpdate : handleSubmit}>
+        {/* Datos del cliente */}
+        {cliente && (
+          <div className="row mb-3">
+            <div className="col-md-6 mb-2">
+              <div className="d-flex flex-column">
+                <label className="form-label text-muted small mb-1">Nombre</label>
+                <input className={styles.input} value={cliente.full_name || ""} disabled />
+              </div>
+            </div>
+            <div className="col-md-6 mb-2">
+              <div className="d-flex flex-column">
+                <label className="form-label text-muted small mb-1">Email</label>
+                <input className={styles.input} value={cliente.email || ""} disabled />
+              </div>
+            </div>
+            <div className="col-md-7 mb-2">
+              <div className="d-flex flex-column">
+                <label className="form-label text-muted small mb-1">Teléfono</label>
+                <input className={styles.input} value={cliente.phone || ""} disabled />
+              </div>
+            </div>
+            <div className="col-md-3 mb-2">
+              <div className="d-flex flex-column">
+                <label className="form-label text-muted small mb-1">Dirección</label>
+                <input className={styles.input} value={cliente.address || ""} disabled />
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Formulario de solicitud DSCR */}
+        <div className="row gy-1">
+          <div className="col-md-6 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">Dirección de la propiedad</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="property_address"
-            value={form.property_address}
-            onChange={handleChange}
-            required
-          />
+              <input
+                type="text"
+                className={styles.input}
+                name="property_address"
+                value={form.property_address}
+                onChange={handleChange}
+                required
+                disabled={!editable && !isEditMode}
+              />
             </div>
+          </div>
         </div>
-      </div>
-      <div className="row gy-1">
-        <div className="col-md-4 mb-2">
+        <div className="row gy-1">
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">FICO</label>
               <NumericFormat
-            className={styles.input}
-            name="fico"
-            value={form.fico}
+                className={styles.input}
+                name="fico"
+                value={form.fico}
                 onValueChange={({ value }) => handleNumberFormat("fico", value)}
                 allowNegative={false}
                 decimalScale={0}
                 allowLeadingZeros={false}
-                thousandSeparator="," 
-            required
+                thousandSeparator=","
+                required
                 placeholder="0"
                 inputMode="numeric"
+                disabled={!editable && !isEditMode}
               />
               {ficoError && (
                 <span style={{ color: 'red', fontSize: 13 }}>{ficoError}</span>
@@ -209,211 +261,215 @@ const DscrForm = ({ client_id }) => {
                 <span style={{ color: '#2c3e50', fontSize: 13, fontWeight: 500 }}>{getFicoCategory(form.fico)}</span>
               )}
             </div>
-        </div>
-        <div className="col-md-4 mb-2">
+          </div>
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">Monto de alquiler</label>
               <NumericFormat
-            className={styles.input}
-            name="rent_amount"
-            value={form.rent_amount}
+                className={styles.input}
+                name="rent_amount"
+                value={form.rent_amount}
                 onValueChange={({ value }) => handleNumberFormat("rent_amount", value)}
-                thousandSeparator="," 
+                thousandSeparator=","
                 prefix="$"
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+                required
                 placeholder="$0.00"
                 inputMode="decimal"
-          />
+                disabled={!editable && !isEditMode}
+              />
             </div>
-        </div>
-        <div className="col-md-4 mb-2">
+          </div>
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">Valor de tasación</label>
               <NumericFormat
-            className={styles.input}
-            name="appraisal_value"
-            value={form.appraisal_value}
+                className={styles.input}
+                name="appraisal_value"
+                value={form.appraisal_value}
                 onValueChange={({ value }) => handleNumberFormat("appraisal_value", value)}
-                thousandSeparator="," 
+                thousandSeparator=","
                 prefix="$"
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+                required
                 placeholder="$0.00"
                 inputMode="decimal"
-          />
+                disabled={!editable && !isEditMode}
+              />
             </div>
+          </div>
         </div>
-      </div>
-      <div className="row gy-1">
-        <div className="col-md-4 mb-2">
+        <div className="row gy-1">
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted mb-1">LTV solicitado (%)</label>
               <NumericFormat
-            className={styles.input}
-            name="ltv_request"
-            value={form.ltv_request}
+                className={styles.input}
+                name="ltv_request"
+                value={form.ltv_request}
                 onValueChange={({ value }) => handleNumberFormat("ltv_request", value)}
                 suffix="%"
                 decimalScale={2}
                 allowNegative={false}
-            required
+                required
                 placeholder="0.00%"
                 inputMode="decimal"
-          />
+              />
             </div>
-        </div>
-        <div className="col-md-4 mb-2">
+          </div>
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">Residencia</label>
-          <select
-            className={styles.select}
-            name="residency_status"
-            value={form.residency_status}
-            onChange={handleChange}
-            required
-          >
-            <option value="OWNER">Propietario</option>
-            <option value="RENT">Arrendatario</option>
-          </select>
+              <select
+                className={styles.select}
+                name="residency_status"
+                value={form.residency_status}
+                onChange={handleChange}
+                required
+              >
+                <option value="OWNER">Propietario</option>
+                <option value="RENT">Arrendatario</option>
+              </select>
             </div>
+          </div>
+          <div className="col-md-4 mb-2">
+            <div className="d-flex flex-column">
+              <label className="form-label text-muted small mb-1">Penalidad por prepago (años)</label>
+              <NumericFormat
+                className={styles.input}
+                name="prepayment_penalty"
+                value={form.prepayment_penalty}
+                onValueChange={({ value }) => handleNumberFormat("prepayment_penalty", value)}
+                thousandSeparator=","
+                prefix="$"
+                decimalScale={2}
+                fixedDecimalScale
+                allowNegative={false}
+                required
+                placeholder="$0.00"
+                inputMode="decimal"
+              />
+            </div>
+          </div>
         </div>
-        <div className="col-md-4 mb-2">
-            <label className="form-label text-muted small mb-1">Penalidad por prepago (años)</label>
-            <NumericFormat
-            className={styles.input}
-            name="prepayment_penalty"
-            value={form.prepayment_penalty}
-              onValueChange={({ value }) => handleNumberFormat("prepayment_penalty", value)}
-              thousandSeparator="," 
-              prefix="$"
-              decimalScale={2}
-              fixedDecimalScale
-              allowNegative={false}
-            required
-              placeholder="$0.00"
-              inputMode="decimal"
-          />
-        </div>
-      </div>
-      <div className="row gy-1">
-        <div className="col-md-4 mb-2">
+        <div className="row gy-1">
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">Unidades de propiedad</label>
               <NumericFormat
-            className={styles.input}
-            name="property_units"
-            value={form.property_units}
+                className={styles.input}
+                name="property_units"
+                value={form.property_units}
                 onValueChange={({ value }) => handleNumberFormat("property_units", value)}
                 allowNegative={false}
                 decimalScale={0}
-            required
+                required
                 placeholder="0"
                 inputMode="numeric"
-          />
+              />
             </div>
-        </div>
-        <div className="col-md-4 mb-2">
+          </div>
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">Tipo de transacción</label>
-          <select
-            className={styles.select}
-            name="type_of_transaction"
-            value={form.type_of_transaction}
-            onChange={handleChange}
-            required
-          >
-            <option value="PURCHASE">Compra</option>
-            <option value="REFINANCE">Refinanciación</option>
-            <option value="CASHOUT">Cash-out</option>
-          </select>
+              <select
+                className={styles.select}
+                name="type_of_transaction"
+                value={form.type_of_transaction}
+                onChange={handleChange}
+                required
+              >
+                <option value="PURCHASE">Compra</option>
+                <option value="REFINANCE">Refinanciación</option>
+                <option value="CASHOUT">Cash-out</option>
+              </select>
             </div>
-        </div>
-        <div className="col-md-4 mb-2">
+          </div>
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">¿Propietario o arrendatario principal?</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="primary_own_or_rent"
-            value={form.primary_own_or_rent}
-            onChange={handleChange}
-            required
-          />
+              <input
+                type="text"
+                className={styles.input}
+                name="primary_own_or_rent"
+                value={form.primary_own_or_rent}
+                onChange={handleChange}
+                required
+              />
             </div>
+          </div>
         </div>
-      </div>
-      <div className="row gy-1">
-        <div className="col-md-4 mb-2">
+        <div className="row gy-1">
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">Pagos tardíos de hipoteca</label>
               <NumericFormat
-            className={styles.input}
-            name="mortgage_late_payments"
-            value={form.mortgage_late_payments}
+                className={styles.input}
+                name="mortgage_late_payments"
+                value={form.mortgage_late_payments}
                 onValueChange={({ value }) => handleNumberFormat("mortgage_late_payments", value)}
-                thousandSeparator="," 
+                thousandSeparator=","
                 prefix="$"
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+                required
                 placeholder="$0.00"
                 inputMode="decimal"
-          />
+              />
             </div>
-        </div>
-        <div className="col-md-4 mb-2">
+          </div>
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">Impuestos de propiedad</label>
               <NumericFormat
-            className={styles.input}
-            name="prop_taxes"
-            value={form.prop_taxes}
+                className={styles.input}
+                name="prop_taxes"
+                value={form.prop_taxes}
                 onValueChange={({ value }) => handleNumberFormat("prop_taxes", value)}
-                thousandSeparator="," 
+                thousandSeparator=","
                 prefix="$"
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+                required
                 placeholder="$0.00"
                 inputMode="decimal"
-          />
+              />
             </div>
-        </div>
-        <div className="col-md-4 mb-2">
+          </div>
+          <div className="col-md-4 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">HOI</label>
               <NumericFormat
-            className={styles.input}
-            name="hoi"
-            value={form.hoi}
+                className={styles.input}
+                name="hoi"
+                value={form.hoi}
                 onValueChange={({ value }) => handleNumberFormat("hoi", value)}
-                thousandSeparator="," 
+                thousandSeparator=","
                 prefix="$"
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+                required
                 placeholder="$0.00"
                 inputMode="decimal"
-          />
+              />
             </div>
+          </div>
         </div>
-      </div>
-      <div className="row gy-1">
-        <div className="col-md-6 mb-2">
+        <div className="row gy-1">
+          <div className="col-md-6 mb-2">
             <div className="d-flex flex-column">
               <label className="form-label text-muted small mb-1">Propiedad bajo LLC</label>
               <select
-            className={styles.input}
-            name="subject_prop_under_llc"
-            value={form.subject_prop_under_llc}
+                className={styles.input}
+                name="subject_prop_under_llc"
+                value={form.subject_prop_under_llc}
                 onChange={e => setForm(prev => ({ ...prev, subject_prop_under_llc: e.target.value }))}
                 required
               >
@@ -431,12 +487,12 @@ const DscrForm = ({ client_id }) => {
                 name="payoff_amount"
                 value={form.payoff_amount}
                 onValueChange={({ value }) => handleNumberFormat("payoff_amount", value)}
-                thousandSeparator="," 
+                thousandSeparator=","
                 prefix="$"
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+                required
                 placeholder="$0.00"
                 inputMode="decimal"
               />
@@ -470,16 +526,26 @@ const DscrForm = ({ client_id }) => {
 
         <div className="row">
           <div className="col-12 mt-3">
-            {assignToClient ? (
-              <button
-                type="button"
-                className={styles.button}
-                style={{ minWidth: "200px" }}
-                onClick={handleCreateEmptyDscr}
-                disabled={loading}
-              >
-                <span className="text-white">{loading ? "CREANDO..." : "CREAR Y ASIGNAR AL CLIENTE"}</span>
-              </button>
+            {solicitud ? (
+              isEditMode ? (
+                <button
+                  type="submit"
+                  className={styles.button}
+                  style={{ minWidth: "200px" }}
+                  disabled={loading}
+                >
+                  <span className="text-white">{loading ? "GUARDANDO..." : "GUARDAR CAMBIOS"}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.button}
+                  style={{ minWidth: "200px" }}
+                  onClick={() => setIsEditMode(true)}
+                >
+                  <span className="text-white">EDITAR</span>
+                </button>
+              )
             ) : (
               <button
                 type="submit"
@@ -502,30 +568,30 @@ const DscrForm = ({ client_id }) => {
             <div className="row">
               <div className="col-md-6 mb-3">
                 <label className="form-label text-muted small mb-1">Días de validez</label>
-          <input
-            type="number"
-            className={styles.input}
+                <input
+                  type="number"
+                  className={styles.input}
                   value={linkForm.valid_days}
                   onChange={(e) => setLinkForm(prev => ({ ...prev, valid_days: e.target.value }))}
                   min="1"
                   max="365"
-            required
-          />
-        </div>
-      </div>
-      <div className="row">
+                  required
+                />
+              </div>
+            </div>
+            <div className="row">
               <div className="col-12">
-          <button
-            type="submit"
-            className={styles.button}
-            style={{ minWidth: "200px" }}
+                <button
+                  type="submit"
+                  className={styles.button}
+                  style={{ minWidth: "200px" }}
                   disabled={loading}
-          >
+                >
                   <span className="text-white">{loading ? "CREANDO..." : "CREAR LINK"}</span>
-          </button>
-        </div>
-      </div>
-    </form>
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       )}
     </>

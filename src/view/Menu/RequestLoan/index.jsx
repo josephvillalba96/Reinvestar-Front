@@ -7,9 +7,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Pagination from "../../../components/Pagination";
 
-import * as apiFixflip from "../../../api/fixflip";
+import * as apiFixflip from "../../../Api/fixflip";
 import * as apiDscr from "../../../Api/dscr";
 import * as apiConstruction from "../../../Api/construction";
+import Notification from "../../../components/Notification";
+import MyModal from "../../../components/Popup";
+import { getProcessors, assignProcessor } from "../../../Api/procesor";
 
 const RequestLoan = () => {
   // Estado para la paginación
@@ -18,6 +21,14 @@ const RequestLoan = () => {
   const [requestType, setRequestType] = useState("");
   const [requestsData, setRequestsData] = useState(null);
   const navegate = useNavigate();
+  const [showAssignPopup, setShowAssignPopup] = useState(false);
+  const [processors, setProcessors] = useState([]);
+  const [selectedProcessor, setSelectedProcessor] = useState(null);
+  const [assigning, setAssigning] = useState(false);
+  const [assignSuccess, setAssignSuccess] = useState("");
+  const [assignError, setAssignError] = useState("");
+  const [assignRequest, setAssignRequest] = useState({ id: null, type: null });
+  const [globalSuccess, setGlobalSuccess] = useState("");
 
   const handleRedired = () => {
     navegate("/requests/new-request");
@@ -57,6 +68,64 @@ const RequestLoan = () => {
     } else {
       setRequestsData([]); // Si no hay tipo de solicitud seleccionado, resetea los datos
     }
+  };
+
+  const openAssignPopup = async (requestId, requestType) => {
+    setAssignRequest({ id: requestId, type: requestType });
+    setShowAssignPopup(true);
+    setAssignSuccess("");
+    setAssignError("");
+    setSelectedProcessor(null);
+    try {
+      const data = await getProcessors();
+      setProcessors(
+        Array.isArray(data)
+          ? data
+          : data.items
+            ? data.items
+            : data.results
+              ? data.results
+              : []
+      );
+    } catch {
+      setProcessors([]);
+    }
+  };
+
+  const closeModalAndCleanup = () => {
+    setShowAssignPopup(false);
+    // Elimina manualmente el backdrop de Bootstrap si existe
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(b => b.parentNode && b.parentNode.removeChild(b));
+    document.body.classList.remove('modal-open');
+    // Si hubo éxito, muestra notificación global
+    if (assignSuccess) {
+      setGlobalSuccess(assignSuccess);
+      setTimeout(() => setGlobalSuccess(""), 2000);
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!selectedProcessor) return;
+    setAssigning(true);
+    setAssignSuccess("");
+    setAssignError("");
+    try {
+      await assignProcessor({
+        processor_id: parseInt(selectedProcessor, 10),
+        dscr_request_id: assignRequest.type === "dscr" ? parseInt(assignRequest.id, 10) : undefined,
+        fixflip_request_id: assignRequest.type === "fixflip" ? parseInt(assignRequest.id, 10) : undefined,
+        construction_request_id: assignRequest.type === "construction" ? parseInt(assignRequest.id, 10) : undefined
+      });
+      setAssignSuccess("Procesador asignado exitosamente");
+      setTimeout(() => {
+        setAssignSuccess("");
+        closeModalAndCleanup();
+      }, 1500);
+    } catch {
+      setAssignError("Error al asignar procesador");
+    }
+    setAssigning(false);
   };
 
   // Lógica de paginación
@@ -127,10 +196,10 @@ const RequestLoan = () => {
                   <td>{request.arv === 0 ? "Pending" : request.arv}</td>
                   <td>{request.status}</td>
                   <td>
-                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }}>
+                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
                       <img src={BookCheck} alt="check-data" width={15} />
                     </button>
-                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }}>
+                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
                       <img src={Eye} alt="detail-client" width={18} />
                     </button>
                   </td>
@@ -173,10 +242,10 @@ const RequestLoan = () => {
                   <td>{request.construction_cost === 0 ? "Pending" : request.construction_cost}</td>
                   <td>{request.status}</td>
                   <td>
-                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }}>
+                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
                       <img src={BookCheck} alt="check-data" width={15} />
                     </button>
-                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }}>
+                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
                       <img src={Eye} alt="detail-client" width={18} />
                     </button>
                   </td>
@@ -220,10 +289,10 @@ const RequestLoan = () => {
                   <td>{formatPercent(request.ltv_request)}</td>
                   <td>{request.status}</td>
                   <td>
-                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }}>
+                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
                       <img src={BookCheck} alt="check-data" width={15} />
                     </button>
-                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }}>
+                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
                       <img src={Eye} alt="detail-client" width={18} />
                     </button>
                   </td>
@@ -261,17 +330,18 @@ const RequestLoan = () => {
               Crear solicitud
             </span>
           </button>
-          <select name="" id="" onChange={handleRequestTypeChange} value={requestType || "dscr"}>
-            <option value="dscr">DSCR</option>
-            <option value="fixflip">Fix & Flip</option>
-            <option value="construction">Construcción</option>
-          </select>
+   
 
         </div>
         <div className={`${"d-flex gap-3"}`}>
           <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
           </button>
+          <select name="" id="" onChange={handleRequestTypeChange} value={requestType || "dscr"}>
+            <option value="dscr">DSCR</option>
+            <option value="fixflip">Fix & Flip</option>
+            <option value="construction">Construcción</option>
+          </select>
           <select className="form-select my_title_color" name="Vendedor" id="">
             <option value="Vendedor">Vendedor</option>
             <option value="Vendedor1">Vendedor 1</option>
@@ -280,8 +350,8 @@ const RequestLoan = () => {
           </select>
           <select className="form-select my_title_color" name="Estado" id="">
             <option value="Estado">Estado</option>
-            <option value="Activo">Activo</option>
-            <option value="Inactivo">Inactivo</option>
+            <option value="1">Activo</option>
+            <option value="0">Inactivo</option>
             <option value="Pendiente">Pendiente</option>
           </select>
 
@@ -299,6 +369,36 @@ const RequestLoan = () => {
         {renderTable()}
       </div>
       <Pagination currentPage={currentPage} totalPages={totalPages} handlePaginate={paginate} />
+      {showAssignPopup && (
+        <MyModal show={showAssignPopup} setShow={val => { setShowAssignPopup(val); if (!val) closeModalAndCleanup(); }} title="Asignar procesador">
+          {assignSuccess && <Notification type="success" message={assignSuccess} />}
+          {assignError && <Notification type="error" message={assignError} />}
+          <select className="form-select my-3" value={selectedProcessor || ""} onChange={e => setSelectedProcessor(e.target.value)}>
+            <option value="">Selecciona un procesador</option>
+            {(Array.isArray(processors) ? processors : []).map(proc => (
+              <option key={proc.id} value={proc.id}>{proc.full_name || proc.name}</option>
+            ))}
+          </select>
+          {/* Mostrar resumen del procesador seleccionado */}
+          {selectedProcessor && (() => {
+            const proc = (Array.isArray(processors) ? processors : []).find(p => String(p.id) === String(selectedProcessor));
+            if (!proc) return null;
+            return (
+              <div className="mb-3 p-2 border rounded bg-light">
+                <div><b>Procesador seleccionado:</b></div>
+                <div><b>Nombre:</b> {proc.full_name || proc.name}</div>
+                <div><b>Email:</b> {proc.email || '-'}</div>
+                <div><b>Teléfono:</b> {proc.phone || '-'}</div>
+              </div>
+            );
+          })()}
+          <button className="btn btn-primary" onClick={handleAssign} disabled={!selectedProcessor || assigning}>
+            {assigning ? "Asignando..." : "Asignar"}
+          </button>
+          <button className="btn btn-secondary ms-2" onClick={closeModalAndCleanup} disabled={assigning}>Cancelar</button>
+        </MyModal>
+      )}
+      {globalSuccess && <Notification type="success" message={globalSuccess} />}
     </div>
   );
 };

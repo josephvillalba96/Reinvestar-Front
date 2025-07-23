@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../style.module.css";
 import { NumericFormat } from "react-number-format";
+import { createFixflip, updateFixflip } from "../../../../../../Api/fixflip";
 
 const initialState = {
   property_type: "",
@@ -15,8 +16,29 @@ const initialState = {
   comments: ""
 };
 
-const FixflipForm = ({ client_id, goToDocumentsTab }) => {
-  const [form, setForm] = useState({ ...initialState });
+const FixflipForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = true }) => {
+  const [form, setForm] = useState(initialState);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  useEffect(() => {
+    if (solicitud) {
+      setForm({
+        property_type: solicitud.property_type || "",
+        property_address: solicitud.property_address || "",
+        property_city: solicitud.property_city || "",
+        property_state: solicitud.property_state || "",
+        property_zip: solicitud.property_zip || "",
+        loan_amount: solicitud.loan_amount || "",
+        purchase_price: solicitud.purchase_price || "",
+        rehab_cost: solicitud.rehab_cost || "",
+        arv: solicitud.arv || "",
+        comments: solicitud.comments || ""
+      });
+      setIsEditMode(false);
+    }
+  }, [solicitud]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,180 +49,258 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setFeedback("");
+    try {
+      await updateFixflip(solicitud.id, form);
+      setFeedback("¡Solicitud actualizada exitosamente!");
+      setIsEditMode(false);
+    } catch (error) {
+      setFeedback("Error al actualizar la solicitud. Inténtalo de nuevo.");
+    }
+    setLoading(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const dataToSend = {
-      ...form,
-      client_id: Number(client_id),
-      loan_amount: form.loan_amount ? Number(form.loan_amount) : 0,
-      purchase_price: form.purchase_price ? Number(form.purchase_price) : 0,
-      rehab_cost: form.rehab_cost ? Number(form.rehab_cost) : 0,
-      arv: form.arv ? Number(form.arv) : 0,
-    };
-    // Aquí puedes enviar dataToSend a la API y obtener el id de la solicitud creada
-    // Simulación:
-    const fakeId = Math.floor(Math.random() * 10000) + 1;
-    if (typeof goToDocumentsTab === 'function') {
-      goToDocumentsTab(fakeId, 'fixflip');
+    setLoading(true);
+    setFeedback("");
+    try {
+      const dataToSend = {
+        ...form,
+        client_id: Number(client_id)
+      };
+      const response = await createFixflip(dataToSend);
+      setFeedback("¡Fixflip creado exitosamente!");
+      if (typeof goToDocumentsTab === 'function') {
+        goToDocumentsTab(response.id, 'fixflip');
+      }
+    } catch (error) {
+      setFeedback("Error al crear el Fixflip. Inténtalo de nuevo.");
     }
+    setLoading(false);
   };
 
   return (
-    <form className="container-fluid" onSubmit={handleSubmit}>
-      <div className="row gy-1">
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small mb-1">Tipo de propiedad</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="property_type"
-            value={form.property_type}
-            onChange={handleChange}
-            required
-          />
+    <>
+      <form className="container-fluid" onSubmit={solicitud ? handleUpdate : handleSubmit}>
+        {/* Datos del cliente */}
+        {cliente && (
+          <div className="row mb-3">
+            <div className="col-md-3 mb-2">
+              <label className="form-label text-muted small mb-1">Nombre</label>
+              <input className={styles.input} value={cliente.full_name || ""} disabled />
+            </div>
+            <div className="col-md-3 mb-2">
+              <label className="form-label text-muted small mb-1">Email</label>
+              <input className={styles.input} value={cliente.email || ""} disabled />
+            </div>
+            <div className="col-md-3 mb-2">
+              <label className="form-label text-muted small mb-1">Teléfono</label>
+              <input className={styles.input} value={cliente.phone || ""} disabled />
+            </div>
+            <div className="col-md-3 mb-2">
+              <label className="form-label text-muted small mb-1">Dirección</label>
+              <input className={styles.input} value={cliente.address || ""} disabled />
+            </div>
+          </div>
+        )}
+        {/* Formulario de solicitud Fixflip */}
+        <div className="row gy-1">
+          <div className="col-md-6 mb-2">
+            <label className="form-label text-muted small mb-1">Tipo de propiedad</label>
+            <input
+              type="text"
+              className={styles.input}
+              name="property_type"
+              value={form.property_type}
+              onChange={handleChange}
+              required
+              disabled={!editable && !isEditMode}
+            />
+          </div>
+          <div className="col-md-6 mb-2">
+            <label className="form-label text-muted small mb-1">Dirección de la propiedad</label>
+            <input
+              type="text"
+              className={styles.input}
+              name="property_address"
+              value={form.property_address}
+              onChange={handleChange}
+              required
+              disabled={!editable && !isEditMode}
+            />
+          </div>
         </div>
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small mb-1">Dirección de la propiedad</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="property_address"
-            value={form.property_address}
-            onChange={handleChange}
-            required
-          />
+        <div className="row gy-1">
+          <div className="col-md-4 mb-2">
+            <label className="form-label text-muted small mb-1">Ciudad</label>
+            <input
+              type="text"
+              className={styles.input}
+              name="property_city"
+              value={form.property_city}
+              onChange={handleChange}
+              required
+              disabled={!editable && !isEditMode}
+            />
+          </div>
+          <div className="col-md-4 mb-2">
+            <label className="form-label text-muted small mb-1">Estado</label>
+            <input
+              type="text"
+              className={styles.input}
+              name="property_state"
+              value={form.property_state}
+              onChange={handleChange}
+              required
+              disabled={!editable && !isEditMode}
+            />
+          </div>
+          <div className="col-md-4 mb-2">
+            <label className="form-label text-muted small mb-1">Código postal</label>
+            <input
+              type="text"
+              className={styles.input}
+              name="property_zip"
+              value={form.property_zip}
+              onChange={handleChange}
+              required
+              disabled={!editable && !isEditMode}
+            />
+          </div>
         </div>
-      </div>
-      <div className="row gy-1">
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Ciudad</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="property_city"
-            value={form.property_city}
-            onChange={handleChange}
-            required
-          />
+        <div className="row gy-1">
+          <div className="col-md-4 mb-2">
+            <label className="form-label text-muted small mb-1">Monto del préstamo</label>
+            <NumericFormat
+              className={styles.input}
+              name="loan_amount"
+              value={form.loan_amount}
+              onValueChange={({ value }) => handleNumberFormat("loan_amount", value)}
+              thousandSeparator="," 
+              prefix="$"
+              decimalScale={2}
+              fixedDecimalScale
+              allowNegative={false}
+              required
+              placeholder="$0.00"
+              inputMode="decimal"
+              disabled={!editable && !isEditMode}
+            />
+          </div>
+          <div className="col-md-4 mb-2">
+            <label className="form-label text-muted small mb-1">Precio de compra</label>
+            <NumericFormat
+              className={styles.input}
+              name="purchase_price"
+              value={form.purchase_price}
+              onValueChange={({ value }) => handleNumberFormat("purchase_price", value)}
+              thousandSeparator="," 
+              prefix="$"
+              decimalScale={2}
+              fixedDecimalScale
+              allowNegative={false}
+              required
+              placeholder="$0.00"
+              inputMode="decimal"
+              disabled={!editable && !isEditMode}
+            />
+          </div>
+          <div className="col-md-4 mb-2">
+            <label className="form-label text-muted small mb-1">Costo de remodelación</label>
+            <NumericFormat
+              className={styles.input}
+              name="rehab_cost"
+              value={form.rehab_cost}
+              onValueChange={({ value }) => handleNumberFormat("rehab_cost", value)}
+              thousandSeparator="," 
+              prefix="$"
+              decimalScale={2}
+              fixedDecimalScale
+              allowNegative={false}
+              required
+              placeholder="$0.00"
+              inputMode="decimal"
+              disabled={!editable && !isEditMode}
+            />
+          </div>
         </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Estado</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="property_state"
-            value={form.property_state}
-            onChange={handleChange}
-            required
-          />
+        <div className="row gy-1">
+          <div className="col-md-6 mb-2">
+            <label className="form-label text-muted small mb-1">ARV (valor después de remodelar)</label>
+            <NumericFormat
+              className={styles.input}
+              name="arv"
+              value={form.arv}
+              onValueChange={({ value }) => handleNumberFormat("arv", value)}
+              thousandSeparator="," 
+              prefix="$"
+              decimalScale={2}
+              fixedDecimalScale
+              allowNegative={false}
+              required
+              placeholder="$0.00"
+              inputMode="decimal"
+              disabled={!editable && !isEditMode}
+            />
+          </div>
+          <div className="col-md-6 mb-2">
+            <label className="form-label text-muted small mb-1">Comentarios</label>
+            <textarea
+              className={styles.textarea}
+              name="comments"
+              value={form.comments}
+              onChange={handleChange}
+              rows={3}
+              required
+              disabled={!editable && !isEditMode}
+            />
+          </div>
         </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Código postal</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="property_zip"
-            value={form.property_zip}
-            onChange={handleChange}
-            required
-          />
+        <div className="row">
+          <div className="col-12 mt-3">
+            {solicitud ? (
+              isEditMode ? (
+                <button
+                  type="submit"
+                  className={styles.button}
+                  style={{ minWidth: "200px" }}
+                  disabled={loading}
+                >
+                  <span className="text-white">{loading ? "GUARDANDO..." : "GUARDAR CAMBIOS"}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.button}
+                  style={{ minWidth: "200px" }}
+                  onClick={() => setIsEditMode(true)}
+                >
+                  <span className="text-white">EDITAR</span>
+                </button>
+              )
+            ) : (
+              <button
+                type="submit"
+                className={styles.button}
+                style={{ minWidth: "200px" }}
+                disabled={loading}
+              >
+                <span className="text-white">{loading ? "CREANDO..." : "CREAR FIXFLIP"}</span>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="row gy-1">
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Monto del préstamo</label>
-          <NumericFormat
-            className={styles.input}
-            name="loan_amount"
-            value={form.loan_amount}
-            onValueChange={({ value }) => handleNumberFormat("loan_amount", value)}
-            thousandSeparator="," 
-            prefix="$"
-            decimalScale={2}
-            fixedDecimalScale
-            allowNegative={false}
-            required
-            placeholder="$0.00"
-            inputMode="decimal"
-          />
-        </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Precio de compra</label>
-          <NumericFormat
-            className={styles.input}
-            name="purchase_price"
-            value={form.purchase_price}
-            onValueChange={({ value }) => handleNumberFormat("purchase_price", value)}
-            thousandSeparator="," 
-            prefix="$"
-            decimalScale={2}
-            fixedDecimalScale
-            allowNegative={false}
-            required
-            placeholder="$0.00"
-            inputMode="decimal"
-          />
-        </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Costo de remodelación</label>
-          <NumericFormat
-            className={styles.input}
-            name="rehab_cost"
-            value={form.rehab_cost}
-            onValueChange={({ value }) => handleNumberFormat("rehab_cost", value)}
-            thousandSeparator="," 
-            prefix="$"
-            decimalScale={2}
-            fixedDecimalScale
-            allowNegative={false}
-            required
-            placeholder="$0.00"
-            inputMode="decimal"
-          />
-        </div>
-      </div>
-      <div className="row gy-1">
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small mb-1">ARV (valor después de remodelar)</label>
-          <NumericFormat
-            className={styles.input}
-            name="arv"
-            value={form.arv}
-            onValueChange={({ value }) => handleNumberFormat("arv", value)}
-            thousandSeparator="," 
-            prefix="$"
-            decimalScale={2}
-            fixedDecimalScale
-            allowNegative={false}
-            required
-            placeholder="$0.00"
-            inputMode="decimal"
-          />
-        </div>
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small mb-1">Comentarios</label>
-          <textarea
-            className={styles.textarea}
-            name="comments"
-            value={form.comments}
-            onChange={handleChange}
-            rows={3}
-            required
-          />
-        </div>
-      </div>
-      <div className="row">
-        <div className="col-12 mt-3">
-          <button
-            type="submit"
-            className={styles.button}
-            style={{ minWidth: "200px" }}
-          >
-            <span className="text-white">CREAR FIXFLIP</span>
-          </button>
-        </div>
-      </div>
-    </form>
+        {feedback && (
+          <div className={`alert ${feedback.includes("exitosamente") ? "alert-success" : "alert-danger"} py-2 mb-3`}>
+            {feedback}
+          </div>
+        )}
+      </form>
+    </>
   );
 };
 

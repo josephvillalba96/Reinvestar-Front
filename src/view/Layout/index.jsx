@@ -36,12 +36,12 @@ const routes = [
     name: "Clientes",
     icon: UserIcon,
   },
-  {
-    id: 4,
-    link: "/Products",
-    name: "Productos",
-    icon: ProductIcon,
-  },
+  // {
+  //   id: 4,
+  //   link: "/Products",
+  //   name: "Productos",
+  //   icon: ProductIcon,
+  // },
   {
     id: 10,
     section: "Usuarios",

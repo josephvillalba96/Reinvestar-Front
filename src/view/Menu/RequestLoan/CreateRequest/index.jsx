@@ -81,6 +81,21 @@ const CreateRequest = () => {
                 Pipeline
               </button>
             </li>
+            <li className="nav-item" role="presentation">
+              <button
+                className={`nav-link${activeTab === "gestion" ? " active" : ""}`}
+                id="gestion-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#gestion"
+                type="button"
+                role="tab"
+                aria-controls="gestion"
+                aria-selected={activeTab === "gestion"}
+                onClick={() => setActiveTab("gestion")}
+              >
+                Gestión Solicitud
+              </button>
+            </li>
           </ul>
           <div className="tab-content" id="myTabContent">
             <div
@@ -108,6 +123,14 @@ const CreateRequest = () => {
               aria-labelledby="contact-tab"
             >
               <PipelineRequest />
+            </div>
+            <div
+              className={`tab-pane fade${activeTab === "gestion" ? " show active" : ""}`}
+              id="gestion"
+              role="tabpanel"
+              aria-labelledby="gestion-tab"
+            >
+              <div>Gestión de la solicitud aquí</div>
             </div>
           </div>
         </div>

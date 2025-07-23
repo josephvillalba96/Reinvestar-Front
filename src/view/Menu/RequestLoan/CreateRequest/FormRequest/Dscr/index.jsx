@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../style.module.css";
 import { NumericFormat } from "react-number-format";
 import { createDscr } from "../../../../../../Api/dscr";
@@ -23,7 +23,7 @@ const initialState = {
   payoff_amount: ""
 };
 
-const DscrForm = ({ client_id }) => {
+const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = true }) => {
   const [form, setForm] = useState({ ...initialState });
   const [ficoError, setFicoError] = useState("");
   const [assignToClient, setAssignToClient] = useState(false);
@@ -32,6 +32,10 @@ const DscrForm = ({ client_id }) => {
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [createdDscrId, setCreatedDscrId] = useState(null);
   const [linkForm, setLinkForm] = useState({ valid_days: 7 });
+
+  useEffect(() => {
+    setForm({ ...initialState });
+  }, [client_id]);
 
   // Maneja cambios generales
   const handleChange = (e) => {
@@ -99,11 +103,17 @@ const DscrForm = ({ client_id }) => {
       setCreatedDscrId(response.id);
       setFeedback("¡DSCR creado exitosamente!");
       
-      if (assignToClient) {
-        setShowLinkForm(true);
-      } else if (typeof goToDocumentsTab === 'function') {
+      // Crear link automáticamente con 30 días
+      await createRequestLink({
+        valid_days: 30,
+        dscr_request_id: response.id,
+        construction_request_id: 0,
+        fixflip_request_id: 0
+      });
+      if (typeof goToDocumentsTab === 'function') {
         goToDocumentsTab(response.id, 'dscr');
       }
+      setForm({ ...initialState }); // Limpiar formulario después de crear
     } catch (error) {
       setFeedback("Error al crear el DSCR. Inténtalo de nuevo.");
     }
@@ -180,7 +190,7 @@ const DscrForm = ({ client_id }) => {
             name="property_address"
             value={form.property_address}
             onChange={handleChange}
-            required
+            // //required
           />
             </div>
         </div>
@@ -198,7 +208,7 @@ const DscrForm = ({ client_id }) => {
                 decimalScale={0}
                 allowLeadingZeros={false}
                 thousandSeparator="," 
-            required
+            //required
                 placeholder="0"
                 inputMode="numeric"
               />
@@ -223,7 +233,7 @@ const DscrForm = ({ client_id }) => {
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+            //required
                 placeholder="$0.00"
                 inputMode="decimal"
           />
@@ -242,7 +252,7 @@ const DscrForm = ({ client_id }) => {
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+            //required
                 placeholder="$0.00"
                 inputMode="decimal"
           />
@@ -261,7 +271,7 @@ const DscrForm = ({ client_id }) => {
                 suffix="%"
                 decimalScale={2}
                 allowNegative={false}
-            required
+            //required
                 placeholder="0.00%"
                 inputMode="decimal"
           />
@@ -275,10 +285,11 @@ const DscrForm = ({ client_id }) => {
             name="residency_status"
             value={form.residency_status}
             onChange={handleChange}
-            required
+            //required
+            disabled={!editable && !isEditMode}
           >
             <option value="OWNER">Propietario</option>
-            <option value="RENT">Arrendatario</option>
+            <option value="TENANT">Arrendatario</option>
           </select>
             </div>
         </div>
@@ -294,7 +305,7 @@ const DscrForm = ({ client_id }) => {
               decimalScale={2}
               fixedDecimalScale
               allowNegative={false}
-            required
+            //required
               placeholder="$0.00"
               inputMode="decimal"
           />
@@ -311,7 +322,7 @@ const DscrForm = ({ client_id }) => {
                 onValueChange={({ value }) => handleNumberFormat("property_units", value)}
                 allowNegative={false}
                 decimalScale={0}
-            required
+            //required
                 placeholder="0"
                 inputMode="numeric"
           />
@@ -325,11 +336,11 @@ const DscrForm = ({ client_id }) => {
             name="type_of_transaction"
             value={form.type_of_transaction}
             onChange={handleChange}
-            required
+            //required
+            disabled={!editable && !isEditMode}
           >
             <option value="PURCHASE">Compra</option>
             <option value="REFINANCE">Refinanciación</option>
-            <option value="CASHOUT">Cash-out</option>
           </select>
             </div>
         </div>
@@ -342,7 +353,7 @@ const DscrForm = ({ client_id }) => {
             name="primary_own_or_rent"
             value={form.primary_own_or_rent}
             onChange={handleChange}
-            required
+            //required
           />
             </div>
         </div>
@@ -361,7 +372,7 @@ const DscrForm = ({ client_id }) => {
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+            //required
                 placeholder="$0.00"
                 inputMode="decimal"
           />
@@ -380,7 +391,7 @@ const DscrForm = ({ client_id }) => {
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+            //required
                 placeholder="$0.00"
                 inputMode="decimal"
           />
@@ -399,7 +410,7 @@ const DscrForm = ({ client_id }) => {
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+            //required
                 placeholder="$0.00"
                 inputMode="decimal"
           />
@@ -415,7 +426,7 @@ const DscrForm = ({ client_id }) => {
             name="subject_prop_under_llc"
             value={form.subject_prop_under_llc}
                 onChange={e => setForm(prev => ({ ...prev, subject_prop_under_llc: e.target.value }))}
-                required
+                //required
               >
                 <option value="">Seleccione una opción</option>
                 <option value="1">Yes</option>
@@ -436,28 +447,10 @@ const DscrForm = ({ client_id }) => {
                 decimalScale={2}
                 fixedDecimalScale
                 allowNegative={false}
-            required
+            //required
                 placeholder="$0.00"
                 inputMode="decimal"
               />
-            </div>
-          </div>
-        </div>
-
-        {/* Checkbox para asignar */}
-        <div className="row mb-3">
-          <div className="col-12">
-            <div className="form-check">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="assignToClient"
-                checked={assignToClient}
-                onChange={(e) => setAssignToClient(e.target.checked)}
-              />
-              <label className="form-check-label" htmlFor="assignToClient">
-                Asignar
-              </label>
             </div>
           </div>
         </div>
@@ -470,26 +463,14 @@ const DscrForm = ({ client_id }) => {
 
         <div className="row">
           <div className="col-12 mt-3">
-            {assignToClient ? (
-              <button
-                type="button"
-                className={styles.button}
-                style={{ minWidth: "200px" }}
-                onClick={handleCreateEmptyDscr}
-                disabled={loading}
-              >
-                <span className="text-white">{loading ? "CREANDO..." : "CREAR Y ASIGNAR AL CLIENTE"}</span>
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className={styles.button}
-                style={{ minWidth: "200px" }}
-                disabled={loading}
-              >
-                <span className="text-white">{loading ? "CREANDO..." : "CREAR DSCR"}</span>
-              </button>
-            )}
+            <button
+              type="submit"
+              className={styles.button}
+              style={{ minWidth: "200px" }}
+              disabled={loading}
+            >
+              <span className="text-white">{loading ? "CREANDO..." : "CREAR DSCR"}</span>
+            </button>
           </div>
         </div>
       </form>
@@ -509,7 +490,7 @@ const DscrForm = ({ client_id }) => {
                   onChange={(e) => setLinkForm(prev => ({ ...prev, valid_days: e.target.value }))}
                   min="1"
                   max="365"
-            required
+            //required
           />
         </div>
       </div>
