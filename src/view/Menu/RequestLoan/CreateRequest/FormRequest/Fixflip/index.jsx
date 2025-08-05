@@ -3,6 +3,10 @@ import styles from "../style.module.css";
 import { NumericFormat } from "react-number-format";
 import { createFixflip } from "../../../../../../Api/fixflip";
 import { createRequestLink } from "../../../../../../Api/requestLink";
+import { getClientById } from "../../../../../../Api/client";
+import { sendTemplateEmail } from "../../../../../../Api/emailTemplate";
+
+const URL_EXTERNAL_FORM = import.meta.env.VITE_URL_EXTERMAL_FORM;
 
 const initialState = {
   property_type: "",
@@ -21,9 +25,16 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
   const [form, setForm] = useState({ ...initialState });
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [client, setClient] = useState(null);
+  const [externalLink, setExternalLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     setForm({ ...initialState });
+    if (client_id) {
+      getClientById(client_id).then(setClient).catch(() => setClient(null));
+    }
   }, [client_id]);
 
   const handleChange = (e) => {
@@ -35,100 +46,198 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Función para enviar email usando template
+  const handleSendEmail = async (link) => {
+    if (!link || !client_id) return;
+    
+    setSending(true);
+    try {
+      // Obtener datos del cliente
+      const clientData = await getClientById(client_id);
+      if (!clientData?.email) {
+        setFeedback("No se encontró el email del cliente.");
+        return;
+      }
+
+      // Enviar email usando template
+      await sendTemplateEmail({
+        template_id: 0, // ID del template de solicitud
+        template_type: "request_link",
+        to_email: clientData.email,
+        from_email: "noreply@reinvestar.com", // Email del sistema
+        content_type: "text/html", // Asegurar que se envíe como HTML
+        variables: {
+          client_name: clientData.full_name,
+          request_link: link,
+          request_type: "Fixflip",
+          request_id: null // No tenemos el ID aún en CreateRequest
+        }
+      });
+      
+      setFeedback("¡Email enviado exitosamente!");
+    } catch (error) {
+      console.error('Error enviando email:', error);
+      setFeedback("Error al enviar el email. Inténtalo de nuevo.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!client_id) {
+      setFeedback("Debes seleccionar un cliente válido antes de crear la solicitud.");
+      return;
+    }
+
     setLoading(true);
     setFeedback("");
+
     try {
+      // 1. Preparar datos de la solicitud
       const dataToSend = {
         ...form,
-        client_id: Number(client_id)
+        client_id: Number(client_id),
+        loan_amount: form.loan_amount === "" ? 0 : Number(form.loan_amount),
+        purchase_price: form.purchase_price === "" ? 0 : Number(form.purchase_price),
+        rehab_cost: form.rehab_cost === "" ? 0 : Number(form.rehab_cost),
+        arv: form.arv === "" ? 0 : Number(form.arv),
+        property_value: form.arv === "" ? 0 : Number(form.arv) // Usar ARV como property_value
       };
+
+      // 2. Crear la solicitud Fixflip
       const response = await createFixflip(dataToSend);
-      setFeedback("¡Fixflip creado exitosamente!");
-      // Crear link automáticamente con 30 días
-      await createRequestLink({
+      console.log('Respuesta createFixflip:', response);
+
+      // 3. Crear el enlace
+      const linkData = {
         valid_days: 30,
+        fixflip_request_id: response.id,
         dscr_request_id: 0,
-        construction_request_id: 0,
-        fixflip_request_id: response.id
-      });
+        construction_request_id: 0
+      };
+
+      const linkResponse = await createRequestLink(linkData);
+      console.log('Respuesta createRequestLink:', linkResponse);
+
+      if (linkResponse?.link_token) {
+        const fullLink = `${URL_EXTERNAL_FORM}/fixflip/${linkResponse.link_token}`;
+        setExternalLink(fullLink);
+        
+        // 4. Enviar email automáticamente
+        await handleSendEmail(fullLink);
+      }
+
+      // 5. Actualizar UI y limpiar formulario
+      setFeedback("¡Fixflip creado exitosamente!");
+      setForm({ ...initialState });
+
+      // 6. Navegar a documentos si es necesario
       if (typeof goToDocumentsTab === 'function') {
         goToDocumentsTab(response.id, 'fixflip');
       }
-      setForm({ ...initialState }); // Limpiar formulario después de crear
+
     } catch (error) {
-      setFeedback("Error al crear el Fixflip. Inténtalo de nuevo.");
+      console.error('Error completo:', error);
+      
+      // Manejar diferentes tipos de errores
+      if (error.response?.data?.detail) {
+        setFeedback(Array.isArray(error.response.data.detail) 
+          ? error.response.data.detail[0]?.msg 
+          : error.response.data.detail);
+      } else if (error.message) {
+        setFeedback(error.message);
+      } else {
+        setFeedback("Error al crear la solicitud. Por favor, intenta de nuevo.");
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <form className="container-fluid" onSubmit={handleSubmit}>
-      <div className="row gy-1">
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small mb-1">Tipo de propiedad</label>
+    <form className={`container-fluid ${styles.formBlock}`} onSubmit={handleSubmit} style={{ maxWidth: '100%', margin: '0 auto', background: 'none', boxShadow: 'none', border: 'none' }}>
+      <div className="d-flex align-items-center mb-4 gap-3">
+        <h4 className="my_title_color fw-bold mb-0" style={{ letterSpacing: 0.5 }}>Solicitud Fixflip</h4>
+        {externalLink && (
+          <>
+            <span className="small text-muted" style={{ wordBreak: 'break-all' }}>{externalLink}</span>
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm ms-2"
+              onClick={() => {navigator.clipboard.writeText(externalLink); setCopied(true); setTimeout(()=>setCopied(false), 1500);}}
+            >
+              {copied ? "¡Copiado!" : "Copiar"}
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Resto del formulario se mantiene igual */}
+      <div className="row gy-4 mb-2">
+        <div className="col-md-6">
+          <label className="form-label my_title_color">Tipo de propiedad</label>
           <input
             type="text"
-            className={styles.input}
+            className={`form-control ${styles.input}`}
             name="property_type"
             value={form.property_type}
             onChange={handleChange}
-            required
+            autoComplete="off"
           />
         </div>
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small mb-1">Dirección de la propiedad</label>
+        <div className="col-md-6">
+          <label className="form-label my_title_color">Dirección de la propiedad</label>
           <input
             type="text"
-            className={styles.input}
+            className={`form-control ${styles.input}`}
             name="property_address"
             value={form.property_address}
             onChange={handleChange}
-            required
+            autoComplete="off"
           />
         </div>
       </div>
-      <div className="row gy-1">
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Ciudad</label>
+      <div className="row gy-4 mb-2 mt-1">
+        <div className="col-md-6">
+          <label className="form-label my_title_color">Ciudad</label>
           <input
             type="text"
-            className={styles.input}
+            className={`form-control ${styles.input}`}
             name="property_city"
             value={form.property_city}
             onChange={handleChange}
-            required
+            autoComplete="off"
           />
         </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Estado</label>
+        <div className="col-md-3">
+          <label className="form-label my_title_color">Estado</label>
           <input
             type="text"
-            className={styles.input}
+            className={`form-control ${styles.input}`}
             name="property_state"
             value={form.property_state}
             onChange={handleChange}
-            required
+            autoComplete="off"
           />
         </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Código postal</label>
+        <div className="col-md-3">
+          <label className="form-label my_title_color">Cód. postal</label>
           <input
             type="text"
-            className={styles.input}
+            className={`form-control ${styles.input}`}
             name="property_zip"
             value={form.property_zip}
             onChange={handleChange}
-            required
+            autoComplete="off"
           />
         </div>
       </div>
-      <div className="row gy-1">
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Monto del préstamo</label>
+      <div className="row gy-4 mb-2 mt-1">
+        <div className="col-md-6">
+          <label className="form-label my_title_color">Monto del préstamo</label>
           <NumericFormat
-            className={styles.input}
+            className={`form-control ${styles.input}`}
             name="loan_amount"
             value={form.loan_amount}
             onValueChange={({ value }) => handleNumberFormat("loan_amount", value)}
@@ -137,15 +246,15 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
             decimalScale={2}
             fixedDecimalScale
             allowNegative={false}
-            required
             placeholder="$0.00"
             inputMode="decimal"
+            autoComplete="off"
           />
         </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Precio de compra</label>
+        <div className="col-md-6">
+          <label className="form-label my_title_color">Precio de compra</label>
           <NumericFormat
-            className={styles.input}
+            className={`form-control ${styles.input}`}
             name="purchase_price"
             value={form.purchase_price}
             onValueChange={({ value }) => handleNumberFormat("purchase_price", value)}
@@ -154,15 +263,17 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
             decimalScale={2}
             fixedDecimalScale
             allowNegative={false}
-            required
             placeholder="$0.00"
             inputMode="decimal"
+            autoComplete="off"
           />
         </div>
-        <div className="col-md-4 mb-2">
-          <label className="form-label text-muted small mb-1">Costo de remodelación</label>
+      </div>
+      <div className="row gy-4 mb-2 mt-1">
+        <div className="col-md-6">
+          <label className="form-label my_title_color">Costo de remodelación</label>
           <NumericFormat
-            className={styles.input}
+            className={`form-control ${styles.input}`}
             name="rehab_cost"
             value={form.rehab_cost}
             onValueChange={({ value }) => handleNumberFormat("rehab_cost", value)}
@@ -171,17 +282,15 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
             decimalScale={2}
             fixedDecimalScale
             allowNegative={false}
-            required
             placeholder="$0.00"
             inputMode="decimal"
+            autoComplete="off"
           />
         </div>
-      </div>
-      <div className="row gy-1">
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small mb-1">ARV (valor después de remodelar)</label>
+        <div className="col-md-6">
+          <label className="form-label my_title_color">ARV (valor después de remodelar)</label>
           <NumericFormat
-            className={styles.input}
+            className={`form-control ${styles.input}`}
             name="arv"
             value={form.arv}
             onValueChange={({ value }) => handleNumberFormat("arv", value)}
@@ -190,35 +299,40 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
             decimalScale={2}
             fixedDecimalScale
             allowNegative={false}
-            required
             placeholder="$0.00"
             inputMode="decimal"
+            autoComplete="off"
           />
         </div>
-        <div className="col-md-6 mb-2">
-          <label className="form-label text-muted small mb-1">Comentarios</label>
+      </div>
+      <div className="row gy-4 mb-2 mt-1">
+        <div className="col-md-12">
+          <label className="form-label my_title_color">Comentarios</label>
           <textarea
-            className={styles.textarea}
+            className={`form-control ${styles.textarea}`}
             name="comments"
             value={form.comments}
             onChange={handleChange}
-            rows={3}
-            required
+            rows={2}
+            autoComplete="off"
+            style={{ resize: "vertical", minHeight: 40, maxHeight: 120 }}
           />
         </div>
       </div>
       <div className="row">
-        <div className="col-12 mt-3">
+        <div className="col-12 mt-4 d-flex flex-column align-items-center">
           <button
             type="submit"
-            className={styles.button}
-            style={{ minWidth: "200px" }}
+            className={`btn fw-bold text-white rounded-pill ${styles.button}`}
+            style={{ minWidth: "220px", background: "#1B2559", fontSize: 18 }}
             disabled={loading}
           >
             {loading ? "Creando..." : "CREAR FIXFLIP"}
           </button>
           {feedback && (
-            <div className="mt-2 text-center text-success">{feedback}</div>
+            <div className={`mt-3 ${feedback.includes("exitosamente") ? "text-success" : "text-danger"} fw-semibold`}>
+              {feedback}
+            </div>
           )}
         </div>
       </div>

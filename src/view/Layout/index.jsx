@@ -1,5 +1,5 @@
 import Logo from "../../assets/logo.png";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import styles from "./style.module.css";
 
 import Logout from "../../assets/Logout.svg";
@@ -12,10 +12,11 @@ import UserProfile from "../../assets/profil-simulate.png";
 import DashboardIcon from "../../assets/dashboardIcon.svg";
 import RequestIcon from "../../assets/dolarIcon.svg";
 import UserIcon from "../../assets/User.svg";
-import ProductIcon from "../../assets/ProductIcon.svg"; 
+import ProductIcon from "../../assets/ProductIcon.svg";
 import UserAndDolar from "../../assets/UserAndDolar.svg";
-import Settings from "../../assets/Settings.svg"; 
+import Settings from "../../assets/Settings.svg";
 import { useEffect, useState } from "react";
+import React from "react";
 
 const routes = [
   {
@@ -73,19 +74,28 @@ const routes = [
     id: 9,
     link: "/parameters",
     name: "Parametros",
-    icon: Settings, 
+    icon: Settings,
   },
 ];
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(""); 
-
+  const location = useLocation();
+  const [user, setUser] = useState("");
 
   useEffect(() => {
-    const userData = localStorage.getItem("user"); 
-    setUser(JSON.parse(userData)); 
-  }, [])
+    const userData = localStorage.getItem("user");
+    setUser(JSON.parse(userData));
+  }, []);
+
+  // Redirección automática para vendedores
+  useEffect(() => {
+    if (user && user.roles && user.roles[0] === "Vendedor") {
+      if (location.pathname === "/" || location.pathname === "/dashboard") {
+        navigate("/clients", { replace: true });
+      }
+    }
+  }, [user, location, navigate]);
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -94,15 +104,75 @@ const Layout = ({ children }) => {
     navigate("/login");
   };
 
+  // Filtrado de menú según el rol
+  let filteredRoutes = [];
+  if (user && user.roles) {
+    const role = user.roles[0];
+    if (role === "Vendedor") {
+      filteredRoutes = [
+        {
+          id: 3,
+          link: "/clients",
+          name: "Clientes",
+          icon: UserIcon,
+        },
+        {
+          id: 2,
+          link: "/requests",
+          name: "Solicitudes",
+          icon: RequestIcon,
+        },
+      ];
+    } else if (role === "Coordinador") {
+      filteredRoutes = [
+        {
+          id: 1,
+          link: "/dashboard",
+          name: "Dashboard",
+          icon: DashboardIcon,
+        },
+        {
+          id: 3,
+          link: "/clients",
+          name: "Clientes",
+          icon: UserIcon,
+        },
+        {
+          id: 2,
+          link: "/requests",
+          name: "Solicitudes",
+          icon: RequestIcon,
+        },
+        {
+          id: 10,
+          section: "Usuarios",
+          icon: UserAndDolar,
+          subRoutes: [
+            {
+              id: 6,
+              link: "/sellers",
+              name: "Vendeores",
+            },
+            {
+              id: 7,
+              link: "/process",
+              name: "Procesadores",
+            },
+          ],
+        },
+      ];
+    } else {
+      // Admin: todo el menú
+      filteredRoutes = routes;
+    }
+  }
 
   return (
     <div className="layout">
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="mb-5">
-          {/* <h5>REINVEST<span className="brand-star">★</span>R</h5> */}
           <img src={Logo} alt="Reinvest-logo" width={180} />
-          {/* <small className="text-muted">Créditos fiduciarios</small> */}
         </div>
 
         <nav className="flex-grow-1 mx-3">
@@ -110,18 +180,17 @@ const Layout = ({ children }) => {
             <p className="title_section">Menú</p>
           </div>
           {
-            routes.map((route)=> {
-
-               if(route.hasOwnProperty("subRoutes")){
-                  return (
-                    <>
-                     <div className="nav-link">
+            filteredRoutes.map((route) => {
+              if (route.hasOwnProperty("subRoutes")) {
+                return (
+                  <React.Fragment key={route.id}>
+                    <div className="nav-link">
                       <div className="text-decoration-none d-flex">
                         <img src={route.icon} alt={route.section} className="me-3" />
                         <span style={{ color: "black" }}>{route.section}</span>
                       </div>
                     </div>
-                     <div className="sub-routes me-5">
+                    <div className="sub-routes me-5">
                       {route.subRoutes.map((subRoute) => (
                         <NavLink
                           key={subRoute.id}
@@ -132,21 +201,21 @@ const Layout = ({ children }) => {
                           <span>{subRoute.name}</span>
                         </NavLink>
                       ))}
-                     </div>
-                    </>
-                  ); 
-               }
-                return (
-                    <NavLink
-                      key={route.id}
-                      to={route.link}
-                      className={`${({ isActive }) =>
-                        isActive ? styles.active : styles.inactive}  nav-link d-flex align-items-center`}
-                    >
-                      <img src={route.icon} alt={route.name} className="me-3" />
-                      <span>{route.name}</span>
-                    </NavLink>
+                    </div>
+                  </React.Fragment>
                 );
+              }
+              return (
+                <NavLink
+                  key={route.id}
+                  to={route.link}
+                  className={`${({ isActive }) =>
+                    isActive ? styles.active : styles.inactive}  nav-link d-flex align-items-center`}
+                >
+                  <img src={route.icon} alt={route.name} className="me-3" />
+                  <span>{route.name}</span>
+                </NavLink>
+              );
             })
           }
         </nav>
@@ -166,12 +235,12 @@ const Layout = ({ children }) => {
         <header className={`${"header"} ${styles.header_border_none}`}>
           <div className="user-info">
             <span>Hola, {user.full_name}</span>
-            <img src={UserProfile} alt="User avatar"/>
+            <img src={UserProfile} alt="User avatar" />
           </div>
         </header>
 
         <main className="main-content bg-white">
-         <Outlet />
+          <Outlet />
         </main>
       </div>
     </div>

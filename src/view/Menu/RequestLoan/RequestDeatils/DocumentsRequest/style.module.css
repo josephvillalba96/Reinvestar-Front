@@ -10,8 +10,6 @@
     border-radius: 30px !important;
 }
 
-
-
 .pipeline_container {
     padding: 1.5rem 1rem;
     width: 45vw;
@@ -172,6 +170,89 @@
     cursor: pointer;
   }
   
-  .comment_button:hover {
+.comment_button:hover {
     background: #16205a;
-  } 
+  }
+
+.documentActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Estilos para las cards de documentos */
+.documentCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  margin-bottom: 12px;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.documentCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-color: #d1d5db;
+}
+
+/* Documento seleccionado */
+.selectedDocument {
+  border-color: #1e3a8a !important;
+  background-color: #f8fafc !important;
+  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.2) !important;
+}
+
+.documents-list {
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Estilos para el modal */
+.modal-content {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1.5rem 1.5rem 1rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  border-top: 1px solid #e5e7eb;
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+.modal-title {
+  color: #1B2559;
+  font-weight: bold;
+}
+
+/* Scrollbar personalizado para la lista de documentos */
+.documents-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.documents-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.documents-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.documents-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Load from "../../../../../assets/material-symbols_upload.svg";
 import Check from "../../../../../assets/lets-icons_check-fill.svg";
+import DocumentObservations from "../../../../../components/DocumentObservations";
 import VerifyIcon from "../../../../../assets/verify-icon.png";
 import styles from "./style.module.css";
 import { 
@@ -50,11 +51,11 @@ const DocumentsRequest = ({ requestId, requestType }) => {
     "Requerido"
   ];
 
-  // Cargar tipos de documento
+  // Cargar tipos de documento usando @typesDocument.js
   useEffect(() => {
     getTypesDocument()
       .then(response => {
-        console.log('Respuesta tipos de documento:', response);
+        console.log('Tipos de documento (detalle):', response);
         if (response && Array.isArray(response.items)) {
           setTypeDocuments(response.items);
         } else if (Array.isArray(response)) {
@@ -222,7 +223,7 @@ const DocumentsRequest = ({ requestId, requestType }) => {
       // Recargar la lista de documentos
       loadDocuments();
     } catch (error) {
-      console.error("Error al cargar el documento:", error);
+      console.error('Error al cargar documento:', error);
       setFeedback("Error al cargar el documento");
     } finally {
       setUploading(false);

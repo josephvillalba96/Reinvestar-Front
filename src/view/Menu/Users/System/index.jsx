@@ -36,8 +36,10 @@ const System = () => {
         limit: itemsPerPage,
       };
       if (search) params.search = search;
-      // El filtro de estado depende de cómo lo maneje tu backend
-      // if (estado && estado !== "Estado") params.estado = estado;
+      // Habilitar filtro de estado
+      if (estado && estado !== "") {
+        params.is_active = estado === "Activo" ? true : false;
+      }
       const data = await getAdmins(params);
       setAdminsData(Array.isArray(data.items) ? data.items : []);
       setTotalAdmins(typeof data.total === 'number' ? data.total : 0);
@@ -60,6 +62,11 @@ const System = () => {
   const handleEstadoChange = (e) => {
     setEstado(e.target.value);
     setCurrentPage(1);
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchAdmins();
   };
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -97,7 +104,7 @@ const System = () => {
           </select>
           <div className="input-group">
             <input type="text" className="form-control" placeholder="Buscar" value={search} onChange={handleSearchChange} />
-            <button className="btn btn-primary" type="button" onClick={fetchAdmins}>
+            <button className="btn btn-primary" type="button" onClick={handleSearch}>
               <img src={LoupeIcon} alt="" width={18} />
             </button>
           </div>
@@ -133,7 +140,11 @@ const System = () => {
                   <td>{admin.email}</td>
                   <td>{admin.phone}</td>
                   <td>{admin.identification}</td>
-                  <td>{admin.is_active ? "Activo" : "Inactivo"}</td>
+                  <td>
+                    <span className={`badge ${admin.is_active ? 'bg-success' : 'bg-secondary'}`}>
+                      {admin.is_active ? "Activo" : "Inactivo"}
+                    </span>
+                  </td>
                   <td>
                     <button
                       className="btn btn-sm me-1"

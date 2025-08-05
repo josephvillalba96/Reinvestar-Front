@@ -54,6 +54,7 @@ const CreateCoordinators = () => {
     setFeedback("");
     setCompanyError("");
     setRoleError("");
+    
     // Validación básica
     if (!formData.nombreCompleto || !formData.email || !formData.celular || !formData.identificacion || !formData.direccion || !formData.contrasena || !formData.company_id) {
       if (!formData.company_id) setCompanyError("Debes seleccionar una compañía");
@@ -61,11 +62,20 @@ const CreateCoordinators = () => {
       setLoading(false);
       return;
     }
+
+    // Validación de contraseña
+    if (formData.contrasena.length < 8) {
+      setFeedback("La contraseña debe tener al menos 8 caracteres");
+      setLoading(false);
+      return;
+    }
+    
     if (formData.contrasena !== formData.confirmarContrasena) {
       setFeedback("Las contraseñas no coinciden");
       setLoading(false);
       return;
     }
+
     // Mapeo de campos al formato esperado por la API
     const payload = {
       full_name: formData.nombreCompleto,
@@ -74,14 +84,16 @@ const CreateCoordinators = () => {
       identification: formData.identificacion,
       address: formData.direccion,
       password: formData.contrasena,
-      company_id: String(formData.company_id),
+      company_id: Number(formData.company_id),
       role: "Coordinador"
     };
+    
     if (!payload.role) {
       setRoleError("El campo rol es obligatorio");
       setLoading(false);
       return;
     }
+    
     try {
       await createCoordinator(payload);
       setFeedback("¡Coordinador creado exitosamente!");
@@ -89,7 +101,27 @@ const CreateCoordinators = () => {
         navegate('/coordinators');
       }, 1500);
     } catch (error) {
-      setFeedback("Error al crear el coordinador. Inténtalo de nuevo.");
+      console.error('Error al crear coordinador:', error);
+      if (error.response?.data?.detail) {
+        // Manejar errores específicos del backend
+        const errorDetails = error.response.data.detail;
+        if (Array.isArray(errorDetails)) {
+          const emailError = errorDetails.find(err => err.loc?.includes('email'));
+          const passwordError = errorDetails.find(err => err.loc?.includes('password'));
+          
+          if (emailError) {
+            setFeedback(`Error en email: ${emailError.msg}`);
+          } else if (passwordError) {
+            setFeedback(`Error en contraseña: ${passwordError.msg}`);
+          } else {
+            setFeedback(`Error: ${errorDetails[0]?.msg || 'Error al crear el coordinador'}`);
+          }
+        } else {
+          setFeedback(`Error: ${errorDetails}`);
+        }
+      } else {
+        setFeedback("Error al crear el coordinador. Inténtalo de nuevo.");
+      }
     }
     setLoading(false);
   };
@@ -218,23 +250,23 @@ const CreateCoordinators = () => {
 
               <div className="row mb-5">
                 <div className="col-md-6 mb-3">
-                  {/* <label className="form-label text-muted small">
-                    Contraseña
-                  </label> */}
                   <input
                     type="password"
-                    placeholder="Contraseña"
+                    placeholder="Contraseña (mínimo 8 caracteres)"
                     className={`form-control  ${styles.input}`}
                     name="contrasena"
                     value={formData.contrasena}
                     onChange={handleInputChange}
                     disabled={loading}
+                    minLength={8}
                   />
+                  {formData.contrasena && formData.contrasena.length < 8 && (
+                    <small className="text-warning">
+                      La contraseña debe tener al menos 8 caracteres
+                    </small>
+                  )}
                 </div>
                 <div className="col-md-6 mb-3">
-                  {/* <label className="form-label text-muted small">
-                    Confirmar contraseña
-                  </label> */}
                   <input
                     type="password"
                     placeholder="Confirmar contraseña"
@@ -244,6 +276,11 @@ const CreateCoordinators = () => {
                     onChange={handleInputChange}
                     disabled={loading}
                   />
+                  {formData.confirmarContrasena && formData.contrasena !== formData.confirmarContrasena && (
+                    <small className="text-danger">
+                      Las contraseñas no coinciden
+                    </small>
+                  )}
                 </div>
               </div>
 

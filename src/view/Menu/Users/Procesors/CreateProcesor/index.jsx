@@ -34,17 +34,27 @@ const CreateProcesor = () => {
     e.preventDefault();
     setLoading(true);
     setFeedback("");
+    
     // Validación básica
     if (!formData.nombreCompleto || !formData.email || !formData.celular || !formData.identificacion || !formData.direccion || !formData.contrasena) {
       setFeedback("Todos los campos son obligatorios");
       setLoading(false);
       return;
     }
+    
+    // Validación de contraseña
+    if (formData.contrasena.length < 8) {
+      setFeedback("La contraseña debe tener al menos 8 caracteres");
+      setLoading(false);
+      return;
+    }
+    
     if (formData.contrasena !== formData.confirmarContrasena) {
       setFeedback("Las contraseñas no coinciden");
       setLoading(false);
       return;
     }
+    
     // Mapeo de campos al formato esperado por la API
     const payload = {
       full_name: formData.nombreCompleto,
@@ -55,6 +65,7 @@ const CreateProcesor = () => {
       password: formData.contrasena,
       role: "Procesador"
     };
+    
     try {
       await createProcessor(payload);
       setFeedback("¡Procesador creado exitosamente!");
@@ -62,7 +73,23 @@ const CreateProcesor = () => {
         navegate('/process');
       }, 1500);
     } catch (error) {
-      setFeedback("Error al crear el procesador. Inténtalo de nuevo.");
+      console.error('Error al crear procesador:', error);
+      if (error.response?.data?.detail) {
+        // Manejar errores específicos del backend
+        const errorDetails = error.response.data.detail;
+        if (Array.isArray(errorDetails)) {
+          const passwordError = errorDetails.find(err => err.loc?.includes('password'));
+          if (passwordError) {
+            setFeedback(`Error en contraseña: ${passwordError.msg}`);
+          } else {
+            setFeedback(`Error: ${errorDetails[0]?.msg || 'Error al crear el procesador'}`);
+          }
+        } else {
+          setFeedback(`Error: ${errorDetails}`);
+        }
+      } else {
+        setFeedback("Error al crear el procesador. Inténtalo de nuevo.");
+      }
     }
     setLoading(false);
   };
@@ -162,13 +189,19 @@ const CreateProcesor = () => {
                 <div className="col-md-6 mb-3">
                   <input
                     type="password"
-                    placeholder="Contraseña"
+                    placeholder="Contraseña (mínimo 8 caracteres)"
                     className={`form-control  ${styles.input}`}
                     name="contrasena"
                     value={formData.contrasena}
                     onChange={handleInputChange}
                     disabled={loading}
+                    minLength={8}
                   />
+                  {formData.contrasena && formData.contrasena.length < 8 && (
+                    <small className="text-warning">
+                      La contraseña debe tener al menos 8 caracteres
+                    </small>
+                  )}
                 </div>
                 <div className="col-md-6 mb-3">
                   <input
@@ -180,6 +213,11 @@ const CreateProcesor = () => {
                     onChange={handleInputChange}
                     disabled={loading}
                   />
+                  {formData.confirmarContrasena && formData.contrasena !== formData.confirmarContrasena && (
+                    <small className="text-danger">
+                      Las contraseñas no coinciden
+                    </small>
+                  )}
                 </div>
               </div>
 

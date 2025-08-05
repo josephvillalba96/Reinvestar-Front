@@ -57,9 +57,10 @@ const Sellers = () => {
         limit: itemsPerPage,
       };
       if (search) params.search = search;
-      // El filtro de estado depende de cómo lo maneje tu backend
-      // Si el backend soporta un filtro por estado, descomenta la siguiente línea:
-      // if (estado && estado !== "Estado") params.estado = estado;
+      // Habilitar filtro de estado
+      if (estado && estado !== "") {
+        params.is_active = estado === "Activo" ? true : false;
+      }
       const data = await getSellers(params);
       setSellersData(Array.isArray(data.items) ? data.items : []);
       setTotalSellers(typeof data.total === 'number' ? data.total : 0);
@@ -82,6 +83,11 @@ const Sellers = () => {
   const handleEstadoChange = (e) => {
     setEstado(e.target.value);
     setCurrentPage(1);
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchSellers();
   };
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -119,7 +125,7 @@ const Sellers = () => {
           </select>
           <div className="input-group">
             <input type="text" className="form-control" placeholder="Buscar" value={search} onChange={handleSearchChange} />
-            <button className="btn btn-primary" type="button" onClick={fetchSellers}>
+            <button className="btn btn-primary" type="button" onClick={handleSearch}>
               <img src={LoupeIcon} alt="" width={18} />
             </button>
           </div>
@@ -141,14 +147,15 @@ const Sellers = () => {
               <th style={{ color: "#1B2559" }}>Celular</th>
               <th style={{ color: "#1B2559" }}>Compañía</th>
               <th style={{ color: "#1B2559" }}>Rol</th>
+              <th style={{ color: "#1B2559" }}>Estado</th>
               <th style={{ color: "#1B2559" }}>Opciones</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={9}>Cargando...</td></tr>
+              <tr><td colSpan={10}>Cargando...</td></tr>
             ) : sellersData.length === 0 ? (
-              <tr><td colSpan={9}>No hay vendedores</td></tr>
+              <tr><td colSpan={10}>No hay vendedores</td></tr>
             ) : (
               sellersData.map((seller) => (
                 <tr key={seller.id}>
@@ -160,6 +167,11 @@ const Sellers = () => {
                   <td>{seller.phone}</td>
                   <td>{companyMap[seller.company_id] || '-'}</td>
                   <td>{Array.isArray(seller.roles) && seller.roles.length > 0 ? seller.roles[0] : '-'}</td>
+                  <td>
+                    <span className={`badge ${seller.is_active ? 'bg-success' : 'bg-secondary'}`}>
+                      {seller.is_active ? "Activo" : "Inactivo"}
+                    </span>
+                  </td>
                   <td>
                     <button
                       className="btn btn-sm me-1"

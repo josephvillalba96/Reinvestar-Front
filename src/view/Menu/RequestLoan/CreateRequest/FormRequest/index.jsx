@@ -52,14 +52,29 @@ const FormRequest = () => {
     }
     try {
       const res = await getClients({ search: value });
-      if (res && res.length > 0) {
-        setSuggestions(res);
+      
+      // Manejar la nueva estructura de datos con total e items
+      let clientes = [];
+      if (Array.isArray(res)) {
+        // Si la API devuelve un array directamente
+        clientes = res;
+      } else if (res && Array.isArray(res.items)) {
+        // Si la API devuelve { total: N, items: [...] }
+        clientes = res.items;
+      } else if (res && Array.isArray(res.results)) {
+        // Si la API devuelve { total: N, results: [...] }
+        clientes = res.results;
+      }
+      
+      if (clientes.length > 0) {
+        setSuggestions(clientes);
         setShowSuggestions(true);
       } else {
         setSuggestions([]);
         setShowSuggestions(false);
       }
-    } catch {
+    } catch (error) {
+      console.error('Error buscando clientes:', error);
       setSuggestions([]);
       setShowSuggestions(false);
     }
@@ -79,7 +94,7 @@ const FormRequest = () => {
     setClienteEncontrado(true);
     setSuggestions([]);
     setShowSuggestions(false);
-    setFeedback("Cliente encontrado y cargado");
+    setFeedback(`Cliente encontrado: ${cliente.full_name || cliente.nombre}`);
   };
 
   // Manejar cambios en el resto del formulario
@@ -174,17 +189,17 @@ const FormRequest = () => {
           <div className="col-4">
             <div className="w-100 d-flex flex-column position-relative">
               <label htmlFor="correo">Email</label>
-              <input
+          <input
                 type="email"
                 placeholder="Correo electrónico"
-                className={styles.input}
+            className={styles.input}
                 name="correo"
                 id="correo"
                 value={form.correo}
                 onChange={handleCorreoChange}
-                required
+            required
                 autoComplete="off"
-              />
+          />
               {/* Sugerencias de email */}
               {showSuggestions && suggestions.length > 0 && (
                 <ul style={{
@@ -200,35 +215,52 @@ const FormRequest = () => {
                   overflowY: "auto",
                   margin: 0,
                   padding: 0,
-                  listStyle: "none"
+                  listStyle: "none",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
                 }}>
                   {suggestions.map(cliente => (
                     <li
                       key={cliente.id}
-                      style={{ padding: 8, cursor: "pointer" }}
+                      style={{ 
+                        padding: "12px 16px", 
+                        cursor: "pointer",
+                        borderBottom: "1px solid #f3f4f6",
+                        fontSize: "14px"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = "#f9fafb";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = "#fff";
+                      }}
                       onClick={() => handleSuggestionClick(cliente)}
                     >
-                      { cliente.email }
+                      <div style={{ fontWeight: "500", color: "#374151" }}>
+                        {cliente.email}
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "2px" }}>
+                        {cliente.full_name || cliente.nombre} • {cliente.phone || cliente.telefono || "Sin teléfono"}
+                      </div>
                     </li>
                   ))}
                 </ul>
               )}
-            </div>
-          </div>
+        </div>
+      </div>
           <div className="col-4">
             <div className="w-100 d-flex flex-column">
               <label htmlFor="correo">Nombre del cliente</label>
-              <input
-                type="text"
+          <input
+            type="text"
                 placeholder="Nombre del cliente"
-                className={styles.input}
-                name="nombre"
-                value={form.nombre}
-                onChange={handleChange}
-                required
+            className={styles.input}
+            name="nombre"
+            value={form.nombre}
+            onChange={handleChange}
+            required
                 disabled={clienteEncontrado}
-              />
-            </div>
+          />
+        </div>
           </div>
           {/* --------------EMPRESAS--------------- */}
           <div className="col-4">
@@ -237,10 +269,10 @@ const FormRequest = () => {
               <select
                 name="empresa"
                 id="options_companies"
-                className={styles.input}
+            className={styles.input}
                 value={form.empresa}
-                onChange={handleChange}
-                required
+            onChange={handleChange}
+            required
                 disabled={clienteEncontrado}
               >
                 <option value="">Seleccione una empresa</option>
@@ -255,31 +287,31 @@ const FormRequest = () => {
           <div className="col-6">
             <div className="w-100 d-flex flex-column">
               <label htmlFor="telefono">Número de teléfono</label>
-              <input
-                type="tel"
+          <input
+            type="tel"
                 placeholder="Número de teléfono"
-                className={styles.input}
-                name="telefono"
-                value={form.telefono}
-                onChange={handleChange}
+            className={styles.input}
+            name="telefono"
+            value={form.telefono}
+            onChange={handleChange}
                 disabled={clienteEncontrado}
-              />
-            </div>
-          </div>
+          />
+        </div>
+      </div>
           <div className="col-6">
             <div className="w-100 d-flex flex-column">
               <label htmlFor="direccion">Dirección de la propiedad</label>
-              <input
-                type="text"
+          <input
+            type="text"
                 placeholder="Dirección de la propiedad"
-                className={styles.input}
-                name="direccion"
-                value={form.direccion}
-                onChange={handleChange}
-                required
+            className={styles.input}
+            name="direccion"
+            value={form.direccion}
+            onChange={handleChange}
+            required
                 disabled={clienteEncontrado}
-              />
-            </div>
+          />
+        </div>
           </div>
         </div>
 
@@ -348,7 +380,7 @@ const FormRequest = () => {
           {form.tipoProducto === "dscr" && <DscrForm client_id={clientId} />}
         </div>
       )}
-    </div>
+      </div>
   );
 };
 

@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import styles from "../style.module.css";
 import { NumericFormat } from "react-number-format";
 import { createDscr, updateDscr } from "../../../../../../Api/dscr";
-import { createRequestLink } from "../../../../../../Api/requestLink";
+import { getRequestLinks, createRequestLink, sendRequestLink } from "../../../../../../Api/requestLink";
+import { sendTemplateEmail } from "../../../../../../Api/emailTemplate";
+
+const URL_EXTERNAL_FORM = import.meta.env.VITE_URL_EXTERMAL_FORM;
 
 const initialState = {
   type_request: "TYPE1",
@@ -29,10 +32,11 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
   const [assignToClient, setAssignToClient] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
-  const [showLinkForm, setShowLinkForm] = useState(false);
-  const [createdDscrId, setCreatedDscrId] = useState(null);
-  const [linkForm, setLinkForm] = useState({ valid_days: 7 });
   const [isEditMode, setIsEditMode] = useState(false);
+  const [externalLink, setExternalLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [sending, setSending] = useState(false);
 
   // Inicializar el formulario con los datos de la solicitud si existen
   useEffect(() => {
@@ -58,6 +62,34 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
       setIsEditMode(false);
     }
   }, [solicitud]);
+
+  useEffect(() => {
+    if (solicitud && solicitud.id) {
+      let isMounted = true;
+      
+      getRequestLinks({ dscr_request_id: solicitud.id })
+        .then(links => {
+          if (isMounted) {
+            const link = Array.isArray(links) ? links.find(l => l.link_token) : null;
+            if (link && link.link_token) {
+              setExternalLink(`${URL_EXTERNAL_FORM}/dscr/${link.link_token}`);
+            } else {
+              setExternalLink("");
+            }
+          }
+        })
+        .catch(error => {
+          if (isMounted) {
+            console.error('Error fetching request links:', error);
+            setExternalLink("");
+          }
+        });
+      
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [solicitud?.id]); // Solo depende del ID de la solicitud
 
   // Maneja cambios generales
   const handleChange = (e) => {
@@ -119,7 +151,7 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
         client_id: Number(client_id)
       };
       const response = await createDscr(dataToSend);
-      setCreatedDscrId(response.id);
+      setIsEditMode(false);
       setFeedback("¡DSCR creado exitosamente!");
       if (typeof goToDocumentsTab === 'function') {
         goToDocumentsTab(response.id, 'dscr');
@@ -130,95 +162,111 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
     setLoading(false);
   };
 
-  const handleCreateEmptyDscr = async () => {
-    setLoading(true);
-    setFeedback("");
-
+  const handleGenerateLink = async () => {
+    if (!solicitud || !solicitud.id) return;
+    setGenerating(true);
     try {
-      const emptyData = {
-        type_request: "TYPE1",
-        property_address: "",
-        fico: 0,
-        rent_amount: 0,
-        appraisal_value: 0,
-        ltv_request: 0,
-        residency_status: "OWNER",
-        prepayment_penalty: 0,
-        property_units: 0,
-        type_of_transaction: "PURCHASE",
-        primary_own_or_rent: "",
-        mortgage_late_payments: 0,
-        prop_taxes: 0,
-        hoi: 0,
-        subject_prop_under_llc: "",
-        payoff_amount: 0,
-        client_id: Number(client_id)
-      };
-
-      const response = await createDscr(emptyData);
-      setCreatedDscrId(response.id);
-      setFeedback("¡DSCR vacío creado y asignado al cliente exitosamente!");
-      setShowLinkForm(true);
-    } catch (error) {
-      setFeedback("Error al crear el DSCR vacío. Inténtalo de nuevo.");
-    }
-    setLoading(false);
-  };
-
-  const handleCreateLink = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setFeedback("");
-
-    try {
-      const linkData = {
-        valid_days: Number(linkForm.valid_days),
-        dscr_request_id: createdDscrId,
+      const link = await createRequestLink({
+        valid_days: 30,
+        dscr_request_id: solicitud.id,
         construction_request_id: 0,
         fixflip_request_id: 0
-      };
-
-      const response = await createRequestLink(linkData);
-      setFeedback("¡Link creado exitosamente!");
-      console.log("Link creado:", response);
-    } catch (error) {
-      setFeedback("Error al crear el link. Inténtalo de nuevo.");
+      });
+      if (link && link.link_token) {
+        setExternalLink(`${URL_EXTERNAL_FORM}/dscr/${link.link_token}`);
+      }
+    } catch (e) {
+      // feedback opcional
     }
-    setLoading(false);
+    setGenerating(false);
+  };
+
+  // Función para enviar email usando template
+  const handleSendLink = async () => {
+    if (!externalLink || !cliente?.email) return;
+    setSending(true);
+    try {
+      // Enviar email usando template
+      await sendTemplateEmail({
+        template_id: 0, // ID del template de solicitud
+        template_type: "request_link",
+        to_email: cliente.email,
+        from_email: "noreply@reinvestar.com", // Email del sistema
+        content_type: "text/html", // Asegurar que se envíe como HTML
+        variables: {
+          client_name: cliente.full_name,
+          request_link: externalLink,
+          request_type: "DSCR",
+          request_id: solicitud.id
+        }
+      });
+      setFeedback("¡Email enviado exitosamente!");
+    } catch (error) {
+      console.error('Error enviando email:', error);
+      setFeedback("Error al enviar el email. Inténtalo de nuevo.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
-    <>
-      <form className="container-fluid" onSubmit={solicitud ? handleUpdate : handleSubmit}>
+    <form className={`container-fluid ${styles.formBlock}`} onSubmit={solicitud ? handleUpdate : handleSubmit} style={{ maxWidth: '100%', margin: '0 auto', background: 'none', boxShadow: 'none', border: 'none' }}>
         {/* Datos del cliente */}
         {cliente && (
-          <div className="row mb-3">
-            <div className="col-md-6 mb-2">
-              <div className="d-flex flex-column">
-                <label className="form-label text-muted small mb-1">Nombre</label>
-                <input className={styles.input} value={cliente.full_name || ""} disabled />
-              </div>
+        <div className="mb-4">
+          <div className="row gy-2 align-items-end">
+            <div className="col-md-3">
+              <label className="form-label my_title_color">Nombre</label>
+              <input className={`form-control ${styles.input}`} value={cliente.full_name || ""} disabled />
             </div>
-            <div className="col-md-6 mb-2">
-              <div className="d-flex flex-column">
-                <label className="form-label text-muted small mb-1">Email</label>
-                <input className={styles.input} value={cliente.email || ""} disabled />
-              </div>
+            <div className="col-md-3">
+              <label className="form-label my_title_color">Email</label>
+              <input className={`form-control ${styles.input}`} value={cliente.email || ""} disabled />
             </div>
-            <div className="col-md-7 mb-2">
-              <div className="d-flex flex-column">
-                <label className="form-label text-muted small mb-1">Teléfono</label>
-                <input className={styles.input} value={cliente.phone || ""} disabled />
-              </div>
+            <div className="col-md-3">
+              <label className="form-label my_title_color">Teléfono</label>
+              <input className={`form-control ${styles.input}`} value={cliente.phone || ""} disabled />
             </div>
-            <div className="col-md-3 mb-2">
-              <div className="d-flex flex-column">
-                <label className="form-label text-muted small mb-1">Dirección</label>
-                <input className={styles.input} value={cliente.address || ""} disabled />
-              </div>
+            <div className="col-md-3">
+              <label className="form-label my_title_color">ID</label>
+              <input className={`form-control ${styles.input}`} value={cliente.id || ""} disabled />
             </div>
           </div>
+        </div>
         )}
+      <div className="d-flex align-items-center mb-4 gap-3">
+        <h4 className="my_title_color fw-bold mb-0" style={{ letterSpacing: 0.5 }}>Detalle de Solicitud DSCR</h4>
+        {externalLink ? (
+          <>
+            <span className="small text-muted" style={{ wordBreak: 'break-all' }}>{externalLink}</span>
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm ms-2"
+              onClick={() => {navigator.clipboard.writeText(externalLink); setCopied(true); setTimeout(()=>setCopied(false), 1500);}}
+            >
+              {copied ? "¡Copiado!" : "Copiar"}
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline-success btn-sm ms-2"
+              onClick={handleSendLink}
+              disabled={sending || !cliente?.email}
+              title={!cliente?.email ? "No hay email del cliente" : "Enviar enlace al cliente"}
+            >
+              {sending ? "Enviando..." : "Enviar"}
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-outline-primary btn-sm ms-2"
+            onClick={handleGenerateLink}
+            disabled={generating}
+          >
+            {generating ? "Generando..." : "Generar enlace"}
+          </button>
+        )}
+      </div>
         {/* Formulario de solicitud DSCR */}
         <div className="row gy-1">
           <div className="col-md-6 mb-2">
@@ -503,7 +551,7 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
         {/* Checkbox para asignar */}
         <div className="row mb-3">
           <div className="col-12">
-            <div className="form-check">
+            {/* <div className="form-check">
               <input
                 className="form-check-input"
                 type="checkbox"
@@ -514,7 +562,7 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
               <label className="form-check-label" htmlFor="assignToClient">
                 Asignar
               </label>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -559,42 +607,6 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
           </div>
         </div>
       </form>
-
-      {/* Formulario para crear link */}
-      {showLinkForm && (
-        <div className="mt-4 p-3 border rounded">
-          <h5 className="mb-3">Crear Link</h5>
-          <form onSubmit={handleCreateLink}>
-            <div className="row">
-              <div className="col-md-6 mb-3">
-                <label className="form-label text-muted small mb-1">Días de validez</label>
-                <input
-                  type="number"
-                  className={styles.input}
-                  value={linkForm.valid_days}
-                  onChange={(e) => setLinkForm(prev => ({ ...prev, valid_days: e.target.value }))}
-                  min="1"
-                  max="365"
-                  required
-                />
-              </div>
-            </div>
-            <div className="row">
-              <div className="col-12">
-                <button
-                  type="submit"
-                  className={styles.button}
-                  style={{ minWidth: "200px" }}
-                  disabled={loading}
-                >
-                  <span className="text-white">{loading ? "CREANDO..." : "CREAR LINK"}</span>
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      )}
-    </>
   );
 };
 

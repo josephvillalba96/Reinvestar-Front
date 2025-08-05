@@ -56,8 +56,10 @@ const Coordinator = () => {
         limit: itemsPerPage,
       };
       if (search) params.search = search;
-      // El filtro de estado depende de cómo lo maneje tu backend
-      // if (estado && estado !== "Estado") params.estado = estado;
+      // Habilitar filtro de estado
+      if (estado && estado !== "") {
+        params.is_active = estado === "Activo" ? true : false;
+      }
       const data = await getCoordinators(params);
       setCoordinatorsData(Array.isArray(data.items) ? data.items : []);
       setTotalCoordinators(typeof data.total === 'number' ? data.total : 0);
@@ -80,6 +82,11 @@ const Coordinator = () => {
   const handleEstadoChange = (e) => {
     setEstado(e.target.value);
     setCurrentPage(1);
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchCoordinators();
   };
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -117,7 +124,7 @@ const Coordinator = () => {
           </select>
           <div className="input-group">
             <input type="text" className="form-control" placeholder="Buscar" value={search} onChange={handleSearchChange} />
-            <button className="btn btn-primary" type="button" onClick={fetchCoordinators}>
+            <button className="btn btn-primary" type="button" onClick={handleSearch}>
               <img src={LoupeIcon} alt="" width={18} />
             </button>
           </div>
@@ -139,14 +146,15 @@ const Coordinator = () => {
               <th style={{ color: "#1B2559" }}>Celular</th>
               <th style={{ color: "#1B2559" }}>Compañía</th>
               <th style={{ color: "#1B2559" }}>Rol</th>
+              <th style={{ color: "#1B2559" }}>Estado</th>
               <th style={{ color: "#1B2559" }}>Opciones</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={9}>Cargando...</td></tr>
+              <tr><td colSpan={10}>Cargando...</td></tr>
             ) : coordinatorsData.length === 0 ? (
-              <tr><td colSpan={9}>No hay coordinadores</td></tr>
+              <tr><td colSpan={10}>No hay coordinadores</td></tr>
             ) : (
               coordinatorsData.map((coordinator) => (
                 <tr key={coordinator.id}>
@@ -158,6 +166,11 @@ const Coordinator = () => {
                   <td>{coordinator.phone}</td>
                   <td>{companyMap[coordinator.company_id] || '-'}</td>
                   <td>{Array.isArray(coordinator.roles) && coordinator.roles.length > 0 ? coordinator.roles[0] : '-'}</td>
+                  <td>
+                    <span className={`badge ${coordinator.is_active ? 'bg-success' : 'bg-secondary'}`}>
+                      {coordinator.is_active ? "Activo" : "Inactivo"}
+                    </span>
+                  </td>
                   <td>
                     <button
                       className="btn btn-sm me-1"

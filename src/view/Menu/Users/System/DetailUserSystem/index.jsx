@@ -18,7 +18,8 @@ const DetailUserSystem = () => {
     url_profile_photo: "",
     password: "",
     confirmarContrasena: "",
-    role: "Admin"
+    role: "Admin",
+    is_active: true
   });
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -54,7 +55,8 @@ const DetailUserSystem = () => {
             url_profile_photo: data.url_profile_photo || "",
             password: "",
             confirmarContrasena: "",
-            role: data.role || "Admin"
+            role: data.role || "Admin",
+            is_active: data.is_active !== undefined ? data.is_active : true
           });
         })
         .catch(() => setFeedback("Error al cargar el usuario"))
@@ -67,10 +69,10 @@ const DetailUserSystem = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -105,6 +107,7 @@ const DetailUserSystem = () => {
       company_id: Number(formData.company_id),
       url_profile_photo: formData.url_profile_photo,
       role: formData.role,
+      is_active: formData.is_active
     };
     if (formData.password) payload.password = formData.password;
     if (!payload.role) {
@@ -228,6 +231,30 @@ const DetailUserSystem = () => {
                   {companyError && <div className="invalid-feedback d-block">{companyError}</div>}
                 </div>
               </div>
+
+              {/* Campo de Estado */}
+              <div className="row mb-4">
+                <div className="col-12 mb-2">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="is_active"
+                      name="is_active"
+                      checked={formData.is_active}
+                      onChange={handleInputChange}
+                      disabled={!editMode}
+                    />
+                    <label className="form-check-label my_title_color" htmlFor="is_active">
+                      Usuario Activo
+                    </label>
+                  </div>
+                  <small className="text-muted">
+                    {editMode ? "Desmarca esta casilla para desactivar el usuario" : "Estado actual del usuario"}
+                  </small>
+                </div>
+              </div>
+
               {roleError && (
                 <div className="alert alert-danger py-2 mb-3">{roleError}</div>
               )}

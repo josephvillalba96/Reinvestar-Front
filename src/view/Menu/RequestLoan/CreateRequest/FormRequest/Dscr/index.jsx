@@ -3,6 +3,10 @@ import styles from "../style.module.css";
 import { NumericFormat } from "react-number-format";
 import { createDscr } from "../../../../../../Api/dscr";
 import { createRequestLink } from "../../../../../../Api/requestLink";
+import { sendTemplateEmail } from "../../../../../../Api/emailTemplate";
+import { getClientById } from "../../../../../../Api/client";
+
+const URL_EXTERNAL_FORM = import.meta.env.VITE_URL_EXTERMAL_FORM;
 
 const initialState = {
   type_request: "TYPE1",
@@ -23,27 +27,24 @@ const initialState = {
   payoff_amount: ""
 };
 
-const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = true }) => {
+const DscrForm = ({ client_id, goToDocumentsTab }) => {
   const [form, setForm] = useState({ ...initialState });
   const [ficoError, setFicoError] = useState("");
-  const [assignToClient, setAssignToClient] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
-  const [showLinkForm, setShowLinkForm] = useState(false);
-  const [createdDscrId, setCreatedDscrId] = useState(null);
-  const [linkForm, setLinkForm] = useState({ valid_days: 7 });
+  const [externalLink, setExternalLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     setForm({ ...initialState });
   }, [client_id]);
 
-  // Maneja cambios generales
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Maneja cambios de campos numéricos con máscara
   const handleNumberFormat = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
     if (name === "fico") {
@@ -55,7 +56,6 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
     }
   };
 
-  // Mensaje de categoría FICO
   const getFicoCategory = (fico) => {
     const n = Number(fico);
     if (!fico || isNaN(n)) return "";
@@ -67,18 +67,57 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
     return "";
   };
 
+  // Función para enviar email usando template
+  const handleSendEmail = async (link) => {
+    if (!link || !client_id) return;
+    
+    setSending(true);
+    try {
+      // Obtener datos del cliente
+      const clientData = await getClientById(client_id);
+      if (!clientData?.email) {
+        setFeedback("No se encontró el email del cliente.");
+        return;
+      }
+
+      // Enviar email usando template
+      await sendTemplateEmail({
+        template_id: 0, // ID del template de solicitud
+        template_type: "request_link",
+        to_email: clientData.email,
+        from_email: "noreply@reinvestar.com", // Email del sistema
+        content_type: "text/html", // Asegurar que se envíe como HTML
+        variables: {
+          client_name: clientData.full_name,
+          request_link: link,
+          request_type: "DSCR",
+          request_id: null // No tenemos el ID aún en CreateRequest
+        }
+      });
+      
+      setFeedback("¡Email enviado exitosamente!");
+    } catch (error) {
+      console.error('Error enviando email:', error);
+      setFeedback("Error al enviar el email. Inténtalo de nuevo.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!client_id) {
+      setFeedback("Debes seleccionar un cliente válido antes de crear la solicitud.");
+      return;
+    }
     if (form.fico && (Number(form.fico) < 300 || Number(form.fico) > 850)) {
       setFicoError("El valor de FICO debe estar entre 300 y 850");
       return;
     }
-
     setLoading(true);
     setFeedback("");
-
     try {
-      // Al enviar, convierte los campos de moneda y porcentaje a número puro
+      // 1. Preparar datos de la solicitud
       const dataToSend = {
         type_request: "TYPE1",
         property_address: form.property_address || "",
@@ -99,417 +138,357 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
         client_id: Number(client_id)
       };
 
+      // 2. Crear la solicitud DSCR
       const response = await createDscr(dataToSend);
-      setCreatedDscrId(response.id);
-      setFeedback("¡DSCR creado exitosamente!");
-      
-      // Crear link automáticamente con 30 días
-      await createRequestLink({
+      console.log('Respuesta createDscr:', response);
+
+      // 3. Crear el enlace automáticamente
+      const linkData = {
         valid_days: 30,
         dscr_request_id: response.id,
         construction_request_id: 0,
         fixflip_request_id: 0
-      });
+      };
+
+      const linkResponse = await createRequestLink(linkData);
+      console.log('Respuesta createRequestLink:', linkResponse);
+
+      if (linkResponse?.link_token) {
+        const fullLink = `${URL_EXTERNAL_FORM}/dscr/${linkResponse.link_token}`;
+        setExternalLink(fullLink);
+        
+        // 4. Enviar email automáticamente
+        await handleSendEmail(fullLink);
+      }
+
+      // 5. Actualizar UI y limpiar formulario
+      setFeedback("¡DSCR creado exitosamente!");
+      setForm({ ...initialState });
+
+      // 6. Navegar a documentos si es necesario
       if (typeof goToDocumentsTab === 'function') {
         goToDocumentsTab(response.id, 'dscr');
       }
-      setForm({ ...initialState }); // Limpiar formulario después de crear
+
     } catch (error) {
-      setFeedback("Error al crear el DSCR. Inténtalo de nuevo.");
+      console.error('Error completo:', error);
+      if (error.response?.data?.detail) {
+        setFeedback(Array.isArray(error.response.data.detail) 
+          ? error.response.data.detail[0]?.msg 
+          : error.response.data.detail);
+      } else if (error.message) {
+        setFeedback(error.message);
+      } else {
+        setFeedback("Error al crear el DSCR. Inténtalo de nuevo.");
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
-
-  const handleCreateEmptyDscr = async () => {
-    setLoading(true);
-    setFeedback("");
-
-    try {
-      const emptyData = {
-  type_request: "TYPE1",
-  property_address: "",
-  fico: 0,
-  rent_amount: 0,
-  appraisal_value: 0,
-  ltv_request: 0,
-  residency_status: "OWNER",
-  prepayment_penalty: 0,
-  property_units: 0,
-  type_of_transaction: "PURCHASE",
-  primary_own_or_rent: "",
-  mortgage_late_payments: 0,
-  prop_taxes: 0,
-  hoi: 0,
-  subject_prop_under_llc: "",
-        payoff_amount: 0,
-        client_id: Number(client_id)
-      };
-
-      const response = await createDscr(emptyData);
-      setCreatedDscrId(response.id);
-      setFeedback("¡DSCR vacío creado y asignado al cliente exitosamente!");
-      setShowLinkForm(true);
-    } catch (error) {
-      setFeedback("Error al crear el DSCR vacío. Inténtalo de nuevo.");
-    }
-    setLoading(false);
-  };
-
-  const handleCreateLink = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setFeedback("");
-
-    try {
-      const linkData = {
-        valid_days: Number(linkForm.valid_days),
-        dscr_request_id: createdDscrId,
-        construction_request_id: 0,
-        fixflip_request_id: 0
-      };
-
-      const response = await createRequestLink(linkData);
-      setFeedback("¡Link creado exitosamente!");
-      console.log("Link creado:", response);
-    } catch (error) {
-      setFeedback("Error al crear el link. Inténtalo de nuevo.");
-    }
-    setLoading(false);
   };
 
   return (
-    <>
-    <form className="container-fluid" onSubmit={handleSubmit}>
+    <form className={`container-fluid ${styles.formBlock}`} onSubmit={handleSubmit} style={{ maxWidth: '100%', margin: '0 auto', background: 'none', boxShadow: 'none', border: 'none' }}>
+      <div className="d-flex align-items-center mb-4 gap-3">
+        <h4 className="my_title_color fw-bold mb-0" style={{ letterSpacing: 0.5 }}>Solicitud DSCR</h4>
+        {externalLink && (
+          <>
+            <span className="small text-muted" style={{ wordBreak: 'break-all' }}>{externalLink}</span>
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm ms-2"
+              onClick={() => {navigator.clipboard.writeText(externalLink); setCopied(true); setTimeout(()=>setCopied(false), 1500);}}
+            >
+              {copied ? "¡Copiado!" : "Copiar"}
+            </button>
+          </>
+        )}
+      </div>
+
       <div className="row gy-1">
         <div className="col-md-6 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">Dirección de la propiedad</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="property_address"
-            value={form.property_address}
-            onChange={handleChange}
-            // //required
-          />
-            </div>
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Dirección de la propiedad</label>
+            <input
+              type="text"
+              className={styles.input}
+              name="property_address"
+              value={form.property_address}
+              onChange={handleChange}
+            />
+          </div>
         </div>
       </div>
+
       <div className="row gy-1">
         <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">FICO</label>
-              <NumericFormat
-            className={styles.input}
-            name="fico"
-            value={form.fico}
-                onValueChange={({ value }) => handleNumberFormat("fico", value)}
-                allowNegative={false}
-                decimalScale={0}
-                allowLeadingZeros={false}
-                thousandSeparator="," 
-            //required
-                placeholder="0"
-                inputMode="numeric"
-              />
-              {ficoError && (
-                <span style={{ color: 'red', fontSize: 13 }}>{ficoError}</span>
-              )}
-              {!ficoError && getFicoCategory(form.fico) && (
-                <span style={{ color: '#2c3e50', fontSize: 13, fontWeight: 500 }}>{getFicoCategory(form.fico)}</span>
-              )}
-            </div>
-        </div>
-        <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">Monto de alquiler</label>
-              <NumericFormat
-            className={styles.input}
-            name="rent_amount"
-            value={form.rent_amount}
-                onValueChange={({ value }) => handleNumberFormat("rent_amount", value)}
-                thousandSeparator="," 
-                prefix="$"
-                decimalScale={2}
-                fixedDecimalScale
-                allowNegative={false}
-            //required
-                placeholder="$0.00"
-                inputMode="decimal"
-          />
-            </div>
-        </div>
-        <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">Valor de tasación</label>
-              <NumericFormat
-            className={styles.input}
-            name="appraisal_value"
-            value={form.appraisal_value}
-                onValueChange={({ value }) => handleNumberFormat("appraisal_value", value)}
-                thousandSeparator="," 
-                prefix="$"
-                decimalScale={2}
-                fixedDecimalScale
-                allowNegative={false}
-            //required
-                placeholder="$0.00"
-                inputMode="decimal"
-          />
-            </div>
-        </div>
-      </div>
-      <div className="row gy-1">
-        <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted mb-1">LTV solicitado (%)</label>
-              <NumericFormat
-            className={styles.input}
-            name="ltv_request"
-            value={form.ltv_request}
-                onValueChange={({ value }) => handleNumberFormat("ltv_request", value)}
-                suffix="%"
-                decimalScale={2}
-                allowNegative={false}
-            //required
-                placeholder="0.00%"
-                inputMode="decimal"
-          />
-            </div>
-        </div>
-        <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">Residencia</label>
-          <select
-            className={styles.select}
-            name="residency_status"
-            value={form.residency_status}
-            onChange={handleChange}
-            //required
-            disabled={!editable && !isEditMode}
-          >
-            <option value="OWNER">Propietario</option>
-            <option value="TENANT">Arrendatario</option>
-          </select>
-            </div>
-        </div>
-        <div className="col-md-4 mb-2">
-            <label className="form-label text-muted small mb-1">Penalidad por prepago (años)</label>
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">FICO</label>
             <NumericFormat
-            className={styles.input}
-            name="prepayment_penalty"
-            value={form.prepayment_penalty}
-              onValueChange={({ value }) => handleNumberFormat("prepayment_penalty", value)}
-              thousandSeparator="," 
+              className={styles.input}
+              name="fico"
+              value={form.fico}
+              onValueChange={({ value }) => handleNumberFormat("fico", value)}
+              allowNegative={false}
+              decimalScale={0}
+              allowLeadingZeros={false}
+              thousandSeparator=","
+              placeholder="0"
+              inputMode="numeric"
+            />
+            {ficoError && (
+              <span style={{ color: 'red', fontSize: 13 }}>{ficoError}</span>
+            )}
+            {!ficoError && getFicoCategory(form.fico) && (
+              <span style={{ color: '#2c3e50', fontSize: 13, fontWeight: 500 }}>{getFicoCategory(form.fico)}</span>
+            )}
+          </div>
+        </div>
+        <div className="col-md-4 mb-2">
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Monto de alquiler</label>
+            <NumericFormat
+              className={styles.input}
+              name="rent_amount"
+              value={form.rent_amount}
+              onValueChange={({ value }) => handleNumberFormat("rent_amount", value)}
+              thousandSeparator=","
               prefix="$"
               decimalScale={2}
               fixedDecimalScale
               allowNegative={false}
-            //required
               placeholder="$0.00"
               inputMode="decimal"
-          />
+            />
+          </div>
+        </div>
+        <div className="col-md-4 mb-2">
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Valor de tasación</label>
+            <NumericFormat
+              className={styles.input}
+              name="appraisal_value"
+              value={form.appraisal_value}
+              onValueChange={({ value }) => handleNumberFormat("appraisal_value", value)}
+              thousandSeparator=","
+              prefix="$"
+              decimalScale={2}
+              fixedDecimalScale
+              allowNegative={false}
+              placeholder="$0.00"
+              inputMode="decimal"
+            />
+          </div>
         </div>
       </div>
+
       <div className="row gy-1">
         <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">Unidades de propiedad</label>
-              <NumericFormat
-            className={styles.input}
-            name="property_units"
-            value={form.property_units}
-                onValueChange={({ value }) => handleNumberFormat("property_units", value)}
-                allowNegative={false}
-                decimalScale={0}
-            //required
-                placeholder="0"
-                inputMode="numeric"
-          />
-            </div>
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted mb-1">LTV solicitado (%)</label>
+            <NumericFormat
+              className={styles.input}
+              name="ltv_request"
+              value={form.ltv_request}
+              onValueChange={({ value }) => handleNumberFormat("ltv_request", value)}
+              suffix="%"
+              decimalScale={2}
+              allowNegative={false}
+              placeholder="0.00%"
+              inputMode="decimal"
+            />
+          </div>
         </div>
         <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">Tipo de transacción</label>
-          <select
-            className={styles.select}
-            name="type_of_transaction"
-            value={form.type_of_transaction}
-            onChange={handleChange}
-            //required
-            disabled={!editable && !isEditMode}
-          >
-            <option value="PURCHASE">Compra</option>
-            <option value="REFINANCE">Refinanciación</option>
-          </select>
-            </div>
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Residencia</label>
+            <select
+              className={styles.select}
+              name="residency_status"
+              value={form.residency_status}
+              onChange={handleChange}
+            >
+              <option value="OWNER">Propietario</option>
+              <option value="RENT">Arrendatario</option>
+            </select>
+          </div>
         </div>
         <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">¿Propietario o arrendatario principal?</label>
-          <input
-            type="text"
-            className={styles.input}
-            name="primary_own_or_rent"
-            value={form.primary_own_or_rent}
-            onChange={handleChange}
-            //required
-          />
-            </div>
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Penalidad por prepago (años)</label>
+            <NumericFormat
+              className={styles.input}
+              name="prepayment_penalty"
+              value={form.prepayment_penalty}
+              onValueChange={({ value }) => handleNumberFormat("prepayment_penalty", value)}
+              thousandSeparator=","
+              prefix="$"
+              decimalScale={2}
+              fixedDecimalScale
+              allowNegative={false}
+              placeholder="$0.00"
+              inputMode="decimal"
+            />
+          </div>
         </div>
       </div>
+
       <div className="row gy-1">
         <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">Pagos tardíos de hipoteca</label>
-              <NumericFormat
-            className={styles.input}
-            name="mortgage_late_payments"
-            value={form.mortgage_late_payments}
-                onValueChange={({ value }) => handleNumberFormat("mortgage_late_payments", value)}
-                thousandSeparator="," 
-                prefix="$"
-                decimalScale={2}
-                fixedDecimalScale
-                allowNegative={false}
-            //required
-                placeholder="$0.00"
-                inputMode="decimal"
-          />
-            </div>
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Unidades de propiedad</label>
+            <NumericFormat
+              className={styles.input}
+              name="property_units"
+              value={form.property_units}
+              onValueChange={({ value }) => handleNumberFormat("property_units", value)}
+              allowNegative={false}
+              decimalScale={0}
+              placeholder="0"
+              inputMode="numeric"
+            />
+          </div>
         </div>
         <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">Impuestos de propiedad</label>
-              <NumericFormat
-            className={styles.input}
-            name="prop_taxes"
-            value={form.prop_taxes}
-                onValueChange={({ value }) => handleNumberFormat("prop_taxes", value)}
-                thousandSeparator="," 
-                prefix="$"
-                decimalScale={2}
-                fixedDecimalScale
-                allowNegative={false}
-            //required
-                placeholder="$0.00"
-                inputMode="decimal"
-          />
-            </div>
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Tipo de transacción</label>
+            <select
+              className={styles.select}
+              name="type_of_transaction"
+              value={form.type_of_transaction}
+              onChange={handleChange}
+            >
+              <option value="PURCHASE">Compra</option>
+              <option value="REFINANCE">Refinanciación</option>
+              <option value="CASHOUT">Cash-out</option>
+            </select>
+          </div>
         </div>
         <div className="col-md-4 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">HOI</label>
-              <NumericFormat
-            className={styles.input}
-            name="hoi"
-            value={form.hoi}
-                onValueChange={({ value }) => handleNumberFormat("hoi", value)}
-                thousandSeparator="," 
-                prefix="$"
-                decimalScale={2}
-                fixedDecimalScale
-                allowNegative={false}
-            //required
-                placeholder="$0.00"
-                inputMode="decimal"
-          />
-            </div>
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">¿Propietario o arrendatario principal?</label>
+            <input
+              type="text"
+              className={styles.input}
+              name="primary_own_or_rent"
+              value={form.primary_own_or_rent}
+              onChange={handleChange}
+            />
+          </div>
         </div>
       </div>
+
+      <div className="row gy-1">
+        <div className="col-md-4 mb-2">
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Pagos tardíos de hipoteca</label>
+            <NumericFormat
+              className={styles.input}
+              name="mortgage_late_payments"
+              value={form.mortgage_late_payments}
+              onValueChange={({ value }) => handleNumberFormat("mortgage_late_payments", value)}
+              thousandSeparator=","
+              prefix="$"
+              decimalScale={2}
+              fixedDecimalScale
+              allowNegative={false}
+              placeholder="$0.00"
+              inputMode="decimal"
+            />
+          </div>
+        </div>
+        <div className="col-md-4 mb-2">
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Impuestos de propiedad</label>
+            <NumericFormat
+              className={styles.input}
+              name="prop_taxes"
+              value={form.prop_taxes}
+              onValueChange={({ value }) => handleNumberFormat("prop_taxes", value)}
+              thousandSeparator=","
+              prefix="$"
+              decimalScale={2}
+              fixedDecimalScale
+              allowNegative={false}
+              placeholder="$0.00"
+              inputMode="decimal"
+            />
+          </div>
+        </div>
+        <div className="col-md-4 mb-2">
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">HOI</label>
+            <NumericFormat
+              className={styles.input}
+              name="hoi"
+              value={form.hoi}
+              onValueChange={({ value }) => handleNumberFormat("hoi", value)}
+              thousandSeparator=","
+              prefix="$"
+              decimalScale={2}
+              fixedDecimalScale
+              allowNegative={false}
+              placeholder="$0.00"
+              inputMode="decimal"
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="row gy-1">
         <div className="col-md-6 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">Propiedad bajo LLC</label>
-              <select
-            className={styles.input}
-            name="subject_prop_under_llc"
-            value={form.subject_prop_under_llc}
-                onChange={e => setForm(prev => ({ ...prev, subject_prop_under_llc: e.target.value }))}
-                //required
-              >
-                <option value="">Seleccione una opción</option>
-                <option value="1">Yes</option>
-                <option value="0">No</option>
-              </select>
-            </div>
-          </div>
-          <div className="col-md-6 mb-2">
-            <div className="d-flex flex-column">
-              <label className="form-label text-muted small mb-1">Monto a pagar (payoff)</label>
-              <NumericFormat
-                className={styles.input}
-                name="payoff_amount"
-                value={form.payoff_amount}
-                onValueChange={({ value }) => handleNumberFormat("payoff_amount", value)}
-                thousandSeparator="," 
-                prefix="$"
-                decimalScale={2}
-                fixedDecimalScale
-                allowNegative={false}
-            //required
-                placeholder="$0.00"
-                inputMode="decimal"
-              />
-            </div>
-          </div>
-        </div>
-
-        {feedback && (
-          <div className={`alert ${feedback.includes("exitosamente") ? "alert-success" : "alert-danger"} py-2 mb-3`}>
-            {feedback}
-          </div>
-        )}
-
-        <div className="row">
-          <div className="col-12 mt-3">
-            <button
-              type="submit"
-              className={styles.button}
-              style={{ minWidth: "200px" }}
-              disabled={loading}
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Propiedad bajo LLC</label>
+            <select
+              className={styles.input}
+              name="subject_prop_under_llc"
+              value={form.subject_prop_under_llc}
+              onChange={e => setForm(prev => ({ ...prev, subject_prop_under_llc: e.target.value }))}
             >
-              <span className="text-white">{loading ? "CREANDO..." : "CREAR DSCR"}</span>
-            </button>
+              <option value="">Seleccione una opción</option>
+              <option value="1">Yes</option>
+              <option value="0">No</option>
+            </select>
           </div>
         </div>
-      </form>
-
-      {/* Formulario para crear link */}
-      {showLinkForm && (
-        <div className="mt-4 p-3 border rounded">
-          <h5 className="mb-3">Crear Link</h5>
-          <form onSubmit={handleCreateLink}>
-            <div className="row">
-              <div className="col-md-6 mb-3">
-                <label className="form-label text-muted small mb-1">Días de validez</label>
-          <input
-            type="number"
-            className={styles.input}
-                  value={linkForm.valid_days}
-                  onChange={(e) => setLinkForm(prev => ({ ...prev, valid_days: e.target.value }))}
-                  min="1"
-                  max="365"
-            //required
-          />
+        <div className="col-md-6 mb-2">
+          <div className="d-flex flex-column">
+            <label className="form-label text-muted small mb-1">Monto a pagar (payoff)</label>
+            <NumericFormat
+              className={styles.input}
+              name="payoff_amount"
+              value={form.payoff_amount}
+              onValueChange={({ value }) => handleNumberFormat("payoff_amount", value)}
+              thousandSeparator=","
+              prefix="$"
+              decimalScale={2}
+              fixedDecimalScale
+              allowNegative={false}
+              placeholder="$0.00"
+              inputMode="decimal"
+            />
+          </div>
         </div>
       </div>
+
+      {feedback && (
+        <div className={`alert ${feedback.includes("exitosamente") ? "alert-success" : "alert-danger"} py-2 mb-3`}>
+          {feedback}
+        </div>
+      )}
+
       <div className="row">
-              <div className="col-12">
+        <div className="col-12 mt-3">
           <button
             type="submit"
             className={styles.button}
             style={{ minWidth: "200px" }}
-                  disabled={loading}
+            disabled={loading}
           >
-                  <span className="text-white">{loading ? "CREANDO..." : "CREAR LINK"}</span>
+            <span className="text-white">{loading ? "CREANDO..." : "CREAR DSCR"}</span>
           </button>
         </div>
       </div>
     </form>
-        </div>
-      )}
-    </>
   );
 };
 

@@ -17,13 +17,15 @@ const Procesors = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [estado, setEstado] = useState("");
+  const [selectedWorkload, setSelectedWorkload] = useState(null);
   const navegate = useNavigate();
 
   const handleRedirect = (id) => {
     navegate(`/process/${id}/details`)
   }
 
-  const fetchProcessors = async (page = 1, searchValue = "") => {
+  const fetchProcessors = async (page = 1, searchValue = "", estadoValue = "") => {
     setLoading(true);
     setError(null);
     try {
@@ -32,9 +34,25 @@ const Procesors = () => {
         limit: itemsPerPage,
       };
       if (searchValue) params.search = searchValue;
+      // Habilitar filtro de estado
+      if (estadoValue && estadoValue !== "") {
+        params.is_active = estadoValue === "Activo" ? true : false;
+      }
       const data = await getProcessors(params);
-      setProcessors(data.items || data.results || data || []);
-      setTotal(data.total || (data.items ? data.items.length : (data.results ? data.results.length : (Array.isArray(data) ? data.length : 0))));
+      
+      // Manejar la nueva estructura de datos
+      if (Array.isArray(data)) {
+        // Si data es directamente un array de procesadores
+        setProcessors(data);
+        setTotal(data.length);
+      } else if (data && Array.isArray(data.items)) {
+        // Si data tiene la estructura { items: [], total: number }
+        setProcessors(data.items);
+        setTotal(data.total || data.items.length);
+      } else {
+        setProcessors([]);
+        setTotal(0);
+      }
     } catch (err) {
       setError("Error al cargar los procesadores");
     } finally {
@@ -43,9 +61,9 @@ const Procesors = () => {
   };
 
   useEffect(() => {
-    fetchProcessors(currentPage, search);
+    fetchProcessors(currentPage, search, estado);
     // eslint-disable-next-line
-  }, [currentPage]);
+  }, [currentPage, search, estado]);
 
   const handleRedired = () => {
     navegate("/process/new-process");
@@ -53,7 +71,30 @@ const Procesors = () => {
 
   const handleSearch = () => {
     setCurrentPage(1);
-    fetchProcessors(1, search);
+    fetchProcessors(1, search, estado);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleEstadoChange = (e) => {
+    setEstado(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleShowWorkload = (processor) => {
+    // Por ahora, mostrar información básica del procesador
+    // En el futuro, se podría hacer una llamada API para obtener el workload específico
+    setSelectedWorkload({
+      ...processor,
+      active_assignments_count: 0, // Placeholder - se debería obtener de la API
+      pending_requests: 0,
+      in_progress_requests: 0,
+      completed_requests: 0,
+      active_assignments: []
+    });
   };
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -84,14 +125,20 @@ const Procesors = () => {
           <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
           </button>
-          <select className="form-select my_title_color" name="Estado" id="">
-            <option value="Estado">Estado</option>
+          <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange}>
+            <option value="">Estado</option>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
           </select>
 
           <div className="input-group">
-            <input type="text" className="form-control" placeholder="Buscar" value={search} onChange={e => setSearch(e.target.value)} />
+            <input 
+              type="text" 
+              className="form-control" 
+              placeholder="Buscar" 
+              value={search} 
+              onChange={handleSearchChange} 
+            />
             <button className="btn btn-primary" type="button" onClick={handleSearch}>
               <img src={LoupeIcon} alt="" width={18} />
             </button>
@@ -108,55 +155,164 @@ const Procesors = () => {
         ) : error ? (
           <div className="text-danger text-center py-5">{error}</div>
         ) : (
-          <table className="table table-bordered table-hover">
-            <thead className="sticky-top">
-              <tr>
-                <th style={{ color: "#1B2559" }}>ID</th>
-                <th style={{ color: "#1B2559" }}>Nombre Completo</th>
-                <th style={{ color: "#1B2559" }}>Email</th>
-                <th style={{ color: "#1B2559" }}>Celular</th>
-                <th style={{ color: "#1B2559" }}>Identificación</th>
-                <th style={{ color: "#1B2559" }}>Estado</th>
-                <th style={{ color: "#1B2559" }}>Opciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.isArray(processors) && processors.length > 0 ? (
-                processors.map((proc) => (
-                  <tr key={proc.id || proc._id}>
-                    <td>{proc.id || proc._id}</td>
-                    <td>{proc.full_name || proc.nombreCompleto || proc.nombre || "-"}</td>
-                    <td>{proc.email}</td>
-                    <td>{proc.phone || proc.celular || "-"}</td>
-                    <td>{proc.identification || "-"}</td>
-                    <td>{proc.is_active !== undefined ? (proc.is_active ? "Activo" : "Inactivo") : "-"}</td>
+        <table className="table table-bordered table-hover">
+          <thead className="sticky-top">
+            <tr>
+              <th style={{ color: "#1B2559" }}>ID</th>
+              <th style={{ color: "#1B2559" }}>Nombre Completo</th>
+              <th style={{ color: "#1B2559" }}>Email</th>
+              <th style={{ color: "#1B2559" }}>Celular</th>
+              <th style={{ color: "#1B2559" }}>Identificación</th>
+              <th style={{ color: "#1B2559" }}>Estado</th>
+              <th style={{ color: "#1B2559" }}>Opciones</th>
+            </tr>
+          </thead>
+          <tbody>
+              {processors.length > 0 ? (
+                processors.map((processor) => (
+                  <tr key={processor.id}>
+                    <td>{processor.id}</td>
+                    <td>{processor.full_name}</td>
+                    <td>{processor.email}</td>
+                    <td>{processor.phone || '-'}</td>
+                    <td>{processor.identification || '-'}</td>
                     <td>
-                      <button
-                        className="btn btn-sm me-1"
-                        style={{ backgroundColor: "#1B2559" }}
-                      >
-                        <img src={BookCheck} alt="check-data" width={15} />
-                      </button>
-                      <button
-                        onClick={() => handleRedirect(proc.id)}
-                        className="btn btn-sm"
-                        style={{ backgroundColor: "#1B2559" }}
-                      >
-                        <img src={Eye} alt="detail-client" width={18}/>
-                      </button>
+                      <span className={`badge ${processor.is_active ? 'bg-success' : 'bg-secondary'}`}>
+                        {processor.is_active ? "Activo" : "Inactivo"}
+                      </span>
                     </td>
-                  </tr>
+                <td>
+                  <button
+                    className="btn btn-sm me-1"
+                    style={{ backgroundColor: "#1B2559" }}
+                        onClick={() => handleShowWorkload(processor)}
+                        data-bs-toggle="modal"
+                        data-bs-target="#workloadModal"
+                  >
+                    <img src={BookCheck} alt="check-data" width={15} />
+                  </button>
+                  <button
+                        onClick={() => handleRedirect(processor.id)}
+                    className="btn btn-sm"
+                    style={{ backgroundColor: "#1B2559" }}
+                  >
+                    <img src={Eye} alt="detail-client" width={18}/>
+                  </button>
+                </td>
+              </tr>
                 ))
               ) : (
                 <tr>
                   <td colSpan={7} className="text-center">No hay procesadores para mostrar</td>
                 </tr>
               )}
-            </tbody>
-          </table>
+          </tbody>
+        </table>
         )}
       </div>
-      <Pagination currentPage={currentPage} totalPages={Math.ceil(total / itemsPerPage) || 1} handlePaginate={paginate}/>
+
+      <Pagination 
+        currentPage={currentPage} 
+        totalPages={Math.ceil(total / itemsPerPage) || 1} 
+        handlePaginate={paginate}
+      />
+
+      {/* Modal de Workload */}
+      <div className="modal fade" id="workloadModal" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Estadísticas de Carga de Trabajo</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              {selectedWorkload && (
+                <div>
+                  <div className="mb-4">
+                    <h6 className="text-muted mb-3">Información del Procesador</h6>
+                    <p className="mb-1"><strong>Nombre:</strong> {selectedWorkload.full_name}</p>
+                    <p className="mb-1"><strong>Email:</strong> {selectedWorkload.email}</p>
+                    <p className="mb-1"><strong>Estado:</strong> 
+                      <span className={`badge ${selectedWorkload.is_active ? 'bg-success' : 'bg-secondary'} ms-2`}>
+                        {selectedWorkload.is_active ? "Activo" : "Inactivo"}
+                      </span>
+                    </p>
+                    {selectedWorkload.phone && (
+                      <p className="mb-1"><strong>Teléfono:</strong> {selectedWorkload.phone}</p>
+                    )}
+                    {selectedWorkload.identification && (
+                      <p className="mb-1"><strong>Identificación:</strong> {selectedWorkload.identification}</p>
+                    )}
+                    {selectedWorkload.address && (
+                      <p className="mb-1"><strong>Dirección:</strong> {selectedWorkload.address}</p>
+                    )}
+                  </div>
+                  
+                  <div className="alert alert-info">
+                    <i className="bi bi-info-circle me-2"></i>
+                    <strong>Nota:</strong> Los datos de carga de trabajo se cargarán próximamente desde el backend.
+                  </div>
+                  
+                  <h6 className="text-muted mb-3">Métricas de Trabajo</h6>
+                  <div className="row g-3">
+                    <div className="col-6">
+                      <div className="p-3 border rounded bg-light">
+                        <div className="small text-muted">Asignaciones Activas</div>
+                        <div className="h3 mb-0 text-primary">{selectedWorkload.active_assignments_count || 0}</div>
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <div className="p-3 border rounded bg-light">
+                        <div className="small text-muted">Solicitudes Pendientes</div>
+                        <div className="h3 mb-0 text-warning">{selectedWorkload.pending_requests || 0}</div>
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <div className="p-3 border rounded bg-light">
+                        <div className="small text-muted">En Progreso</div>
+                        <div className="h3 mb-0 text-info">{selectedWorkload.in_progress_requests || 0}</div>
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <div className="p-3 border rounded bg-light">
+                        <div className="small text-muted">Completadas</div>
+                        <div className="h3 mb-0 text-success">{selectedWorkload.completed_requests || 0}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedWorkload.active_assignments && selectedWorkload.active_assignments.length > 0 && (
+                    <div className="mt-4">
+                      <h6 className="text-muted mb-3">Asignaciones Activas</h6>
+                      <div className="list-group">
+                        {selectedWorkload.active_assignments.map((assignment) => (
+                          <div key={assignment.id} className="list-group-item">
+                            <div className="d-flex justify-content-between align-items-center mb-1">
+                              <span className="badge bg-primary">{assignment.request_type}</span>
+                              <small className="text-muted">
+                                {new Date(assignment.assigned_at).toLocaleDateString()}
+                              </small>
+                            </div>
+                            <p className="mb-1"><strong>Cliente:</strong> {assignment.client_name}</p>
+                            <p className="mb-0">
+                              <span className={`badge ${assignment.request_status === 'PENDING' ? 'bg-warning' : 'bg-info'}`}>
+                                {assignment.request_status}
+                              </span>
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

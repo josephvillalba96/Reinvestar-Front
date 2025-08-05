@@ -53,6 +53,7 @@ const CreateSeller = () => {
     setFeedback("");
     setCompanyError("");
     setRoleError("");
+    
     // Validación básica
     if (!formData.nombreCompleto || !formData.email || !formData.celular || !formData.identificacion || !formData.direccion || !formData.contrasena || !formData.company_id) {
       if (!formData.company_id) setCompanyError("Debes seleccionar una compañía");
@@ -60,11 +61,20 @@ const CreateSeller = () => {
       setLoading(false);
       return;
     }
+
+    // Validación de contraseña
+    if (formData.contrasena.length < 8) {
+      setFeedback("La contraseña debe tener al menos 8 caracteres");
+      setLoading(false);
+      return;
+    }
+    
     if (formData.contrasena !== formData.confirmarContrasena) {
       setFeedback("Las contraseñas no coinciden");
       setLoading(false);
       return;
     }
+
     // Mapeo de campos al formato esperado por la API
     const payload = {
       full_name: formData.nombreCompleto,
@@ -73,14 +83,16 @@ const CreateSeller = () => {
       identification: formData.identificacion,
       address: formData.direccion,
       password: formData.contrasena,
-      company_id: String(formData.company_id),
+      company_id: Number(formData.company_id),
       role: "Vendedor"
     };
+    
     if (!payload.role) {
       setRoleError("El campo rol es obligatorio");
       setLoading(false);
       return;
     }
+    
     try {
       await createSeller(payload);
       setFeedback("¡Vendedor creado exitosamente!");
@@ -88,7 +100,23 @@ const CreateSeller = () => {
         navegate('/sellers');
       }, 1500);
     } catch (error) {
-      setFeedback("Error al crear el vendedor. Inténtalo de nuevo.");
+      console.error('Error al crear vendedor:', error);
+      if (error.response?.data?.detail) {
+        // Manejar errores específicos del backend
+        const errorDetails = error.response.data.detail;
+        if (Array.isArray(errorDetails)) {
+          const passwordError = errorDetails.find(err => err.loc?.includes('password'));
+          if (passwordError) {
+            setFeedback(`Error en contraseña: ${passwordError.msg}`);
+          } else {
+            setFeedback(`Error: ${errorDetails[0]?.msg || 'Error al crear el vendedor'}`);
+          }
+        } else {
+          setFeedback(`Error: ${errorDetails}`);
+        }
+      } else {
+        setFeedback("Error al crear el vendedor. Inténtalo de nuevo.");
+      }
     }
     setLoading(false);
   };
@@ -204,12 +232,18 @@ const CreateSeller = () => {
                 <div className="col-md-6 mb-3">
                   <input
                     type="password"
-                    placeholder="Contraseña"
+                    placeholder="Contraseña (mínimo 8 caracteres)"
                     className={`form-control  ${styles.input}`}
                     name="contrasena"
                     value={formData.contrasena}
                     onChange={handleInputChange}
+                    minLength={8}
                   />
+                  {formData.contrasena && formData.contrasena.length < 8 && (
+                    <small className="text-warning">
+                      La contraseña debe tener al menos 8 caracteres
+                    </small>
+                  )}
                 </div>
                 <div className="col-md-6 mb-3">
                   <input
@@ -220,6 +254,11 @@ const CreateSeller = () => {
                     value={formData.confirmarContrasena}
                     onChange={handleInputChange}
                   />
+                  {formData.confirmarContrasena && formData.contrasena !== formData.confirmarContrasena && (
+                    <small className="text-danger">
+                      Las contraseñas no coinciden
+                    </small>
+                  )}
                 </div>
               </div>
 

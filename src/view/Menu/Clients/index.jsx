@@ -48,10 +48,28 @@ const Clients = () => {
       if (search) params.search = search;
       if (companyId) params.company_id = companyId;
       const data = await getClients(params);
-      setClientsData(data);
-      setTotalClients(data.length < itemsPerPage && currentPage === 1 ? data.length : currentPage * itemsPerPage + (data.length === itemsPerPage ? itemsPerPage : 0));
+      
+      // Asegurar que clientsData sea siempre un array
+      if (Array.isArray(data)) {
+        setClientsData(data);
+        setTotalClients(data.length);
+      } else if (data && Array.isArray(data.items)) {
+        // Si la API devuelve { items: [...], total: N }
+        setClientsData(data.items);
+        setTotalClients(data.total || data.items.length);
+      } else if (data && Array.isArray(data.results)) {
+        // Si la API devuelve { results: [...], total: N }
+        setClientsData(data.results);
+        setTotalClients(data.total || data.results.length);
+      } else {
+        // Fallback: establecer array vacío
+        setClientsData([]);
+        setTotalClients(0);
+      }
     } catch (error) {
+      console.error('Error fetching clients:', error);
       setClientsData([]);
+      setTotalClients(0);
     }
     setLoading(false);
   };
@@ -139,9 +157,9 @@ const Clients = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={9}>Cargando...</td></tr>
-            ) : clientsData.length === 0 ? (
-              <tr><td colSpan={9}>No hay clientes</td></tr>
+              <tr><td colSpan={10}>Cargando...</td></tr>
+            ) : !Array.isArray(clientsData) || clientsData.length === 0 ? (
+              <tr><td colSpan={10}>No hay clientes</td></tr>
             ) : (
               clientsData.map((client) => (
                 <tr key={client.id}>

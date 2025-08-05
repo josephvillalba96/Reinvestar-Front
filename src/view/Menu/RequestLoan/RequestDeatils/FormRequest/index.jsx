@@ -340,9 +340,10 @@ const FormRequest = () => {
         </div>
       </div>
       <hr className="mt-2 mb-2"/>
+      
       {/* Formulario de producto solo si hay cliente y tipo de producto */}
       {form.tipoProducto && (
-        <div className="mt-4">
+        <div className={`jopo mt-4`}>
           {form.tipoProducto === "fixflip" && <FixflipForm client_id={clientId} />}
           {form.tipoProducto === "construction" && <ConstructionForm client_id={clientId} />}
           {form.tipoProducto === "dscr" && <DscrForm client_id={clientId} />}

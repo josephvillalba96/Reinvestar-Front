@@ -10,6 +10,7 @@ import Pagination from "../../../components/Pagination";
 import * as apiFixflip from "../../../Api/fixflip";
 import * as apiDscr from "../../../Api/dscr";
 import * as apiConstruction from "../../../Api/construction";
+import * as apiSeller from "../../../Api/seller";
 import Notification from "../../../components/Notification";
 import MyModal from "../../../components/Popup";
 import { getProcessors, assignProcessor } from "../../../Api/procesor";
@@ -18,7 +19,7 @@ const RequestLoan = () => {
   // Estado para la paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
-  const [requestType, setRequestType] = useState("");
+  const [requestType, setRequestType] = useState("dscr");
   const [requestsData, setRequestsData] = useState(null);
   const navegate = useNavigate();
   const [showAssignPopup, setShowAssignPopup] = useState(false);
@@ -30,43 +31,78 @@ const RequestLoan = () => {
   const [assignRequest, setAssignRequest] = useState({ id: null, type: null });
   const [globalSuccess, setGlobalSuccess] = useState("");
 
+  // Nuevos estados para filtros
+  const [sellers, setSellers] = useState([]);
+  const [selectedSeller, setSelectedSeller] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Cargar vendedores al inicio
+  useEffect(() => {
+    loadSellers();
+  }, []);
+
+  // Cargar solicitudes cuando cambien los filtros
+  useEffect(() => {
+    if (!requestType) return;
+    
+    const timeoutId = setTimeout(() => {
+      handleRequests(requestType);
+    }, 300); // Debounce de 300ms
+    
+    return () => clearTimeout(timeoutId);
+  }, [requestType, currentPage, selectedSeller, selectedStatus, searchTerm]);
+
+  const loadSellers = async () => {
+    try {
+      const response = await apiSeller.getSellers();
+      setSellers(response?.items || []);
+    } catch (error) {
+      console.error('Error cargando vendedores:', error);
+      setSellers([]);
+    }
+  };
+
   const handleRedired = () => {
     navegate("/requests/new-request");
   };
 
   const handleRequestTypeChange = (e) => {
     setRequestType(e.target.value);
-    console.log("Tipo de solicitud:", e.target.value);
+    setCurrentPage(1); // Resetear página al cambiar tipo
   };
 
   const handleRequests = async (requestType) => {
-
-    setRequestsData([]);
-
-    if ("fixflip" === requestType) {
-
-      const data = await apiFixflip.getFixflips({
+    if (!requestType) return;
+    
+    try {
+      const params = {
         skip: (currentPage - 1) * itemsPerPage,
         limit: itemsPerPage,
-      });
+        seller_id: selectedSeller || undefined,
+        status: selectedStatus || undefined,
+        search: searchTerm || undefined
+      };
+
+      let data;
+      switch (requestType) {
+        case "fixflip":
+          data = await apiFixflip.getFixflips(params);
+          break;
+        case "dscr":
+          data = await apiDscr.getDscrs(params);
+          break;
+        case "construction":
+          data = await apiConstruction.getConstructions(params);
+          break;
+        default:
+          data = [];
+      }
+      
       setRequestsData(data);
-      // Aquí puedes manejar los datos obtenidos de fixflip
-    } else if ("dscr" === requestType) {
-      const data = await apiDscr.getDscrs({
-        skip: (currentPage - 1) * itemsPerPage,
-        limit: itemsPerPage,
-      });
-      setRequestsData(data);
-      // Aquí puedes manejar los datos obtenidos de dscr
-    } else if ("construction" === requestType) {
-      const data = await apiConstruction.getConstructions({
-        skip: (currentPage - 1) * itemsPerPage,
-        limit: itemsPerPage,
-      });
-      setRequestsData(data);
-      // Aquí puedes manejar los datos obtenidos de construction
-    } else {
-      setRequestsData([]); // Si no hay tipo de solicitud seleccionado, resetea los datos
+    } catch (error) {
+      console.error('Error cargando solicitudes:', error);
+      setRequestsData([]);
     }
   };
 
@@ -137,21 +173,6 @@ const RequestLoan = () => {
     handleRequests(requestType || "dscr");
   };
 
-  useEffect(() => {
-    handleRequests(requestType || "dscr");
-    // eslint-disable-next-line
-  }, [currentPage, requestType]);
-
-  // Datos de ejemplo para la tabla (reemplaza con tus datos reales)
-
-  // // Lógica de paginación
-  // const indexOfLastItem = currentPage * itemsPerPage;
-  // const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  // const currentItems = clientsData.slice(indexOfFirstItem, indexOfLastItem);
-  // const totalPages = Math.ceil(clientsData.length / itemsPerPage);
-
-  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
   // Formateador de moneda USD
   const formatUSD = (value) => {
     if (!value || isNaN(Number(value))) return "$0.00";
@@ -172,6 +193,7 @@ const RequestLoan = () => {
         <table className="table table-bordered table-hover">
           <thead className="sticky-top">
             <tr>
+              <th style={{ color: "#1B2559" }}>ID</th>
               <th style={{ color: "#1B2559" }}>Radicado</th>
               <th style={{ color: "#1B2559" }}>Nombre Completo</th>
               <th style={{ color: "#1B2559" }}>Email</th>
@@ -187,6 +209,7 @@ const RequestLoan = () => {
             {data && data.length > 0 ? (
               data.map((request) => (
                 <tr key={request.id}>
+                  <td><strong>{request.id}</strong></td>
                   <td>{request.radicado}</td>
                   <td>{request?.client?.full_name}</td>
                   <td>{request?.client?.email}</td>
@@ -207,7 +230,7 @@ const RequestLoan = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={9}>No hay solicitudes fixflip</td>
+                <td colSpan={10}>No hay solicitudes fixflip</td>
               </tr>
             )}
           </tbody>
@@ -218,6 +241,7 @@ const RequestLoan = () => {
         <table className="table table-bordered table-hover">
           <thead className="sticky-top">
             <tr>
+              <th style={{ color: "#1B2559" }}>ID</th>
               <th style={{ color: "#1B2559" }}>Radicado</th>
               <th style={{ color: "#1B2559" }}>Nombre Completo</th>
               <th style={{ color: "#1B2559" }}>Email</th>
@@ -233,6 +257,7 @@ const RequestLoan = () => {
             {data && data.length > 0 ? (
               data.map((request) => (
                 <tr key={request.id}>
+                  <td><strong>{request.id}</strong></td>
                   <td>{request.radicado}</td>
                   <td>{request?.client?.full_name}</td>
                   <td>{request?.client?.email}</td>
@@ -253,7 +278,7 @@ const RequestLoan = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={9}>No hay solicitudes construction</td>
+                <td colSpan={10}>No hay solicitudes construction</td>
               </tr>
             )}
           </tbody>
@@ -265,6 +290,7 @@ const RequestLoan = () => {
         <table className="table table-bordered table-hover">
           <thead className="sticky-top">
             <tr>
+              <th style={{ color: "#1B2559" }}>ID</th>
               <th style={{ color: "#1B2559" }}>Radicado</th>
               <th style={{ color: "#1B2559" }}>Nombre Completo</th>
               <th style={{ color: "#1B2559" }}>Email</th>
@@ -280,6 +306,7 @@ const RequestLoan = () => {
             {data && data.length > 0 ? (
               data.map((request) => (
                 <tr key={request.id}>
+                  <td><strong>{request.id}</strong></td>
                   <td>{request.radicado}</td>
                   <td>{request?.client.full_name}</td>
                   <td>{request?.client.email}</td>
@@ -300,7 +327,7 @@ const RequestLoan = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={9}>No hay solicitudes dscr</td>
+                <td colSpan={10}>No hay solicitudes dscr</td>
               </tr>
             )}
           </tbody>
@@ -330,33 +357,52 @@ const RequestLoan = () => {
               Crear solicitud
             </span>
           </button>
-   
-
         </div>
         <div className={`${"d-flex gap-3"}`}>
           <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
           </button>
-          <select name="" id="" onChange={handleRequestTypeChange} value={requestType || "dscr"}>
+          <select 
+            className="form-select my_title_color" 
+            onChange={handleRequestTypeChange} 
+            value={requestType}
+          >
             <option value="dscr">DSCR</option>
             <option value="fixflip">Fix & Flip</option>
             <option value="construction">Construcción</option>
           </select>
-          <select className="form-select my_title_color" name="Vendedor" id="">
-            <option value="Vendedor">Vendedor</option>
-            <option value="Vendedor1">Vendedor 1</option>
-            <option value="Vendedor2">Vendedor 2</option>
-            <option value="Vendedor3">Vendedor 3</option>
+          <select 
+            className="form-select my_title_color" 
+            value={selectedSeller}
+            onChange={(e) => setSelectedSeller(e.target.value)}
+          >
+            <option value="">Todos los vendedores</option>
+            {sellers.map((seller) => (
+              <option key={seller.id} value={seller.id}>
+                {seller.full_name}
+              </option>
+            ))}
           </select>
-          <select className="form-select my_title_color" name="Estado" id="">
-            <option value="Estado">Estado</option>
-            <option value="1">Activo</option>
-            <option value="0">Inactivo</option>
-            <option value="Pendiente">Pendiente</option>
+          <select 
+            className="form-select my_title_color" 
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="">Todos los estados</option>
+            <option value="PENDING">Pendiente</option>
+            <option value="IN_PROGRESS">En progreso</option>
+            <option value="COMPLETED">Completado</option>
+            <option value="CANCELLED">Cancelado</option>
           </select>
 
           <div className="input-group">
-            <input type="text" className="form-control" placeholder="Buscar" />
+            <input 
+              type="text" 
+              className="form-control" 
+              placeholder="Buscar" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <button className="btn btn-primary" type="button">
               <img src={LoupeIcon} alt="" width={18} />
             </button>

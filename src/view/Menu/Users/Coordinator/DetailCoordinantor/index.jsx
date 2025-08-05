@@ -18,7 +18,8 @@ const DetailCoordinator = () => {
     url_profile_photo: "",
     password: "",
     confirmarContrasena: "",
-    role: "Coordinador"
+    role: "Coordinador",
+    is_active: true
   });
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -54,7 +55,8 @@ const DetailCoordinator = () => {
             url_profile_photo: data.url_profile_photo || "",
             password: "",
             confirmarContrasena: "",
-            role: data.role || "Coordinador"
+            role: data.role || "Coordinador",
+            is_active: data.is_active !== undefined ? data.is_active : true
           });
         })
         .catch(() => setFeedback("Error al cargar el coordinador"))
@@ -67,10 +69,10 @@ const DetailCoordinator = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -85,17 +87,29 @@ const DetailCoordinator = () => {
     setFeedback("");
     setCompanyError("");
     setRoleError("");
+    
     if (!formData.full_name || !formData.phone || !formData.identification || !formData.address || !formData.company_id) {
       if (!formData.company_id) setCompanyError("Debes seleccionar una compañía");
       setFeedback("Todos los campos son obligatorios, incluyendo la compañía");
       setLoading(false);
       return;
     }
-    if (formData.password && formData.password !== formData.confirmarContrasena) {
-      setFeedback("Las contraseñas no coinciden");
-      setLoading(false);
-      return;
+
+    // Validación de contraseña si se está cambiando
+    if (formData.password) {
+      if (formData.password.length < 8) {
+        setFeedback("La contraseña debe tener al menos 8 caracteres");
+        setLoading(false);
+        return;
+      }
+      
+      if (formData.password !== formData.confirmarContrasena) {
+        setFeedback("Las contraseñas no coinciden");
+        setLoading(false);
+        return;
+      }
     }
+
     const payload = {
       full_name: formData.full_name,
       email: formData.email,
@@ -105,13 +119,19 @@ const DetailCoordinator = () => {
       company_id: Number(formData.company_id),
       url_profile_photo: formData.url_profile_photo,
       role: formData.role,
+      is_active: formData.is_active
     };
-    if (formData.password) payload.password = formData.password;
+    
+    if (formData.password) {
+      payload.password = formData.password;
+    }
+    
     if (!payload.role) {
       setRoleError("El campo rol es obligatorio");
       setLoading(false);
       return;
     }
+    
     try {
       await updateCoordinator(id, payload);
       setFeedback("¡Coordinador actualizado exitosamente!");
@@ -148,7 +168,6 @@ const DetailCoordinator = () => {
       <div className="container-fluid p-4">
         <div className="row">
           <div className="col-md-7 col-lg-6">
-           
             <form onSubmit={handleSubmit} autoComplete="off">
               <div className="row mb-2">
                 <div className="col-md-6 mb-3">
@@ -228,6 +247,30 @@ const DetailCoordinator = () => {
                   {companyError && <div className="invalid-feedback d-block">{companyError}</div>}
                 </div>
               </div>
+
+              {/* Campo de Estado */}
+              <div className="row mb-4">
+                <div className="col-12 mb-2">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="is_active"
+                      name="is_active"
+                      checked={formData.is_active}
+                      onChange={handleInputChange}
+                      disabled={!editMode}
+                    />
+                    <label className="form-check-label my_title_color" htmlFor="is_active">
+                      Coordinador Activo
+                    </label>
+                  </div>
+                  <small className="text-muted">
+                    {editMode ? "Desmarca esta casilla para desactivar el coordinador" : "Estado actual del coordinador"}
+                  </small>
+                </div>
+              </div>
+
               {roleError && (
                 <div className="alert alert-danger py-2 mb-3">{roleError}</div>
               )}

@@ -55,7 +55,43 @@ export const getProcessorAssignmentById = async (assignment_id) => {
 };
 
 // Desactivar una asignación existente
-export const deactivateProcessorAssignment = async (assignment_id) => {
-  const response = await api.put(`/api/v1/processors/assignments/${assignment_id}/deactivate`);
+export const deactivateProcessorAssignment = async (params) => {
+  const { processor_id, request_type, request_id, ...otherParams } = params;
+  
+  // Validaciones básicas
+  if (!processor_id || isNaN(Number(processor_id))) {
+    throw new Error('processor_id debe ser un número válido');
+  }
+  
+  if (!request_type) {
+    throw new Error('request_type es obligatorio');
+  }
+  
+  if (!request_id || isNaN(Number(request_id))) {
+    throw new Error('request_id debe ser un número válido');
+  }
+  
+  // Crear el objeto de parámetros limpio para la query string
+  const queryParams = {
+    processor_id: Number(processor_id),
+    request_type: request_type,
+    request_id: Number(request_id)
+  };
+  
+  // Agregar otros parámetros válidos si existen
+  if (otherParams && Object.keys(otherParams).length > 0) {
+    Object.assign(queryParams, otherParams);
+  }
+  
+  // Usar el endpoint correcto para desactivar asignaciones
+  const response = await api.put("/api/v1/processors/assignments/deactivate", null, { 
+    params: queryParams 
+  });
+  return response.data;
+};
+
+// Obtener procesadores asignados a una solicitud específica
+export const getProcessorsByRequest = async (params = {}) => {
+  const response = await api.get("/api/v1/processors/assignments", { params });
   return response.data;
 }; 

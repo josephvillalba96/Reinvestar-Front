@@ -1,14 +1,26 @@
 import api from "./instance";
 
-// Crear un nuevo enlace de solicitud
+// Obtener enlaces de solicitud
+export const getRequestLinks = async (params = {}) => {
+  const response = await api.get("/api/v1/request-links/", { params });
+  return response.data;
+};
+
+// Crear enlace de solicitud
 export const createRequestLink = async (data) => {
   const response = await api.post("/api/v1/request-links/", data);
   return response.data;
 };
 
-// Obtener todos los enlaces de solicitud (con filtros opcionales)
-export const getRequestLinks = async (params = {}) => {
-  const response = await api.get("/api/v1/request-links/", { params });
+// Obtener enlace por token
+export const getRequestLinkByToken = async (token) => {
+  const response = await api.get(`/api/v1/request-links/token/${token}`);
+  return response.data;
+};
+
+// Enviar enlace por email
+export const sendRequestLink = async (data) => {
+  const response = await api.post("/api/v1/request-links/send", data);
   return response.data;
 };
 

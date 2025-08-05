@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import Login from './view/Login'
 import Layout from './view/Layout'
-import DetalleSolicitud from './view/RequestDeatils'
+import DetalleSolicitud from './view/Menu/RequestLoan/RequestDeatils'
 import RecoverPassword from './view/RecoverPassword'
 import RecoverConfirmation from './view/RecoverConfirmation'
 import Clients from './view/Menu/Clients'
@@ -23,14 +23,8 @@ import DetailSeller from './view/Menu/Users/Sellers/DetailsSeller'
 import DetailCoordinator from './view/Menu/Users/Coordinator/DetailCoordinantor'
 import DetailUserSystem from './view/Menu/Users/System/DetailUserSystem'
 import DetailProcesor from './view/Menu/Users/Procesors/DetailProcesor'
-
-const Dashboard = () => <h1>DashBoard</h1>
-const Parameters = () => <h1>Parameters</h1>
-
-// function PrivateRoute() {
-//   const token = localStorage.getItem('token');
-//   return token ? <Outlet /> : <Navigate to="/login" replace />;
-// }
+import Parameters from './view/Menu/Parameters'
+import Dashboard from './view/Menu/Dashboard'
 
 function App() {
   return (
@@ -43,7 +37,6 @@ function App() {
         {/* Rutas privadas */}
         <Route element={<PrivateRoute />}> 
           <Route path="/" element={<Layout />} >
-            <Route path="request-details" element={<DetalleSolicitud />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="requests" element={<RequestLoan />} />
             <Route path="requests/:type/:id/details" element={<DetalleSolicitud />} />

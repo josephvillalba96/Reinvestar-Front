@@ -66,7 +66,7 @@ const CreateRequest = () => {
                 Documentos
               </button>
             </li>
-            <li className="nav-item" role="presentation">
+            {/* <li className="nav-item" role="presentation">
               <button
                 className={`nav-link${activeTab === "contact" ? " active" : ""}`}
                 id="contact-tab"
@@ -80,22 +80,7 @@ const CreateRequest = () => {
               >
                 Pipeline
               </button>
-            </li>
-            <li className="nav-item" role="presentation">
-              <button
-                className={`nav-link${activeTab === "gestion" ? " active" : ""}`}
-                id="gestion-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#gestion"
-                type="button"
-                role="tab"
-                aria-controls="gestion"
-                aria-selected={activeTab === "gestion"}
-                onClick={() => setActiveTab("gestion")}
-              >
-                Gestión Solicitud
-              </button>
-            </li>
+            </li> */}
           </ul>
           <div className="tab-content" id="myTabContent">
             <div
@@ -116,22 +101,14 @@ const CreateRequest = () => {
             >
               <DocumentsRequest requestId={createdRequestId} requestType={createdRequestType}/>
             </div>
-            <div
+            {/* <div
               className={`tab-pane fade${activeTab === "contact" ? " show active" : ""}`}
               id="contact"
               role="tabpanel"
               aria-labelledby="contact-tab"
             >
               <PipelineRequest />
-            </div>
-            <div
-              className={`tab-pane fade${activeTab === "gestion" ? " show active" : ""}`}
-              id="gestion"
-              role="tabpanel"
-              aria-labelledby="gestion-tab"
-            >
-              <div>Gestión de la solicitud aquí</div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

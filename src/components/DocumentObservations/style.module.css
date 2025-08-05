@@ -1,0 +1,107 @@
+.container {
+  position: relative;
+  margin: 10px 0;
+}
+
+.toggleButton {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.toggleButton:hover {
+  background-color: #45a049;
+}
+
+.observationsPanel {
+  position: absolute;
+  right: 0;
+  width: 300px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  z-index: 100;
+  margin-top: 5px;
+}
+
+.observationsList {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.observationItem {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 8px;
+}
+
+.observationItem p {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+}
+
+.observationItem small {
+  color: #666;
+  font-size: 12px;
+}
+
+.newObservation {
+  display: flex;
+  flex-direction: column;
+}
+
+.observationInput {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-height: 60px;
+  margin-bottom: 8px;
+  resize: vertical;
+}
+
+.addButton {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.addButton:hover {
+  background-color: #0b7dda;
+}
+
+.addButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.deleteButton {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.deleteButton:hover {
+  background-color: #d32f2f;
+}
+
+.error {
+  color: #f44336;
+  font-size: 12px;
+  margin-top: 5px;
+}

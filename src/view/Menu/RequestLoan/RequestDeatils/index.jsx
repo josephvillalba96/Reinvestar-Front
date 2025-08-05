@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
-import Back from "../../assets/back.svg";
+import Back from "../../../../assets/back.svg";
 import styles from "./DetalleSolicitud.module.css";
 import { useNavigate, useParams } from "react-router-dom";
-import DocumentsRequest from "../Menu/RequestLoan/DetailRequest/DocumentsRequest";
-import PipelineRequest from "../Menu/RequestLoan/DetailRequest/PipelineRequest";
-import { getDscrById } from "../../Api/dscr";
-import { getClientById } from "../../Api/client";
-import DscrForm from "../Menu/RequestLoan/DetailRequest/FormRequest/Dscr";
-import FixflipForm from "../Menu/RequestLoan/DetailRequest/FormRequest/Fixflip";
-import ConstructionForm from "../Menu/RequestLoan/DetailRequest/FormRequest/Construction";
-import { getFixflipById } from "../../Api/fixflip";
-import { getConstructionById } from "../../Api/construction";
+import DocumentsRequest from "./DocumentsRequest";
+import PipelineRequest from "./PipelineRequest";
+import ProcessorForm from "./Processor";
+import { getDscrById } from "../../../../Api/dscr";
+import { getClientById } from "../../../../Api/client";
+import DscrForm from "./FormRequest/Dscr";
+import FixflipForm from "./FormRequest/Fixflip";
+import ConstructionForm from "./FormRequest/Construction";
+import { getFixflipById } from "../../../../Api/fixflip";
+import { getConstructionById } from "../../../../Api/construction";
 
 const DetalleSolicitud = () => {
   const navegate = useNavigate();
@@ -33,11 +34,15 @@ const DetalleSolicitud = () => {
         }
         setSolicitud(data);
       } catch (e) {
+        console.error('Error fetching data:', e);
         setSolicitud(null);
       }
       setLoading(false);
     };
-    fetchData();
+    
+    if (id && type) {
+      fetchData();
+    }
   }, [id, type]);
 
   const handleback = () => {
@@ -46,14 +51,26 @@ const DetalleSolicitud = () => {
 
   return (
     <>
-      <div className="internal_layout">
+      <div className={`${styles.scroll_section} internal_layout`}>
         <div className="d-flex align-items-center p-5">
           <button className="btn border-none" onClick={handleback}>
             <img src={Back} alt="back" width={35} />
           </button>
-          <h2 className={`${styles.title} fw-bolder my_title_color`}>
-            Detalle de solicitud
-          </h2>
+          <div className="d-flex flex-column">
+            <h2 className={`${styles.title} fw-bolder my_title_color`}>
+              Detalle de solicitud
+            </h2>
+            {solicitud && (
+              <div className="d-flex align-items-center gap-3 mt-2">
+                <span className="badge bg-primary fs-6">
+                  <strong>ID: {solicitud.id}</strong>
+                </span>
+                <span className="badge bg-secondary fs-6">
+                  <strong>Tipo: {type?.toUpperCase()}</strong>
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="d-flex flex-column justify-content-center mx-5">
           <ul className="nav nav-tabs mb-2" id="myTab" role="tablist">
@@ -89,6 +106,21 @@ const DetalleSolicitud = () => {
             </li>
             <li className="nav-item" role="presentation">
               <button
+                className={`nav-link${activeTab === "processor" ? " active" : ""}`}
+                id="processor-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#processor"
+                type="button"
+                role="tab"
+                aria-controls="processor"
+                aria-selected={activeTab === "processor"}
+                onClick={() => setActiveTab("processor")}
+              >
+                Procesador
+              </button>
+            </li>
+            <li className="nav-item" role="presentation">
+              <button
                 className={`nav-link${activeTab === "contact" ? " active" : ""}`}
                 id="contact-tab"
                 data-bs-toggle="tab"
@@ -102,21 +134,6 @@ const DetalleSolicitud = () => {
                 Pipeline
               </button>
             </li>
-            <li className="nav-item" role="presentation">
-              <button
-                className={`nav-link${activeTab === "gestion" ? " active" : ""}`}
-                id="gestion-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#gestion"
-                type="button"
-                role="tab"
-                aria-controls="gestion"
-                aria-selected={activeTab === "gestion"}
-                onClick={() => setActiveTab("gestion")}
-              >
-                Gestión Solicitud
-              </button>
-            </li>
           </ul>
           <div className="tab-content" id="myTabContent">
             <div
@@ -125,6 +142,7 @@ const DetalleSolicitud = () => {
               role="tabpanel"
               aria-labelledby="home-tab"
             >
+              
               <div className={`d-flex justify-content-center aling-items-center ${styles.container_section_request}`}>
                 {loading ? (
                   <div>Cargando...</div>
@@ -148,12 +166,20 @@ const DetalleSolicitud = () => {
               <DocumentsRequest requestId={id} requestType={type} />
             </div>
             <div
+              className={`tab-pane fade${activeTab === "processor" ? " show active" : ""}`}
+              id="processor"
+              role="tabpanel"
+              aria-labelledby="processor-tab"
+            >
+              <ProcessorForm requestId={id} requestType={type} />
+            </div>
+            <div
               className={`tab-pane fade${activeTab === "contact" ? " show active" : ""}`}
               id="contact"
               role="tabpanel"
               aria-labelledby="contact-tab"
             >
-              <PipelineRequest />
+              <PipelineRequest requestId={id} requestType={type} />
             </div>
             <div
               className={`tab-pane fade${activeTab === "gestion" ? " show active" : ""}`}
