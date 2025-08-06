@@ -173,12 +173,12 @@ const Sellers = () => {
                     </span>
                   </td>
                   <td>
-                    <button
+                    {/* <button
                       className="btn btn-sm me-1"
                       style={{ backgroundColor: "#1B2559" }}
                     >
                       <img src={BookCheck} alt="check-data" width={15} />
-                    </button>
+                    </button> */}
                     <button
                       className="btn btn-sm"
                       style={{ backgroundColor: "#1B2559" }}

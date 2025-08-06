@@ -11,8 +11,6 @@ import * as apiFixflip from "../../../Api/fixflip";
 import * as apiDscr from "../../../Api/dscr";
 import * as apiConstruction from "../../../Api/construction";
 import * as apiSeller from "../../../Api/seller";
-import Notification from "../../../components/Notification";
-import MyModal from "../../../components/Popup";
 import { getProcessors, assignProcessor } from "../../../Api/procesor";
 
 const RequestLoan = () => {
@@ -130,14 +128,19 @@ const RequestLoan = () => {
 
   const closeModalAndCleanup = () => {
     setShowAssignPopup(false);
+    setSelectedProcessor(null);
+    setAssignSuccess("");
+    setAssignError("");
+    
     // Elimina manualmente el backdrop de Bootstrap si existe
     const backdrops = document.querySelectorAll('.modal-backdrop');
     backdrops.forEach(b => b.parentNode && b.parentNode.removeChild(b));
     document.body.classList.remove('modal-open');
+    
     // Si hubo éxito, muestra notificación global
     if (assignSuccess) {
       setGlobalSuccess(assignSuccess);
-      setTimeout(() => setGlobalSuccess(""), 2000);
+      setTimeout(() => setGlobalSuccess(""), 3000);
     }
   };
 
@@ -153,15 +156,18 @@ const RequestLoan = () => {
         fixflip_request_id: assignRequest.type === "fixflip" ? parseInt(assignRequest.id, 10) : undefined,
         construction_request_id: assignRequest.type === "construction" ? parseInt(assignRequest.id, 10) : undefined
       });
-      setAssignSuccess("Procesador asignado exitosamente");
+      setAssignSuccess("¡Procesador asignado exitosamente!");
+      
+      // Cerrar modal después de 2 segundos
       setTimeout(() => {
-        setAssignSuccess("");
         closeModalAndCleanup();
-      }, 1500);
-    } catch {
-      setAssignError("Error al asignar procesador");
+      }, 2000);
+    } catch (error) {
+      console.error('Error asignando procesador:', error);
+      setAssignError("Error al asignar procesador. Verifica que el procesador esté disponible.");
+    } finally {
+      setAssigning(false);
     }
-    setAssigning(false);
   };
 
   // Lógica de paginación
@@ -415,36 +421,138 @@ const RequestLoan = () => {
         {renderTable()}
       </div>
       <Pagination currentPage={currentPage} totalPages={totalPages} handlePaginate={paginate} />
+      
+      {/* Modal de asignación de procesadores */}
       {showAssignPopup && (
-        <MyModal show={showAssignPopup} setShow={val => { setShowAssignPopup(val); if (!val) closeModalAndCleanup(); }} title="Asignar procesador">
-          {assignSuccess && <Notification type="success" message={assignSuccess} />}
-          {assignError && <Notification type="error" message={assignError} />}
-          <select className="form-select my-3" value={selectedProcessor || ""} onChange={e => setSelectedProcessor(e.target.value)}>
-            <option value="">Selecciona un procesador</option>
-            {(Array.isArray(processors) ? processors : []).map(proc => (
-              <option key={proc.id} value={proc.id}>{proc.full_name || proc.name}</option>
-            ))}
-          </select>
-          {/* Mostrar resumen del procesador seleccionado */}
-          {selectedProcessor && (() => {
-            const proc = (Array.isArray(processors) ? processors : []).find(p => String(p.id) === String(selectedProcessor));
-            if (!proc) return null;
-            return (
-              <div className="mb-3 p-2 border rounded bg-light">
-                <div><b>Procesador seleccionado:</b></div>
-                <div><b>Nombre:</b> {proc.full_name || proc.name}</div>
-                <div><b>Email:</b> {proc.email || '-'}</div>
-                <div><b>Teléfono:</b> {proc.phone || '-'}</div>
+        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered" style={{ zIndex: 1051 }}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="bi bi-person-plus me-2"></i>
+                  Asignar Procesador
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={closeModalAndCleanup}
+                  disabled={assigning}
+                />
               </div>
-            );
-          })()}
-          <button className="btn btn-primary" onClick={handleAssign} disabled={!selectedProcessor || assigning}>
-            {assigning ? "Asignando..." : "Asignar"}
-          </button>
-          <button className="btn btn-secondary ms-2" onClick={closeModalAndCleanup} disabled={assigning}>Cancelar</button>
-        </MyModal>
+              <div className="modal-body">
+                {/* Notificaciones */}
+                {assignSuccess && (
+                  <div className="alert alert-success alert-dismissible fade show" role="alert">
+                    <i className="bi bi-check-circle me-2"></i>
+                    {assignSuccess}
+                    <button type="button" className="btn-close" onClick={() => setAssignSuccess("")}></button>
+                  </div>
+                )}
+                {assignError && (
+                  <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i className="bi bi-exclamation-circle me-2"></i>
+                    {assignError}
+                    <button type="button" className="btn-close" onClick={() => setAssignError("")}></button>
+                  </div>
+                )}
+
+                {/* Selector de procesador */}
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Seleccionar Procesador</label>
+                  <select 
+                    className="form-select" 
+                    value={selectedProcessor || ""} 
+                    onChange={e => setSelectedProcessor(e.target.value)}
+                    disabled={assigning}
+                  >
+                    <option value="">Selecciona un procesador</option>
+                    {(Array.isArray(processors) ? processors : []).map(proc => (
+                      <option key={proc.id} value={proc.id}>
+                        {proc.full_name || proc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Información del procesador seleccionado */}
+                {selectedProcessor && (() => {
+                  const proc = (Array.isArray(processors) ? processors : []).find(p => String(p.id) === String(selectedProcessor));
+                  if (!proc) return null;
+                  return (
+                    <div className="mb-3 p-3 border rounded bg-light">
+                      <h6 className="fw-bold text-primary mb-2">
+                        <i className="bi bi-person me-2"></i>
+                        Procesador Seleccionado
+                      </h6>
+                      <div className="row">
+                        <div className="col-md-6">
+                          <p className="mb-1"><strong>Nombre:</strong> {proc.full_name || proc.name}</p>
+                          <p className="mb-1"><strong>Email:</strong> {proc.email || '-'}</p>
+                        </div>
+                        <div className="col-md-6">
+                          <p className="mb-1"><strong>Teléfono:</strong> {proc.phone || '-'}</p>
+                          <p className="mb-1">
+                            <strong>Estado:</strong> 
+                            <span className={`badge ${proc.is_active ? 'bg-success' : 'bg-secondary'} ms-2`}>
+                              {proc.is_active ? "Activo" : "Inactivo"}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Información de la solicitud */}
+                <div className="alert alert-info">
+                  <i className="bi bi-info-circle me-2"></i>
+                  <strong>Solicitud:</strong> #{assignRequest.id} - {assignRequest.type?.toUpperCase()}
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={closeModalAndCleanup} 
+                  disabled={assigning}
+                >
+                  <i className="bi bi-x me-2"></i>
+                  Cancelar
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={handleAssign} 
+                  disabled={!selectedProcessor || assigning}
+                >
+                  {assigning ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Asignando...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-person-plus me-2"></i>
+                      Asignar Procesador
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
-      {globalSuccess && <Notification type="success" message={globalSuccess} />}
+      
+      {/* Notificación global */}
+      {globalSuccess && (
+        <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 1060 }}>
+          <div className="alert alert-success alert-dismissible fade show" role="alert">
+            <i className="bi bi-check-circle me-2"></i>
+            {globalSuccess}
+            <button type="button" className="btn-close" onClick={() => setGlobalSuccess("")}></button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,8 +4,7 @@ import styles from "./style.module.css";
 
 import Logout from "../../assets/Logout.svg";
 
-// image- profile
-import UserProfile from "../../assets/profil-simulate.png";
+// image- profile (removed - using Bootstrap icon instead)
 
 
 //icons
@@ -235,7 +234,7 @@ const Layout = ({ children }) => {
         <header className={`${"header"} ${styles.header_border_none}`}>
           <div className="user-info">
             <span>Hola, {user.full_name}</span>
-            <img src={UserProfile} alt="User avatar" />
+            <i className="bi bi-person-circle" style={{ fontSize: '2rem', color: '#1B2559' }}></i>
           </div>
         </header>
 
