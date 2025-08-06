@@ -19,6 +19,7 @@ import CreateProcesor from './view/Menu/Users/Procesors/CreateProcesor'
 import System from './view/Menu/Users/System'
 import CreateUserSystem from './view/Menu/Users/System/CreateUserSystem'
 import PrivateRoute from './components/PrivateRouter'
+import AuthGuard from './components/AuthGuard'
 import DetailSeller from './view/Menu/Users/Sellers/DetailsSeller'
 import DetailCoordinator from './view/Menu/Users/Coordinator/DetailCoordinantor'
 import DetailUserSystem from './view/Menu/Users/System/DetailUserSystem'
@@ -30,13 +31,16 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Rutas públicas */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/recover-password" element={<RecoverPassword/>} />
-        <Route path="/recover-confirmation" element={<RecoverConfirmation/>} />
+        {/* Rutas públicas protegidas por AuthGuard */}
+        <Route element={<AuthGuard />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/recover-password" element={<RecoverPassword/>} />
+          <Route path="/recover-confirmation" element={<RecoverConfirmation/>} />
+        </Route>
         {/* Rutas privadas */}
         <Route element={<PrivateRoute />}> 
           <Route path="/" element={<Layout />} >
+            <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="requests" element={<RequestLoan />} />
             <Route path="requests/:type/:id/details" element={<DetalleSolicitud />} />

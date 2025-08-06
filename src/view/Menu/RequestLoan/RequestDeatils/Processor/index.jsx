@@ -18,8 +18,35 @@ const ProcessorForm = ({ requestId, requestType }) => {
   const [showAssignForm, setShowAssignForm] = useState(false);
 
   useEffect(() => {
-    loadProcessors();
-    loadAssignments();
+    console.log('useEffect ejecutado con:', { requestId, requestType });
+    
+    // Limpiar el estado antes de cargar nuevos datos
+    setAssignments([]);
+    setProcessors([]);
+    setSelectedProcessor("");
+    setFeedback("");
+    setWorkloadData(null);
+    setShowAssignForm(false);
+    
+    // Solo cargar datos si tenemos requestId y requestType válidos
+    if (requestId && requestType) {
+      console.log('Cargando datos para solicitud:', { requestId, requestType });
+      
+      // Cargar datos inmediatamente
+      const loadData = async () => {
+        try {
+          await Promise.all([loadProcessors(), loadAssignments()]);
+        } catch (error) {
+          console.error('Error cargando datos:', error);
+          setAssignments([]);
+          setProcessors([]);
+        }
+      };
+      
+      loadData();
+    } else {
+      console.log('Faltan parámetros para cargar datos:', { requestId, requestType });
+    }
   }, [requestId, requestType]);
 
   const loadProcessors = async () => {
@@ -45,6 +72,12 @@ const ProcessorForm = ({ requestId, requestType }) => {
 
   const loadAssignments = async () => {
     try {
+      if (!requestId || !requestType) {
+        console.log('Faltan parámetros para cargar asignaciones:', { requestId, requestType });
+        setAssignments([]);
+        return;
+      }
+
       const params = {};
       
       // Agregar el ID de solicitud correspondiente según el tipo
@@ -64,18 +97,50 @@ const ProcessorForm = ({ requestId, requestType }) => {
           return;
       }
       
+      console.log('Cargando asignaciones para:', { requestId, requestType, params });
       const data = await getProcessorsByRequest(params);
+      console.log('Datos de asignaciones recibidos:', data);
       
       // Asegurar que data sea un array
+      let assignmentsData = [];
       if (Array.isArray(data)) {
-        setAssignments(data);
+        assignmentsData = data;
       } else if (data && Array.isArray(data.items)) {
-        setAssignments(data.items);
+        assignmentsData = data.items;
       } else if (data && Array.isArray(data.results)) {
-        setAssignments(data.results);
+        assignmentsData = data.results;
       } else {
-        setAssignments([]);
+        assignmentsData = [];
       }
+
+      // Filtrar asignaciones para asegurar que solo se muestren las que corresponden a esta solicitud
+      // y que estén activas
+      assignmentsData = assignmentsData.filter(assignment => {
+        // Verificar que la asignación tenga los datos necesarios
+        if (!assignment) {
+          return false;
+        }
+
+        // Verificar que el ID de la solicitud coincida según el tipo
+        let matchesRequest = false;
+        switch (requestType) {
+          case "dscr":
+            matchesRequest = parseInt(assignment.dscr_request_id) === parseInt(requestId);
+            break;
+          case "fixflip":
+            matchesRequest = parseInt(assignment.fixflip_request_id) === parseInt(requestId);
+            break;
+          case "construction":
+            matchesRequest = parseInt(assignment.construction_request_id) === parseInt(requestId);
+            break;
+        }
+
+        // Solo mostrar asignaciones que coincidan con la solicitud actual y estén activas
+        return matchesRequest && assignment.is_active;
+      });
+      
+      console.log('Asignaciones filtradas:', assignmentsData);
+      setAssignments(assignmentsData);
     } catch (error) {
       console.error('Error cargando asignaciones:', error);
       setAssignments([]);

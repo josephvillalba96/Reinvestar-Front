@@ -122,6 +122,15 @@ const Layout = ({ children }) => {
           icon: RequestIcon,
         },
       ];
+    } else if (role === "Procesador") {
+      filteredRoutes = [
+        {
+          id: 2,
+          link: "/requests",
+          name: "Solicitudes",
+          icon: RequestIcon,
+        },
+      ];
     } else if (role === "Coordinador") {
       filteredRoutes = [
         {

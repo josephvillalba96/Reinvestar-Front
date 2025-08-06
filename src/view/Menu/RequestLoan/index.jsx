@@ -35,10 +35,23 @@ const RequestLoan = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Cargar vendedores al inicio
+  // Estado para el usuario actual
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Cargar usuario actual al inicio
   useEffect(() => {
-    loadSellers();
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      setCurrentUser(JSON.parse(userData));
+    }
   }, []);
+
+  // Cargar vendedores solo si el usuario es admin, coordinador o procesador
+  useEffect(() => {
+    if (currentUser && (currentUser.roles?.[0] === "Admin" || currentUser.roles?.[0] === "Coordinador" || currentUser.roles?.[0] === "Procesador")) {
+      loadSellers();
+    }
+  }, [currentUser]);
 
   // Cargar solicitudes cuando cambien los filtros
   useEffect(() => {
@@ -342,6 +355,11 @@ const RequestLoan = () => {
     }
   };
 
+  // Función para verificar si el usuario puede ver el filtro de vendedores
+  const canViewSellerFilter = () => {
+    return currentUser && (currentUser.roles?.[0] === "Admin" || currentUser.roles?.[0] === "Coordinador" || currentUser.roles?.[0] === "Procesador");
+  };
+
   return (
     <div
       className={`${"d-flex flex-column justify-content-center align-items-center text-center"} internal_layout`}
@@ -377,18 +395,20 @@ const RequestLoan = () => {
             <option value="fixflip">Fix & Flip</option>
             <option value="construction">Construcción</option>
           </select>
-          <select 
-            className="form-select my_title_color" 
-            value={selectedSeller}
-            onChange={(e) => setSelectedSeller(e.target.value)}
-          >
-            <option value="">Todos los vendedores</option>
-            {sellers.map((seller) => (
-              <option key={seller.id} value={seller.id}>
-                {seller.full_name}
-              </option>
-            ))}
-          </select>
+          {canViewSellerFilter() && (
+            <select 
+              className="form-select my_title_color" 
+              value={selectedSeller}
+              onChange={(e) => setSelectedSeller(e.target.value)}
+            >
+              <option value="">Todos los vendedores</option>
+              {sellers.map((seller) => (
+                <option key={seller.id} value={seller.id}>
+                  {seller.full_name}
+                </option>
+              ))}
+            </select>
+          )}
           <select 
             className="form-select my_title_color" 
             value={selectedStatus}

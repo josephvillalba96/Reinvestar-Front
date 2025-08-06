@@ -19,6 +19,7 @@ const DetalleSolicitud = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [solicitud, setSolicitud] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,9 +46,29 @@ const DetalleSolicitud = () => {
     }
   }, [id, type]);
 
+  // Cargar usuario actual al inicio
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      setCurrentUser(JSON.parse(userData));
+    }
+  }, []);
+
   const handleback = () => {
     navegate("/requests");
   };
+
+  // Función para verificar si el usuario puede ver el tab de procesadores
+  const canViewProcessorTab = () => {
+    return currentUser && currentUser.roles?.[0] !== "Procesador";
+  };
+
+  // Redirigir al tab home si el usuario es procesador y está en el tab de procesadores
+  useEffect(() => {
+    if (currentUser && currentUser.roles?.[0] === "Procesador" && activeTab === "processor") {
+      setActiveTab("home");
+    }
+  }, [currentUser, activeTab]);
 
   return (
     <>
@@ -104,21 +125,23 @@ const DetalleSolicitud = () => {
                 Documentos
               </button>
             </li>
-            <li className="nav-item" role="presentation">
-              <button
-                className={`nav-link${activeTab === "processor" ? " active" : ""}`}
-                id="processor-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#processor"
-                type="button"
-                role="tab"
-                aria-controls="processor"
-                aria-selected={activeTab === "processor"}
-                onClick={() => setActiveTab("processor")}
-              >
-                Procesador
-              </button>
-            </li>
+            {canViewProcessorTab() && (
+              <li className="nav-item" role="presentation">
+                <button
+                  className={`nav-link${activeTab === "processor" ? " active" : ""}`}
+                  id="processor-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#processor"
+                  type="button"
+                  role="tab"
+                  aria-controls="processor"
+                  aria-selected={activeTab === "processor"}
+                  onClick={() => setActiveTab("processor")}
+                >
+                  Procesador
+                </button>
+              </li>
+            )}
             <li className="nav-item" role="presentation">
               <button
                 className={`nav-link${activeTab === "contact" ? " active" : ""}`}
@@ -165,14 +188,16 @@ const DetalleSolicitud = () => {
             >
               <DocumentsRequest requestId={id} requestType={type} />
             </div>
-            <div
-              className={`tab-pane fade${activeTab === "processor" ? " show active" : ""}`}
-              id="processor"
-              role="tabpanel"
-              aria-labelledby="processor-tab"
-            >
-              <ProcessorForm requestId={id} requestType={type} />
-            </div>
+            {canViewProcessorTab() && (
+              <div
+                className={`tab-pane fade${activeTab === "processor" ? " show active" : ""}`}
+                id="processor"
+                role="tabpanel"
+                aria-labelledby="processor-tab"
+              >
+                <ProcessorForm key={`${type}-${id}`} requestId={id} requestType={type} />
+              </div>
+            )}
             <div
               className={`tab-pane fade${activeTab === "contact" ? " show active" : ""}`}
               id="contact"

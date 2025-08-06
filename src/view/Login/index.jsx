@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import logo from '../../assets/logo.png';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { login } from '../../Api/auth';
+import { getMe } from '../../Api/user';
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -18,7 +19,16 @@ const Login = () => {
       const data = await login({ email, password });
       if (data && data.access_token) {
         localStorage.setItem("token", data.access_token);
-        navigate("/dashboard");
+        // Obtener el usuario y su rol
+        const user = await getMe();
+        localStorage.setItem("user", JSON.stringify(user));
+        
+        // Redirigir según el rol
+        if (user && user.roles && user.roles[0] === "Procesador") {
+          navigate("/requests");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         setError("Credenciales incorrectas");
       }
