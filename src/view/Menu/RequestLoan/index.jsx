@@ -192,15 +192,48 @@ const RequestLoan = () => {
     handleRequests(requestType || "dscr");
   };
 
-  // Formateador de moneda USD
-  const formatUSD = (value) => {
-    if (!value || isNaN(Number(value))) return "$0.00";
-    return Number(value).toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  // Formateador de valores monetarios
+  const formatMonetaryValue = (value) => {
+    if (!value || isNaN(Number(value)) || Number(value) === 0) {
+      return <span className="text-muted">Pendiente</span>;
+    }
+    const amount = Number(value);
+    let label, color;
+    
+    if (amount < 100000) {
+      label = "Bajo";
+      color = "text-success";
+    } else if (amount < 500000) {
+      label = "Medio";
+      color = "text-primary";
+    } else {
+      label = "Alto";
+      color = "text-danger";
+    }
+    
+    return <span className={color}>{label}</span>;
   };
-  // Formateador de porcentaje
+
+  // Formateador de porcentajes
   const formatPercent = (value) => {
-    if (!value || isNaN(Number(value))) return "0%";
-    return `${Number(value).toFixed(2)}%`;
+    if (!value || isNaN(Number(value)) || Number(value) === 0) {
+      return <span className="text-muted">Pendiente</span>;
+    }
+    const percent = Number(value);
+    let label, color;
+    
+    if (percent < 50) {
+      label = "Conservador";
+      color = "text-success";
+    } else if (percent < 75) {
+      label = "Moderado";
+      color = "text-primary";
+    } else {
+      label = "Agresivo";
+      color = "text-danger";
+    }
+    
+    return <span className={color}>{label}</span>;
   };
 
   // Renderiza la tabla según el tipo de solicitud
@@ -233,9 +266,9 @@ const RequestLoan = () => {
                   <td>{request?.client?.full_name}</td>
                   <td>{request?.client?.email}</td>
                   <td>{request?.client?.phone}</td>
-                  <td>{request.loan_amount === 0 ? "Pending" : request.loan_amount}</td>
-                  <td>{request.purchase_price === 0 ? "Pending" : request.purchase_price}</td>
-                  <td>{request.arv === 0 ? "Pending" : request.arv}</td>
+                  <td>{formatMonetaryValue(request.loan_amount)}</td>
+                  <td>{formatMonetaryValue(request.purchase_price)}</td>
+                  <td>{formatMonetaryValue(request.arv)}</td>
                   <td>{request.status}</td>
                   <td>
                     <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
@@ -281,9 +314,9 @@ const RequestLoan = () => {
                   <td>{request?.client?.full_name}</td>
                   <td>{request?.client?.email}</td>
                   <td>{request?.client?.phone}</td>
-                  <td>{request.loan_amount === 0 ? "Pending" : request.loan_amount}</td>
-                  <td>{request.property_value === 0 ? "Pending" : request.property_value}</td>
-                  <td>{request.construction_cost === 0 ? "Pending" : request.construction_cost}</td>
+                  <td>{formatMonetaryValue(request.loan_amount)}</td>
+                  <td>{formatMonetaryValue(request.property_value)}</td>
+                  <td>{formatMonetaryValue(request.construction_cost)}</td>
                   <td>{request.status}</td>
                   <td>
                     <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
@@ -330,8 +363,8 @@ const RequestLoan = () => {
                   <td>{request?.client.full_name}</td>
                   <td>{request?.client.email}</td>
                   <td>{request?.client.phone}</td>
-                  <td>{formatUSD(request.rent_amount)}</td>
-                  <td>{formatUSD(request.appraisal_value)}</td>
+                  <td>{formatMonetaryValue(request.rent_amount)}</td>
+                  <td>{formatMonetaryValue(request.appraisal_value)}</td>
                   <td>{formatPercent(request.ltv_request)}</td>
                   <td>{request.status}</td>
                   <td>
