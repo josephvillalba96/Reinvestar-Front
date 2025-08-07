@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { formatFileSize } from "../../../../../utils/fileUtils";
 import Load from "../../../../../assets/material-symbols_upload.svg";
 import Check from "../../../../../assets/lets-icons_check-fill.svg";
 import DocumentObservations from "../../../../../components/DocumentObservations";
@@ -329,7 +330,7 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                 type="button"
                 className="btn btn-primary px-4 py-2"
                 onClick={() => setShowModal(true)}
-                disabled={loading}
+                  disabled={loading}
                 style={{ borderRadius: '25px' }}
               >
                 <i className="fas fa-upload me-2"></i>
@@ -357,12 +358,20 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                     <div className="d-flex align-items-center justify-content-between w-100">
                       <div className="d-flex align-items-center flex-grow-1">
                         <img src={Check} alt="ok" width={20} className="me-3" />
-                        <div className="flex-grow-1">
-                          <div className="fw-bold">{doc.name}</div>
-                          <div className="text-muted small">
-                            {doc.type_document?.name || "Sin tipo"}
+                                                  <div className="flex-grow-1">
+                            <div className="fw-bold">{doc.name}</div>
+                            <div className="text-muted small d-flex gap-2">
+                              <span>{doc.type_document?.name || "Sin tipo"}</span>
+                              {doc.file_size && (
+                                <>
+                                  <span>•</span>
+                                  <span>
+                                    {formatFileSize(doc.file_size)}
+                                  </span>
+                                </>
+                      )}
+                    </div>
                           </div>
-                        </div>
                       </div>
                       <div className="d-flex align-items-center gap-2">
                         <button
@@ -411,8 +420,8 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                           style={{ borderRadius: '15px' }}
                         >
                           <i className="fas fa-trash me-1"></i>
-                          Eliminar
-                        </button>
+                        Eliminar
+                      </button>
                       </div>
                     </div>
                   </div>

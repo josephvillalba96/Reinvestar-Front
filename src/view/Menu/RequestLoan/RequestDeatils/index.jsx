@@ -65,10 +65,20 @@ const DetalleSolicitud = () => {
     return currentUser && currentUser.roles?.[0] !== "Procesador";
   };
 
+  // Función para verificar si el usuario puede ver el tab de estado
+  const canViewStatusTab = () => {
+    return currentUser && currentUser.roles?.[0] !== "Vendedor";
+  };
+
   // Redirigir al tab home si el usuario es procesador y está en el tab de procesadores
+  // o si es vendedor y está en el tab de estado
   useEffect(() => {
-    if (currentUser && currentUser.roles?.[0] === "Procesador" && activeTab === "processor") {
-      setActiveTab("home");
+    if (currentUser) {
+      const userRole = currentUser.roles?.[0];
+      if ((userRole === "Procesador" && activeTab === "processor") ||
+          (userRole === "Vendedor" && activeTab === "status")) {
+        setActiveTab("home");
+      }
     }
   }, [currentUser, activeTab]);
 
@@ -176,21 +186,23 @@ const DetalleSolicitud = () => {
                 </button>
               </li>
             )}
-            <li className="nav-item" role="presentation">
-              <button
-                className={`nav-link${activeTab === "status" ? " active" : ""}`}
-                id="status-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#status"
-                type="button"
-                role="tab"
-                aria-controls="status"
-                aria-selected={activeTab === "status"}
-                onClick={() => setActiveTab("status")}
-              >
-                Estado
-              </button>
-            </li>
+            {canViewStatusTab() && (
+              <li className="nav-item" role="presentation">
+                <button
+                  className={`nav-link${activeTab === "status" ? " active" : ""}`}
+                  id="status-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#status"
+                  type="button"
+                  role="tab"
+                  aria-controls="status"
+                  aria-selected={activeTab === "status"}
+                  onClick={() => setActiveTab("status")}
+                >
+                  Estado
+                </button>
+              </li>
+            )}
           </ul>
           <div className="tab-content" id="myTabContent">
             <div
@@ -254,24 +266,26 @@ const DetalleSolicitud = () => {
                 />
               </div>
             )}
-            <div
-              className={`tab-pane fade${activeTab === "status" ? " show active" : ""}`}
-              id="status"
-              role="tabpanel"
-              aria-labelledby="status-tab"
-            >
-              <StatusManagement 
-                requestId={id} 
-                requestType={type} 
-                currentStatus={solicitud?.status || "PENDING"}
-                onStatusChange={(newStatus) => {
-                  setSolicitud(prev => ({
-                    ...prev,
-                    status: newStatus
-                  }));
-                }}
-              />
-            </div>
+            {canViewStatusTab() && (
+              <div
+                className={`tab-pane fade${activeTab === "status" ? " show active" : ""}`}
+                id="status"
+                role="tabpanel"
+                aria-labelledby="status-tab"
+              >
+                <StatusManagement 
+                  requestId={id} 
+                  requestType={type} 
+                  currentStatus={solicitud?.status || "PENDING"}
+                  onStatusChange={(newStatus) => {
+                    setSolicitud(prev => ({
+                      ...prev,
+                      status: newStatus
+                    }));
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

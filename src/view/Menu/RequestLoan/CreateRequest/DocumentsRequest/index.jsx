@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { formatFileSize } from "../../../../../utils/fileUtils";
 import Load from "../../../../../assets/material-symbols_upload.svg";
 import Check from "../../../../../assets/lets-icons_check-fill.svg";
 import VerifyIcon from "../../../../../assets/verify-icon.png";
@@ -316,11 +317,11 @@ const DocumentsRequest = ({ requestId, requestType }) => {
   };
 
   return (
-    <div className="container-fluid py-4">
-      <div className="row">
-        {/* Columna izquierda - Lista de documentos */}
-        <div className="col-7">
-          <div className="d-flex flex-column gap-3">
+      <div className="container-fluid py-4">
+        <div className="row">
+          {/* Columna izquierda - Lista de documentos */}
+          <div className="col-7">
+            <div className="d-flex flex-column gap-3">
             {/* Botón para cargar documento */}
             <div className="d-flex justify-content-start mb-3">
               <button
@@ -355,12 +356,20 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                     <div className="d-flex align-items-center justify-content-between w-100">
                       <div className="d-flex align-items-center flex-grow-1">
                         <img src={Check} alt="ok" width={20} className="me-3" />
-                        <div className="flex-grow-1">
-                          <div className="fw-bold">{doc.name}</div>
-                          <div className="text-muted small">
-                            {doc.type_document?.name || "Sin tipo"}
+                                                  <div className="flex-grow-1">
+                            <div className="fw-bold">{doc.name}</div>
+                            <div className="text-muted small d-flex gap-2">
+                              <span>{doc.type_document?.name || "Sin tipo"}</span>
+                              {doc.file_size && (
+                                <>
+                                  <span>•</span>
+                                  <span>
+                                    {formatFileSize(doc.file_size)}
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
                       </div>
                       <div className="d-flex align-items-center gap-2">
                         <button
@@ -428,18 +437,18 @@ const DocumentsRequest = ({ requestId, requestType }) => {
             {feedback && (
               <div className="alert alert-info mt-3">{feedback}</div>
             )}
+            </div>
           </div>
-        </div>
 
         {/* Columna derecha - Comentarios */}
-        <div className="col-5">
+          <div className="col-5">
           <div className={styles.comment_box_container}>
-            <div
-              className="rounded-circle d-flex align-items-center justify-content-center mx-auto"
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center mx-auto"
               style={{ width: "80px", height: "80px", marginBottom: "1rem" }}
-            >
-              <img src={VerifyIcon} alt="verify-icon" />
-            </div>
+              >
+                <img src={VerifyIcon} alt="verify-icon" />
+              </div>
             
             {selectedDocument ? (
               <>
@@ -452,7 +461,7 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                 <div className="w-100">
                   <div className="mb-3">
                     <label className="form-label small text-muted">Tipo de observación:</label>
-                    <select
+              <select
                       className="form-select form-select-sm"
                       value={selectedObservationType}
                       onChange={(e) => setSelectedObservationType(e.target.value)}
@@ -461,10 +470,10 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                       {observationTypes.map((type) => (
                         <option key={type} value={type}>{type}</option>
                       ))}
-                    </select>
+              </select>
                   </div>
-                  <textarea
-                    className={styles.comment_textarea}
+              <textarea
+                className={styles.comment_textarea}
                     placeholder="Agregar nuevo comentario..."
                     value={newObservation}
                     onChange={(e) => setNewObservation(e.target.value)}
@@ -512,7 +521,7 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                     value={selectedDocumentType}
                     onChange={(e) => setSelectedDocumentType(e.target.value)}
                     disabled={uploading || typeDocuments.length === 0}
-                    required
+                required
                   >
                     <option value="">
                       {typeDocuments.length === 0 ? "No hay tipos de documento disponibles" : "Seleccione tipo"}
@@ -632,7 +641,7 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                     <div className="text-center py-3">
                       <i className="fas fa-comment-slash text-muted mb-2" style={{ fontSize: '2rem' }}></i>
                       <p className="text-muted">No hay comentarios para este documento</p>
-                    </div>
+                  </div>
                   )}
                 </div>
               </div>
@@ -683,7 +692,7 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                       </div>
                       <p className="mt-2">Cargando documento...</p>
                     </div>
-                  </div>
+                </div>
                 ) : documentViewUrl ? (
                   <iframe
                     src={documentViewUrl}
@@ -713,7 +722,7 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                     </div>
                   </div>
                 )}
-              </div>
+                </div>
               <div className="modal-footer">
                 <button
                   type="button"
@@ -746,7 +755,7 @@ const DocumentsRequest = ({ requestId, requestType }) => {
           <div className="modal-backdrop fade show" style={{ zIndex: 1049 }}></div>
         </div>
       )}
-    </div>
+      </div>
   );
 };
 
