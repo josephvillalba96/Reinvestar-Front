@@ -192,6 +192,29 @@ const RequestLoan = () => {
     handleRequests(requestType || "dscr");
   };
 
+  // Formateador de estados
+  const formatStatus = (status) => {
+    if (!status) return <span className="text-muted">No definido</span>;
+    
+    const statusMap = {
+      'PENDING': { label: 'Pendiente', color: 'bg-warning text-dark' },
+      'IN_REVIEW': { label: 'En Revisión', color: 'bg-info text-white' },
+      'PRICING': { label: 'En Pricing', color: 'bg-primary text-white' },
+      'ACCEPTED': { label: 'Aprobada', color: 'bg-success text-white' },
+      'REJECTED': { label: 'Rechazada', color: 'bg-danger text-white' },
+      'CANCELLED': { label: 'Cancelada', color: 'bg-secondary text-white' },
+      'CLOSED': { label: 'Cerrada', color: 'bg-dark text-white' }
+    };
+
+    const statusInfo = statusMap[status] || { label: status, color: 'bg-secondary text-white' };
+    
+    return (
+      <span className={`badge ${statusInfo.color} px-3 py-2`} style={{ fontSize: '0.85rem' }}>
+        {statusInfo.label}
+      </span>
+    );
+  };
+
   // Formateador de valores monetarios
   const formatMonetaryValue = (value) => {
     if (!value || isNaN(Number(value)) || Number(value) === 0) {
@@ -269,7 +292,7 @@ const RequestLoan = () => {
                   <td>{formatMonetaryValue(request.loan_amount)}</td>
                   <td>{formatMonetaryValue(request.purchase_price)}</td>
                   <td>{formatMonetaryValue(request.arv)}</td>
-                  <td>{request.status}</td>
+                  <td>{formatStatus(request.status)}</td>
                   <td>
                     <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
                       <img src={BookCheck} alt="check-data" width={15} />
@@ -317,7 +340,7 @@ const RequestLoan = () => {
                   <td>{formatMonetaryValue(request.loan_amount)}</td>
                   <td>{formatMonetaryValue(request.property_value)}</td>
                   <td>{formatMonetaryValue(request.construction_cost)}</td>
-                  <td>{request.status}</td>
+                  <td>{formatStatus(request.status)}</td>
                   <td>
                     <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
                       <img src={BookCheck} alt="check-data" width={15} />
@@ -366,7 +389,7 @@ const RequestLoan = () => {
                   <td>{formatMonetaryValue(request.rent_amount)}</td>
                   <td>{formatMonetaryValue(request.appraisal_value)}</td>
                   <td>{formatPercent(request.ltv_request)}</td>
-                  <td>{request.status}</td>
+                  <td>{formatStatus(request.status)}</td>
                   <td>
                     <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
                       <img src={BookCheck} alt="check-data" width={15} />
@@ -448,13 +471,13 @@ const RequestLoan = () => {
             onChange={(e) => setSelectedStatus(e.target.value)}
           >
             <option value="">Todos los estados</option>
-            <option value="PENDING">Pendiente</option>
-            <option value="IN_REVIEW">En Revisión</option>
-            <option value="PRICING">En Pricing</option>
-            <option value="ACCEPTED">Aprobada</option>
-            <option value="REJECTED">Rechazada</option>
-            <option value="CANCELLED">Cancelada</option>
-            <option value="CLOSED">Cerrada</option>
+            <option value="PENDING" className="text-warning">⭐ Pendiente</option>
+            <option value="IN_REVIEW" className="text-info">🔍 En Revisión</option>
+            <option value="PRICING" className="text-primary">💰 En Pricing</option>
+            <option value="ACCEPTED" className="text-success">✅ Aprobada</option>
+            <option value="REJECTED" className="text-danger">❌ Rechazada</option>
+            <option value="CANCELLED" className="text-secondary">⏹️ Cancelada</option>
+            <option value="CLOSED" className="text-dark">🔒 Cerrada</option>
           </select>
 
           <div className="input-group">
