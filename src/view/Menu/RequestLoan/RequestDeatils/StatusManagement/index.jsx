@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import styles from './style.module.css';
-import { updateDscr } from '../../../../../Api/dscr';
-import { updateFixflip } from '../../../../../Api/fixflip';
-import { updateConstruction } from '../../../../../Api/construction';
+import { changeRequestStatus, StatusEnum, StatusLabels, StatusColors } from '../../../../../Api/requestStatus';
 
 const StatusManagement = ({ requestId, requestType, currentStatus, onStatusChange }) => {
   const [loading, setLoading] = useState(false);
@@ -10,15 +8,11 @@ const StatusManagement = ({ requestId, requestType, currentStatus, onStatusChang
   const [feedback, setFeedback] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
 
-  const statusOptions = [
-    { value: "PENDING", label: "Pendiente", color: "bg-warning" },
-    { value: "IN_REVIEW", label: "En Revisión", color: "bg-info" },
-    { value: "PRICING", label: "En Pricing", color: "bg-primary" },
-    { value: "ACCEPTED", label: "Aprobada", color: "bg-success" },
-    { value: "REJECTED", label: "Rechazada", color: "bg-danger" },
-    { value: "CANCELLED", label: "Cancelada", color: "bg-secondary" },
-    { value: "CLOSED", label: "Cerrada", color: "bg-dark" }
-  ];
+  const statusOptions = Object.entries(StatusEnum).map(([key, value]) => ({
+    value,
+    label: StatusLabels[value],
+    color: StatusColors[value]
+  }));
 
   const handleSaveStatus = async () => {
     if (!window.confirm(`¿Estás seguro de cambiar el estado a ${statusOptions.find(s => s.value === selectedStatus)?.label}?`)) {
@@ -30,35 +24,12 @@ const StatusManagement = ({ requestId, requestType, currentStatus, onStatusChang
     setFeedback("");
 
     try {
-      // Preparar los datos para actualizar
-      const updateData = { status: selectedStatus };
-      
-      console.log('Actualizando estado:', {
-        requestId,
-        requestType,
-        currentStatus,
-        selectedStatus,
-        updateData
+      // Llamar al nuevo servicio de cambio de estado
+      await changeRequestStatus({
+        request_type: requestType,
+        request_id: requestId,
+        new_status: selectedStatus
       });
-      
-      let response;
-      
-      // Llamar a la API correspondiente según el tipo de solicitud
-      switch (requestType) {
-        case "dscr":
-          response = await updateDscr(requestId, updateData);
-          break;
-        case "fixflip":
-          response = await updateFixflip(requestId, updateData);
-          break;
-        case "construction":
-          response = await updateConstruction(requestId, updateData);
-          break;
-        default:
-          throw new Error("Tipo de solicitud no válido");
-      }
-      
-      console.log('Respuesta de la API:', response);
       
       // Actualizar el estado local
       onStatusChange(selectedStatus);
@@ -69,12 +40,7 @@ const StatusManagement = ({ requestId, requestType, currentStatus, onStatusChang
       
     } catch (error) {
       console.error('Error actualizando estado:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      setError(error.response?.data?.detail || error.message || "Error al actualizar el estado");
+      setError(error.message || "Error al actualizar el estado");
       setFeedback("");
     } finally {
       setLoading(false);
