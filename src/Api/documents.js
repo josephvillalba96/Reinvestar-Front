@@ -80,6 +80,23 @@ export const getDocumentDownloadUrl = async (document_id) => {
   }
 };
 
+// Obtener URL de visualización de un documento
+export const getDocumentViewUrl = async (document_id) => {
+  try {
+    const response = await api.get(`/api/v1/documents/${document_id}/view-url`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error obteniendo URL de visualización para documento ${document_id}:`, error);
+    // Si no existe el endpoint específico, intentar con el endpoint de descarga
+    try {
+      const downloadResponse = await api.get(`/api/v1/documents/${document_id}/download-url`);
+      return downloadResponse.data;
+    } catch (downloadError) {
+      throw error;
+    }
+  }
+};
+
 // Obtener URL de descarga temporal para un documento (para clientes)
 export const getDocumentDownloadUrlClient = async (document_id, access_token) => {
   const response = await api.get(`/api/v1/documents/${document_id}/download-url/client`, {

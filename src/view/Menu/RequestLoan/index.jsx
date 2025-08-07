@@ -383,9 +383,9 @@ const RequestLoan = () => {
           </button>
         </div>
         <div className={`${"d-flex gap-3"}`}>
-          <button className="btn d-flex align-items-center">
+          {/* <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
-          </button>
+          </button> */}
           <select 
             className="form-select my_title_color" 
             onChange={handleRequestTypeChange} 
@@ -416,9 +416,12 @@ const RequestLoan = () => {
           >
             <option value="">Todos los estados</option>
             <option value="PENDING">Pendiente</option>
-            <option value="IN_PROGRESS">En progreso</option>
-            <option value="COMPLETED">Completado</option>
-            <option value="CANCELLED">Cancelado</option>
+            <option value="IN_REVIEW">En Revisión</option>
+            <option value="PRICING">En Pricing</option>
+            <option value="ACCEPTED">Aprobada</option>
+            <option value="REJECTED">Rechazada</option>
+            <option value="CANCELLED">Cancelada</option>
+            <option value="CLOSED">Cerrada</option>
           </select>
 
           <div className="input-group">

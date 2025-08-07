@@ -12,7 +12,8 @@ import {
   updateDocumentObservation,
   deleteDocumentObservation,
   downloadDocument,
-  getDocumentDownloadUrl
+  getDocumentDownloadUrl,
+  getDocumentViewUrl
 } from "../../../../../Api/documents";
 import { getTypesDocument } from "../../../../../Api/typesDocument";
 
@@ -34,6 +35,12 @@ const DocumentsRequest = ({ requestId, requestType }) => {
   const [selectedObservationType, setSelectedObservationType] = useState("Pendiente de revisión");
   const [loadingObservations, setLoadingObservations] = useState(false);
   const [savingObservation, setSavingObservation] = useState(false);
+
+  // Estados para visualización de documentos
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [documentToView, setDocumentToView] = useState(null);
+  const [documentViewUrl, setDocumentViewUrl] = useState("");
+  const [loadingView, setLoadingView] = useState(false);
 
   // Estado para descarga
   const [downloading, setDownloading] = useState(false);
@@ -112,6 +119,49 @@ const DocumentsRequest = ({ requestId, requestType }) => {
       setFeedback("Error al descargar el documento. Verifica que el archivo esté disponible.");
     } finally {
       setDownloading(false);
+    }
+  };
+
+  // Función para visualizar documento
+  const handleViewDocument = async (document) => {
+    setLoadingView(true);
+    setDocumentToView(document);
+    setShowViewModal(true);
+    setDocumentViewUrl("");
+    
+    try {
+      // Descargar el documento como blob
+      const blob = await downloadDocument(document.id);
+      
+      // Crear una URL temporal para el blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Determinar el tipo de contenido basado en el nombre del archivo
+      const fileExtension = document.name.split('.').pop().toLowerCase();
+      const isPdf = fileExtension === 'pdf';
+      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension);
+      
+      if (!isPdf && !isImage) {
+        throw new Error('Formato de archivo no compatible con visualización directa');
+      }
+      
+      setDocumentViewUrl(url);
+      
+      // Limpiar la URL cuando se cierre el modal
+      return () => {
+        if (url) {
+          window.URL.revokeObjectURL(url);
+        }
+      };
+    } catch (error) {
+      console.error('Error obteniendo documento para visualización:', error);
+      setFeedback(
+        error.message === 'Formato de archivo no compatible con visualización directa'
+          ? "Este tipo de archivo no se puede visualizar directamente. Por favor, use la opción de descarga."
+          : "Error al cargar el documento para visualización."
+      );
+    } finally {
+      setLoadingView(false);
     }
   };
 
@@ -314,16 +364,16 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                       </div>
                       <div className="d-flex align-items-center gap-2">
                         <button
-                          className="btn btn-outline-success btn-sm"
+                          className="btn btn-outline-primary btn-sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDownloadDocument(doc);
+                            handleViewDocument(doc);
                           }}
-                          disabled={downloading}
+                          disabled={loadingView}
                           style={{ borderRadius: '15px' }}
                         >
-                          <i className="fas fa-download me-1"></i>
-                          {downloading ? "Descargando..." : "Descargar"}
+                          <i className="fas fa-eye me-1"></i>
+                          {loadingView ? "Cargando..." : "Ver"}
                         </button>
                         <button
                           className="btn btn-outline-info btn-sm"
@@ -594,6 +644,102 @@ const DocumentsRequest = ({ requestId, requestType }) => {
                 >
                   Cerrar
                 </button>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop fade show" style={{ zIndex: 1049 }}></div>
+        </div>
+      )}
+
+      {/* Modal para visualizar documento */}
+      {showViewModal && documentToView && (
+        <div className="modal fade show" style={{ display: 'block', zIndex: 1050 }} tabIndex="-1">
+          <div className="modal-dialog modal-xl modal-dialog-centered" style={{ zIndex: 1051 }}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="fas fa-eye me-2"></i>
+                  Visualizar Documento - {documentToView.name}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    if (documentViewUrl) {
+                      window.URL.revokeObjectURL(documentViewUrl);
+                    }
+                    setShowViewModal(false);
+                    setDocumentToView(null);
+                    setDocumentViewUrl("");
+                  }}
+                />
+              </div>
+              <div className="modal-body" style={{ height: '70vh', padding: '0' }}>
+                {loadingView ? (
+                  <div className="d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
+                    <div className="text-center">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Cargando...</span>
+                      </div>
+                      <p className="mt-2">Cargando documento...</p>
+                    </div>
+                  </div>
+                ) : documentViewUrl ? (
+                  <iframe
+                    src={documentViewUrl}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                      borderRadius: '0 0 0.375rem 0.375rem'
+                    }}
+                    title={`Visualización de ${documentToView.name}`}
+                    onError={() => {
+                      setFeedback("Error al cargar el documento. El formato puede no ser compatible con la visualización.");
+                    }}
+                  />
+                ) : (
+                  <div className="d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
+                    <div className="text-center">
+                      <i className="fas fa-exclamation-triangle text-warning mb-2" style={{ fontSize: '2rem' }}></i>
+                      <p className="text-muted">No se pudo cargar el documento para visualización.</p>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => handleViewDocument(documentToView)}
+                      >
+                        <i className="fas fa-redo me-1"></i>
+                        Reintentar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    if (documentViewUrl) {
+                      window.URL.revokeObjectURL(documentViewUrl);
+                    }
+                    setShowViewModal(false);
+                    setDocumentToView(null);
+                    setDocumentViewUrl("");
+                  }}
+                >
+                  Cerrar
+                </button>
+                {documentToView && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleDownloadDocument(documentToView)}
+                    disabled={downloading}
+                  >
+                    <i className="fas fa-download me-1"></i>
+                    {downloading ? "Descargando..." : "Descargar"}
+                  </button>
+                )}
               </div>
             </div>
           </div>

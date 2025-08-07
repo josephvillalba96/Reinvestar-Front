@@ -1,0 +1,29 @@
+.statusBadge {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+}
+
+.statusButton {
+  min-width: 120px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.statusButton:hover {
+  transform: translateY(-2px);
+}
+
+.statusInfo {
+  border-radius: 10px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #0d6efd;
+}
+
+.statusInfo li {
+  margin-bottom: 0.5rem;
+}
+
+.statusInfo li:last-child {
+  margin-bottom: 0;
+}

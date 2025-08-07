@@ -5,6 +5,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import DocumentsRequest from "./DocumentsRequest";
 import PipelineRequest from "./PipelineRequest";
 import ProcessorForm from "./Processor";
+import StatusManagement from "./StatusManagement";
+import IntentionLetter from "./IntentionLetter";
 import { getDscrById } from "../../../../Api/dscr";
 import { getClientById } from "../../../../Api/client";
 import DscrForm from "./FormRequest/Dscr";
@@ -157,6 +159,38 @@ const DetalleSolicitud = () => {
                 Pipeline
               </button>
             </li>
+            {solicitud?.status === "ACCEPTED" && (
+              <li className="nav-item" role="presentation">
+                <button
+                  className={`nav-link${activeTab === "intention" ? " active" : ""}`}
+                  id="intention-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#intention"
+                  type="button"
+                  role="tab"
+                  aria-controls="intention"
+                  aria-selected={activeTab === "intention"}
+                  onClick={() => setActiveTab("intention")}
+                >
+                  Carta de Intención
+                </button>
+              </li>
+            )}
+            <li className="nav-item" role="presentation">
+              <button
+                className={`nav-link${activeTab === "status" ? " active" : ""}`}
+                id="status-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#status"
+                type="button"
+                role="tab"
+                aria-controls="status"
+                aria-selected={activeTab === "status"}
+                onClick={() => setActiveTab("status")}
+              >
+                Estado
+              </button>
+            </li>
           </ul>
           <div className="tab-content" id="myTabContent">
             <div
@@ -206,13 +240,37 @@ const DetalleSolicitud = () => {
             >
               <PipelineRequest requestId={id} requestType={type} />
             </div>
+            {solicitud?.status === "ACCEPTED" && (
+              <div
+                className={`tab-pane fade${activeTab === "intention" ? " show active" : ""}`}
+                id="intention"
+                role="tabpanel"
+                aria-labelledby="intention-tab"
+              >
+                <IntentionLetter 
+                  requestId={id} 
+                  requestType={type} 
+                  solicitud={solicitud} 
+                />
+              </div>
+            )}
             <div
-              className={`tab-pane fade${activeTab === "gestion" ? " show active" : ""}`}
-              id="gestion"
+              className={`tab-pane fade${activeTab === "status" ? " show active" : ""}`}
+              id="status"
               role="tabpanel"
-              aria-labelledby="gestion-tab"
+              aria-labelledby="status-tab"
             >
-              <div>Gestión de la solicitud aquí</div>
+              <StatusManagement 
+                requestId={id} 
+                requestType={type} 
+                currentStatus={solicitud?.status || "PENDING"}
+                onStatusChange={(newStatus) => {
+                  setSolicitud(prev => ({
+                    ...prev,
+                    status: newStatus
+                  }));
+                }}
+              />
             </div>
           </div>
         </div>

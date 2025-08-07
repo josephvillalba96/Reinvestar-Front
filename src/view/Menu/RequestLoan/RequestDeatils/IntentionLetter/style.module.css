@@ -1,0 +1,25 @@
+.letterButton {
+  min-width: 150px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.letterButton:hover {
+  transform: translateY(-2px);
+}
+
+.letterInfo {
+  border-radius: 10px;
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+}
+
+.letterCard {
+  border-radius: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.letterTitle {
+  color: #1B2559;
+  font-weight: 600;
+}
