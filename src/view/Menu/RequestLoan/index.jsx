@@ -471,13 +471,13 @@ const RequestLoan = () => {
             onChange={(e) => setSelectedStatus(e.target.value)}
           >
             <option value="">Todos los estados</option>
-            <option value="PENDING" className="text-warning">⭐ Pendiente</option>
-            <option value="IN_REVIEW" className="text-info">🔍 En Revisión</option>
-            <option value="PRICING" className="text-primary">💰 En Pricing</option>
-            <option value="ACCEPTED" className="text-success">✅ Aprobada</option>
-            <option value="REJECTED" className="text-danger">❌ Rechazada</option>
-            <option value="CANCELLED" className="text-secondary">⏹️ Cancelada</option>
-            <option value="CLOSED" className="text-dark">🔒 Cerrada</option>
+            <option value="PENDING">Pendiente</option>
+            <option value="IN_REVIEW">En Revisión</option>
+            <option value="PRICING">En Pricing</option>
+            <option value="ACCEPTED">Aprobada</option>
+            <option value="REJECTED">Rechazada</option>
+            <option value="CANCELLED">Cancelada</option>
+            <option value="CLOSED">Cerrada</option>
           </select>
 
           <div className="input-group">
