@@ -5,6 +5,10 @@
   --border-color: #e5e7eb;
   --title-color:#1B2559; 
 }
+/* Tamaño de fuente global: ~0.85rem del valor por defecto del navegador */
+html {
+  font-size: 85%;
+}
 /* General styles */
 @font-face {
   font-family:  'Mulish Light';
@@ -178,6 +182,11 @@ body, html {
 /*custom styles*/
 .internal_layout {
    height: calc(100vh - 4.1rem) !important;
+   overflow: hidden;
+  /* Alinear vistas hacia arriba y comenzar a ~1% del alto de la ventana */
+   justify-content: flex-start !important;
+   align-items: stretch !important;
+  padding-top: 1vh;
 }
 
 .my_title_color {
@@ -185,8 +194,25 @@ body, html {
 }  
   
 .table_height {
-  height: calc(30 * 25rem);
-  overflow-y: auto;
+  /* Limita la altura visible de las tablas para evitar desbordes dentro del layout */
+  max-height: calc(100vh - 16rem);
+  overflow: auto;
+}
+
+/* Asegura que el thead sticky tenga fondo y se vea por encima del contenido */
+table thead.sticky-top,
+table thead.sticky-top th {
+  background-color: #fff;
+}
+
+table thead.sticky-top {
+  z-index: 2;
+}
+
+/* Alineación vertical consistente en celdas */
+table.table th,
+table.table td {
+  vertical-align: middle;
 }
 
 .page-link {
@@ -195,6 +221,17 @@ body, html {
    margin-right: 0.1rem !important;
    /* background-color:  rgb(27, 37, 89) ; */
    /* color: white !important; */
+}
+
+/* Asegurar botones circulares y homogéneos (números y flechas) */
+.pagination .page-link {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 

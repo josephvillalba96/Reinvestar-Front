@@ -1,4 +1,4 @@
-import Logo from "../../assets/logo.png";
+import Logo from "../../assets/LogoReinvestar.svg";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import styles from "./style.module.css";
 

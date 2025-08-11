@@ -295,10 +295,10 @@ const RequestLoan = () => {
                   <td>{formatStatus(request.status)}</td>
                   <td>
                     <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
-                      <img src={BookCheck} alt="check-data" width={15} />
+                      <img src={BookCheck} alt="check-data" width={10} />
                     </button>
                     <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
-                      <img src={Eye} alt="detail-client" width={18} />
+                      <img src={Eye} alt="detail-client" width={10} />
                     </button>
                   </td>
                 </tr>
@@ -343,10 +343,10 @@ const RequestLoan = () => {
                   <td>{formatStatus(request.status)}</td>
                   <td>
                     <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
-                      <img src={BookCheck} alt="check-data" width={15} />
+                      <img src={BookCheck} alt="check-data" width={10} />
                     </button>
                     <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
-                      <img src={Eye} alt="detail-client" width={18} />
+                      <img src={Eye} alt="detail-client" width={10} />
                     </button>
                   </td>
                 </tr>
@@ -392,10 +392,10 @@ const RequestLoan = () => {
                   <td>{formatStatus(request.status)}</td>
                   <td>
                     <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
-                      <img src={BookCheck} alt="check-data" width={15} />
+                      <img src={BookCheck} alt="check-data" width={10} />
                     </button>
                     <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
-                      <img src={Eye} alt="detail-client" width={18} />
+                      <img src={Eye} alt="detail-client" width={10} />
                     </button>
                   </td>
                 </tr>
@@ -418,7 +418,7 @@ const RequestLoan = () => {
 
   return (
     <div
-      className={`${"d-flex flex-column justify-content-center align-items-center text-center"} internal_layout`}
+      className={`${"d-flex flex-column"} internal_layout`}
       style={{ backgroundColor: "#fff" }}
     >
       <div className="d-flex flex-column align-items-start w-100 mb-4 px-4 mt-5">

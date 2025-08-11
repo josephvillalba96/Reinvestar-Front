@@ -18,6 +18,8 @@ const initialState = {
   purchase_price: "",
   rehab_cost: "",
   arv: "",
+  renovation_timeline: "",
+  contractor_info: "",
   comments: ""
 };
 
@@ -44,6 +46,15 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
 
   const handleNumberFormat = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const computeLtv = () => {
+    const loanAmountNum = form.loan_amount === "" ? 0 : Number(form.loan_amount);
+    const arvNum = form.arv === "" ? 0 : Number(form.arv);
+    const purchaseNum = form.purchase_price === "" ? 0 : Number(form.purchase_price);
+    if (arvNum > 0) return Number(((loanAmountNum / arvNum) * 100).toFixed(2));
+    if (purchaseNum > 0) return Number(((loanAmountNum / purchaseNum) * 100).toFixed(2));
+    return 0;
   };
 
   // Función para enviar email usando template
@@ -95,14 +106,27 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
 
     try {
       // 1. Preparar datos de la solicitud
+      const loanAmountNum = form.loan_amount === "" ? 0 : Number(form.loan_amount);
+      const arvNum = form.arv === "" ? 0 : Number(form.arv);
+      const purchaseNum = form.purchase_price === "" ? 0 : Number(form.purchase_price);
+      const ltv = computeLtv();
+
       const dataToSend = {
-        ...form,
         client_id: Number(client_id),
-        loan_amount: form.loan_amount === "" ? 0 : Number(form.loan_amount),
-        purchase_price: form.purchase_price === "" ? 0 : Number(form.purchase_price),
-        rehab_cost: form.rehab_cost === "" ? 0 : Number(form.rehab_cost),
-        arv: form.arv === "" ? 0 : Number(form.arv),
-        property_value: form.arv === "" ? 0 : Number(form.arv) // Usar ARV como property_value
+        property_type: form.property_type || "",
+        property_address: form.property_address || "",
+        property_city: form.property_city || "",
+        property_state: form.property_state || "",
+        property_zip_code: form.property_zip || "",
+        loan_amount: loanAmountNum || 0,
+        purchase_price: purchaseNum || 0,
+        renovation_cost: form.rehab_cost === "" ? 0 : Number(form.rehab_cost),
+        after_repair_value: arvNum || 0,
+        property_value: arvNum || purchaseNum || 0,
+        ltv,
+        renovation_timeline: form.renovation_timeline || "",
+        contractor_info: form.contractor_info || "",
+        notes: form.comments || ""
       };
 
       // 2. Crear la solicitud Fixflip
@@ -271,6 +295,41 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
       </div>
       <div className="row gy-4 mb-2 mt-1">
         <div className="col-md-6">
+          <label className="form-label my_title_color">Cronograma remodelación</label>
+          <input
+            type="text"
+            className={`form-control ${styles.input}`}
+            name="renovation_timeline"
+            value={form.renovation_timeline}
+            onChange={handleChange}
+            autoComplete="off"
+          />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label my_title_color">Contratista</label>
+          <input
+            type="text"
+            className={`form-control ${styles.input}`}
+            name="contractor_info"
+            value={form.contractor_info}
+            onChange={handleChange}
+            autoComplete="off"
+          />
+        </div>
+      </div>
+      <div className="row gy-4 mb-2 mt-1">
+        <div className="col-md-6">
+          <label className="form-label my_title_color">LTV estimado</label>
+          <input
+            type="text"
+            className={`form-control ${styles.input}`}
+            value={`${computeLtv()}%`}
+            disabled
+          />
+        </div>
+      </div>
+      <div className="row gy-4 mb-2 mt-1">
+        <div className="col-md-6">
           <label className="form-label my_title_color">Costo de remodelación</label>
           <NumericFormat
             className={`form-control ${styles.input}`}
@@ -341,3 +400,4 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
 };
 
 export default FixflipForm; 
+export { FixflipForm };

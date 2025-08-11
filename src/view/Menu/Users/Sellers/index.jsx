@@ -94,7 +94,7 @@ const Sellers = () => {
 
   return (
     <div
-      className={`${"d-flex flex-column justify-content-center align-items-center text-center"} internal_layout`}
+      className={`${"d-flex flex-column"} internal_layout`}
       style={{ backgroundColor: "#fff" }}
     >
       <div className="d-flex flex-column align-items-start w-100 mb-4 px-4 mt-5">
@@ -184,7 +184,7 @@ const Sellers = () => {
                       style={{ backgroundColor: "#1B2559" }}
                       onClick={() => handleRedirectDetails(seller.id)}
                     >
-                      <img src={Eye} alt="detail-client" width={18}/>
+                      <img src={Eye} alt="detail-client" width={10}/>
                     </button>
                   </td>
                 </tr>

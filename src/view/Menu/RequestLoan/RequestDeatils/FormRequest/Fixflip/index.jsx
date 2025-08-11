@@ -17,6 +17,8 @@ const initialState = {
   purchase_price: "",
   rehab_cost: "",
   arv: "",
+  renovation_timeline: "",
+  contractor_info: "",
   comments: ""
 };
 
@@ -37,11 +39,13 @@ const FixflipForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable
         property_address: solicitud.property_address || "",
         property_city: solicitud.property_city || "",
         property_state: solicitud.property_state || "",
-        property_zip: solicitud.property_zip || "",
-        loan_amount: solicitud.loan_amount || "",
-        purchase_price: solicitud.purchase_price || "",
-        rehab_cost: solicitud.rehab_cost || "",
-        arv: solicitud.arv || "",
+        property_zip: solicitud.property_zip_code || solicitud.property_zip || "",
+        loan_amount: solicitud.loan_amount ?? "",
+        purchase_price: solicitud.purchase_price ?? "",
+        rehab_cost: solicitud.renovation_cost ?? "",
+        arv: solicitud.after_repair_value ?? "",
+        renovation_timeline: solicitud.renovation_timeline || "",
+        contractor_info: solicitud.contractor_info || "",
         comments: solicitud.comments || ""
       });
       setIsEditMode(false);
@@ -82,18 +86,40 @@ const FixflipForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const computeLtv = () => {
+    const loanAmountNum = form.loan_amount === "" ? 0 : Number(form.loan_amount);
+    const arvNum = form.arv === "" ? 0 : Number(form.arv);
+    const purchaseNum = form.purchase_price === "" ? 0 : Number(form.purchase_price);
+    if (arvNum > 0) return Number(((loanAmountNum / arvNum) * 100).toFixed(2));
+    if (purchaseNum > 0) return Number(((loanAmountNum / purchaseNum) * 100).toFixed(2));
+    return 0;
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);
     setFeedback("");
     try {
-      // Convertir campos numéricos vacíos a null
+      const loanAmountNum = form.loan_amount === "" ? 0 : Number(form.loan_amount);
+      const arvNum = form.arv === "" ? 0 : Number(form.arv);
+      const purchaseNum = form.purchase_price === "" ? 0 : Number(form.purchase_price);
+      const ltv = arvNum > 0 ? Number(((loanAmountNum / arvNum) * 100).toFixed(2)) : (purchaseNum > 0 ? Number(((loanAmountNum / purchaseNum) * 100).toFixed(2)) : 0);
+
       const dataToSend = {
-        ...form,
-        loan_amount: form.loan_amount === "" ? null : Number(form.loan_amount),
-        purchase_price: form.purchase_price === "" ? null : Number(form.purchase_price),
-        rehab_cost: form.rehab_cost === "" ? null : Number(form.rehab_cost),
-        arv: form.arv === "" ? null : Number(form.arv)
+        property_type: form.property_type || "",
+        property_address: form.property_address || "",
+        property_city: form.property_city || "",
+        property_state: form.property_state || "",
+        property_zip_code: form.property_zip || "",
+        loan_amount: loanAmountNum || 0,
+        purchase_price: purchaseNum || 0,
+        renovation_cost: form.rehab_cost === "" ? 0 : Number(form.rehab_cost),
+        after_repair_value: arvNum || 0,
+        property_value: arvNum || purchaseNum || 0,
+        ltv,
+        renovation_timeline: form.renovation_timeline || "",
+        contractor_info: form.contractor_info || "",
+        comments: form.comments || ""
       };
       await updateFixflip(solicitud.id, dataToSend);
       setFeedback("¡Solicitud actualizada exitosamente!");
@@ -109,13 +135,27 @@ const FixflipForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable
     setLoading(true);
     setFeedback("");
     try {
+      const loanAmountNum = form.loan_amount === "" ? 0 : Number(form.loan_amount);
+      const arvNum = form.arv === "" ? 0 : Number(form.arv);
+      const purchaseNum = form.purchase_price === "" ? 0 : Number(form.purchase_price);
+      const ltv = arvNum > 0 ? Number(((loanAmountNum / arvNum) * 100).toFixed(2)) : (purchaseNum > 0 ? Number(((loanAmountNum / purchaseNum) * 100).toFixed(2)) : 0);
+
       const dataToSend = {
-        ...form,
         client_id: Number(client_id),
-        loan_amount: form.loan_amount === "" ? null : Number(form.loan_amount),
-        purchase_price: form.purchase_price === "" ? null : Number(form.purchase_price),
-        rehab_cost: form.rehab_cost === "" ? null : Number(form.rehab_cost),
-        arv: form.arv === "" ? null : Number(form.arv)
+        property_type: form.property_type || "",
+        property_address: form.property_address || "",
+        property_city: form.property_city || "",
+        property_state: form.property_state || "",
+        property_zip_code: form.property_zip || "",
+        loan_amount: loanAmountNum || 0,
+        purchase_price: purchaseNum || 0,
+        renovation_cost: form.rehab_cost === "" ? 0 : Number(form.rehab_cost),
+        after_repair_value: arvNum || 0,
+        property_value: arvNum || purchaseNum || 0,
+        ltv,
+        renovation_timeline: form.renovation_timeline || "",
+        contractor_info: form.contractor_info || "",
+        comments: form.comments || ""
       };
       const response = await createFixflip(dataToSend);
       setFeedback("¡Fixflip creado exitosamente!");
@@ -193,10 +233,10 @@ const FixflipForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable
               <label className="form-label my_title_color">Teléfono</label>
               <input className={`form-control ${styles.input}`} value={cliente.phone || ""} disabled />
             </div>
-            <div className="col-md-3">
+            {/* <div className="col-md-3">
               <label className="form-label my_title_color">ID</label>
               <input className={`form-control ${styles.input}`} value={cliente.id || ""} disabled />
-            </div>
+            </div> */}
           </div>
         </div>
       )}
@@ -369,6 +409,44 @@ const FixflipForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable
             inputMode="decimal"
             autoComplete="off"
             disabled={!editable && !isEditMode}
+          />
+        </div>
+      </div>
+    
+      <div className="row gy-4 mb-2 mt-1">
+        <div className="col-md-6">
+          <label className="form-label my_title_color">Cronograma remodelación</label>
+          <input
+            type="text"
+            className={`form-control ${styles.input}`}
+            name="renovation_timeline"
+            value={form.renovation_timeline}
+            onChange={handleChange}
+            autoComplete="off"
+            disabled={!editable && !isEditMode}
+          />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label my_title_color">Contratista</label>
+          <input
+            type="text"
+            className={`form-control ${styles.input}`}
+            name="contractor_info"
+            value={form.contractor_info}
+            onChange={handleChange}
+            autoComplete="off"
+            disabled={!editable && !isEditMode}
+          />
+        </div>
+      </div>
+      <div className="row gy-4 mb-2 mt-1">
+        <div className="col-md-6">
+          <label className="form-label my_title_color">LTV estimado</label>
+          <input
+            type="text"
+            className={`form-control ${styles.input}`}
+            value={`${computeLtv()}%`}
+            disabled
           />
         </div>
       </div>

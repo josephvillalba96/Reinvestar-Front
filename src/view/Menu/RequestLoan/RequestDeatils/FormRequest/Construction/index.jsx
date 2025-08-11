@@ -165,10 +165,10 @@ const ConstructionForm = ({ client_id, goToDocumentsTab, solicitud, cliente, edi
               <label className="form-label my_title_color">Teléfono</label>
               <input className={`form-control ${styles.input}`} value={cliente.phone || ""} disabled />
             </div>
-            <div className="col-md-3">
+            {/* <div className="col-md-3">
               <label className="form-label my_title_color">ID</label>
               <input className={`form-control ${styles.input}`} value={cliente.id || ""} disabled />
-            </div>
+            </div> */}
           </div>
         </div>
       )}

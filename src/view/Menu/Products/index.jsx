@@ -27,7 +27,7 @@ const Productos = () => {
   ];
 
   return (
-    <div className={`${"container p-3"} internal_layout`}>
+  <div className={`${"container p-3"} internal_layout`} style={{paddingTop: undefined}}>
       <h2 className="fw-bold fs-1 mb-5">Productos</h2>
       <div className="row g-5">
         {productos.map((producto, index) => (

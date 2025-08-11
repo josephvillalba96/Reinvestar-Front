@@ -1,4 +1,5 @@
 import styles from "./style.module.css";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 
 const Pagination = ({ currentPage, totalPages, handlePaginate }) => {
   return (
@@ -6,10 +7,12 @@ const Pagination = ({ currentPage, totalPages, handlePaginate }) => {
       <ul className="pagination justify-content-center">
         <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
           <button
-            className="btn"
+            className="page-link d-flex align-items-center justify-content-center"
             onClick={() => handlePaginate(currentPage - 1)}
+            aria-label="Anterior"
+            title="Anterior"
           >
-            Anterior
+            <FaChevronLeft size={14} />
           </button>
         </li>
 
@@ -30,10 +33,12 @@ const Pagination = ({ currentPage, totalPages, handlePaginate }) => {
           }`}
         >
           <button
-            className="btn"
+            className="page-link d-flex align-items-center justify-content-center"
             onClick={() => handlePaginate(currentPage + 1)}
+            aria-label="Siguiente"
+            title="Siguiente"
           >
-            Siguiente
+            <FaChevronRight size={14} />
           </button>
         </li>
       </ul>

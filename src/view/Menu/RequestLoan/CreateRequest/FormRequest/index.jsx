@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./style.module.css";
-import FixflipForm from "./Fixflip";
+import FixflipForm, { FixflipForm as FixflipFormNamed } from "./Fixflip/index.jsx";
 import ConstructionForm from "./Construction";
 import DscrForm from "./Dscr";
 import { getClients, createClient } from "../../../../../Api/client";
