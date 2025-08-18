@@ -115,16 +115,16 @@ const Sellers = () => {
           </button>
         </div>
         <div className={`${"d-flex gap-3"}`}>
-          <button className="btn d-flex align-items-center">
+          {/* <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
-          </button>
+          </button> */}
           <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange}>
             <option value="">Estado</option>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
           </select>
-          <div className="input-group">
-            <input type="text" className="form-control" placeholder="Buscar" value={search} onChange={handleSearchChange} />
+          <div className={`input-group ${styles.searchGroup}`}>
+            <input type="text" className={`form-control ${styles.searchInput}`} placeholder="Buscar" value={search} onChange={handleSearchChange} />
             <button className="btn btn-primary" type="button" onClick={handleSearch}>
               <img src={LoupeIcon} alt="" width={18} />
             </button>

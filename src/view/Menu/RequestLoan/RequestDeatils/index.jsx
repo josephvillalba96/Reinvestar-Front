@@ -85,12 +85,12 @@ const DetalleSolicitud = () => {
   return (
     <>
       <div className={`${styles.scroll_section} internal_layout`}>
-        <div className="d-flex align-items-center p-5">
+        <div className={`d-flex align-items-center justify-content-between px-4 py-2 ${styles.header}`}>
           <button className="btn border-none" onClick={handleback}>
             <img src={Back} alt="back" width={35} />
           </button>
           <div className="d-flex flex-column">
-            <h2 className={`${styles.title} fw-bolder my_title_color`}>
+            <h2 className={`${styles.title} fw-bolder my_title_color mb-0`}>
               Detalle de solicitud
             </h2>
             {solicitud && (
@@ -105,8 +105,9 @@ const DetalleSolicitud = () => {
             )}
           </div>
         </div>
-        <div className="d-flex flex-column justify-content-center mx-5">
-          <ul className="nav nav-tabs mb-2" id="myTab" role="tablist">
+        <div className="d-flex flex-column justify-content-center mx-4">
+          <div className={styles.stickyTabs}>
+          <ul className="nav nav-tabs" id="myTab" role="tablist">
             <li className="nav-item" role="presentation">
               <button
                 className={`nav-link${activeTab === "home" ? " active" : ""}`}
@@ -204,6 +205,7 @@ const DetalleSolicitud = () => {
               </li>
             )}
           </ul>
+          </div>
           <div className="tab-content" id="myTabContent">
             <div
               className={`tab-pane fade${activeTab === "home" ? " show active" : ""}`}

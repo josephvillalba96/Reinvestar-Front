@@ -1,11 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styles from './style.module.css';
 import {
   createIntentLetter,
   getIntentLetters,
   uploadIntentLetterFile,
   updateIntentLetterStatus,
+  getIntentLettersByRequest,
 } from '../../../../../Api/intentLetters';
+import { generateDocument } from '../../../../../Api/documentGeneration';
+import DscrForm from "../FormRequest/Dscr";
+import FixflipForm from "../FormRequest/Fixflip";
+import ConstructionForm from "../FormRequest/Construction";
 
 const IntentionLetter = ({ requestId, requestType, solicitud }) => {
   const [loading, setLoading] = useState(false);
@@ -16,6 +21,278 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const formRef = useRef(null);
+
+  // Utils de conversión segura
+  const toISOOrNull = (dateStr) => {
+    if (!dateStr) return null;
+    try {
+      const dt = new Date(dateStr);
+      if (Number.isNaN(dt.getTime())) return null;
+      return dt.toISOString();
+    } catch (_) {
+      return null;
+    }
+  };
+  const n = (v) => {
+    if (v === undefined || v === null || v === "") return 0;
+    const num = Number(v);
+    return Number.isFinite(num) ? num : 0;
+  };
+  const s = (v) => (v === undefined || v === null ? "" : String(v));
+  const b = (v) => Boolean(v);
+
+  // Payload base con todos los campos del esquema
+  const buildEmptyPayload = (tipo, requestId, title, content) => ({
+    title: s(title),
+    content: s(content),
+    description: "",
+    loan_amount: 0,
+    interest_rate: 0,
+    loan_term: 0,
+    closing_costs: 0,
+    tipo: s(tipo),
+    request_id: Number(requestId),
+    radicado: "",
+    property_type: "",
+    property_address: "",
+    property_city: "",
+    property_state: "",
+    property_zip: "",
+    fico: 0,
+    rent_amount: 0,
+    appraisal_value: 0,
+    ltv_request: 0,
+    residency_status: "",
+    prepayment_penalty: 0,
+    prepayment_penalty_type: "",
+    interest_rate_structure: "",
+    discount_points: 0,
+    origination_fee_percentage: 0,
+    origination_fee_amount: 0,
+    prop_taxes: 0,
+    hoi: 0,
+    hoa: 0,
+    flood_insurance: 0,
+    payoff_amount: 0,
+    dscr_ratio: 0,
+    mortgage_payment_piti: 0,
+    closing_cost_estimated: 0,
+    subject_prop_under_llc: "",
+    down_payment: 0,
+    reserves_6_months: 0,
+    borrower_name: "",
+    guarantor_name: "",
+    legal_status: "",
+    entity_name: "",
+    issued_date: null,
+    estimated_closing_date: null,
+    estimated_fico_score: 0,
+    loan_type: "",
+    type_of_program: "",
+    cash_out: 0,
+    dscr_required: false,
+    dscr_flag: false,
+    closing_cost_approx: 0,
+    total_closing_cost_estimated: 0,
+    service_fee: 0,
+    title_fees: 0,
+    government_fees: 0,
+    escrow_tax_insurance: 0,
+    appraisal_fee: 0,
+    type_of_transaction: "",
+    primary_own_or_rent: "",
+    mortgage_late_payments: "",
+    property_units: 0,
+    borrower_signed: false,
+    guarantor_signed: false,
+    property_value: 0,
+    ltv: 0,
+    purchase_price: 0,
+    renovation_cost: 0,
+    after_repair_value: 0,
+    renovation_timeline: "",
+    contractor_info: "",
+    rehab_budget: 0,
+    total_project_cost: 0,
+    ltc: 0,
+    construction_type: "",
+    draw_schedule: "",
+    inspection_frequency: "",
+    rehab_timeline: "",
+    scope_of_work: "",
+    permits_required: false,
+    timeline: "",
+    appraisal_required: false,
+    title_insurance: false,
+    borrower_experience: "",
+    exit_strategy: "",
+    purchase_type: "",
+    refinance_type: "",
+    cash_out_amount: 0,
+    origination_fee: 0,
+    underwriting_fee: 0,
+    processing_fee: 0,
+    legal_fee: 0,
+    total_closing_costs: 0,
+    insurance: 0,
+    property_taxes: 0,
+    utilities: 0,
+    maintenance: 0,
+    cash_reserves: 0,
+    bank_statements_required: false,
+    proof_of_funds: "",
+    construction_cost: 0,
+    land_cost: 0,
+    construction_timeline: "",
+    permits_status: "",
+    loan_purpose: "",
+    payment_type: "",
+    loan_position: "",
+    prepayment_terms: "",
+    monthly_payment: 0,
+    total_interest: 0,
+    total_loan_cost: 0,
+    file_path: "",
+    is_signed: false,
+    signature_data: "",
+    is_approved: false,
+  });
+
+  const buildPayloadFromSolicitud = (tipo, requestId, solicitud, title, content) => {
+    const base = buildEmptyPayload(tipo, requestId, title, content);
+    if (!solicitud) return base;
+
+    // Comunes (si existen)
+    base.property_type = s(solicitud.property_type);
+    base.property_address = s(solicitud.property_address);
+    base.property_city = s(solicitud.property_city);
+    base.property_state = s(solicitud.property_state);
+    base.property_zip = s(solicitud.property_zip || solicitud.property_zip_code);
+    base.property_value = n(solicitud.property_value);
+
+    // Tipos
+    if (tipo === 'dscr') {
+      base.borrower_name = s(solicitud.borrower_name);
+      base.guarantor_name = s(solicitud.guarantor_name);
+      base.legal_status = s(solicitud.legal_status);
+      base.residency_status = s(solicitud.legal_status);
+      base.entity_name = s(solicitud.entity_name);
+      base.issued_date = toISOOrNull(solicitud.issued_date);
+      base.estimated_closing_date = toISOOrNull(solicitud.estimated_closing_date);
+      base.fico = n(solicitud.fico);
+      base.rent_amount = n(solicitud.rent_amount);
+      base.appraisal_value = n(solicitud.appraisal_value);
+      base.loan_amount = n(solicitud.loan_amount);
+      base.loan_term = n(solicitud.loan_term);
+      base.interest_rate = n(solicitud.interest_rate);
+      base.ltv_request = n(solicitud.ltv_request);
+      base.interest_rate_structure = s(solicitud.interest_rate_structure);
+      base.discount_points = n(solicitud.discount_points);
+      base.origination_fee_percentage = n(solicitud.origination_fee_percentage);
+      base.origination_fee_amount = n(solicitud.origination_fee_amount);
+      base.prop_taxes = n(solicitud.prop_taxes);
+      base.hoi = n(solicitud.hoi);
+      base.hoa = n(solicitud.hoa);
+      base.flood_insurance = n(solicitud.flood_insurance);
+      base.payoff_amount = n(solicitud.payoff_amount);
+      base.dscr_ratio = n(solicitud.dscr_ratio);
+      base.mortgage_payment_piti = n(solicitud.mortgage_payment_piti);
+      base.closing_cost_estimated = n(solicitud.closing_cost_estimated);
+      base.subject_prop_under_llc = s(solicitud.subject_prop_under_llc);
+      base.down_payment = n(solicitud.down_payment);
+      base.reserves_6_months = n(solicitud.reserves_6_months);
+      base.type_of_program = s(solicitud.type_of_program);
+      base.cash_out = n(solicitud.cash_out);
+      base.dscr_required = b(solicitud.dscr_required);
+      base.dscr_flag = b(solicitud.dscr_flag);
+      base.closing_cost_approx = n(solicitud.closing_cost_approx);
+      base.total_closing_cost_estimated = n(solicitud.total_closing_cost_estimated);
+      base.service_fee = n(solicitud.service_fee);
+      base.title_fees = n(solicitud.title_fees);
+      base.government_fees = n(solicitud.government_fees);
+      base.escrow_tax_insurance = n(solicitud.escrow_tax_insurance);
+      base.appraisal_fee = n(solicitud.appraisal_fee);
+      base.type_of_transaction = s(solicitud.type_of_transaction);
+      base.primary_own_or_rent = s(solicitud.primary_own_or_rent);
+      base.mortgage_late_payments = s(solicitud.mortgage_late_payments);
+      base.property_units = n(solicitud.property_units);
+      // Campos derivados razonables
+      base.property_value = base.property_value || n(solicitud.appraisal_value);
+      base.ltv = n(solicitud.ltv_request);
+      base.closing_costs = base.total_closing_cost_estimated || base.closing_cost_estimated;
+      base.loan_type = s(solicitud.loan_type);
+    } else if (tipo === 'fixflip' || tipo === 'construction') {
+      // Campos base comunes en Fixflip/Construction
+      base.loan_amount = n(solicitud.loan_amount);
+      base.interest_rate = n(solicitud.interest_rate);
+      base.loan_term = n(solicitud.loan_term);
+      base.loan_type = s(solicitud.loan_type);
+      base.loan_purpose = s(solicitud.loan_purpose);
+      base.payment_type = s(solicitud.payment_type);
+      base.loan_position = s(solicitud.loan_position);
+      base.prepayment_terms = s(solicitud.prepayment_terms);
+
+      base.purchase_price = n(solicitud.purchase_price);
+      base.renovation_cost = n(solicitud.renovation_cost);
+      base.after_repair_value = n(solicitud.after_repair_value);
+      base.ltv = n(solicitud.ltv);
+
+      base.rehab_budget = n(solicitud.rehab_budget);
+      base.total_project_cost = n(solicitud.total_project_cost);
+      base.ltc = n(solicitud.ltc);
+      base.construction_type = s(solicitud.construction_type);
+      base.draw_schedule = s(solicitud.draw_schedule);
+      base.inspection_frequency = s(solicitud.inspection_frequency);
+      base.renovation_timeline = s(solicitud.renovation_timeline);
+      base.rehab_timeline = s(solicitud.rehab_timeline);
+      base.contractor_info = s(solicitud.contractor_info);
+
+      base.monthly_payment = n(solicitud.monthly_payment);
+      base.total_interest = n(solicitud.total_interest);
+      base.total_loan_cost = n(solicitud.total_loan_cost);
+
+      base.scope_of_work = s(solicitud.scope_of_work);
+      base.permits_required = b(solicitud.permits_required);
+      base.timeline = s(solicitud.timeline);
+      base.appraisal_required = b(solicitud.appraisal_required);
+      base.title_insurance = b(solicitud.title_insurance);
+      base.borrower_experience = s(solicitud.borrower_experience);
+      base.exit_strategy = s(solicitud.exit_strategy);
+      base.purchase_type = s(solicitud.purchase_type);
+      base.refinance_type = s(solicitud.refinance_type);
+      base.cash_out_amount = n(solicitud.cash_out_amount);
+
+      base.origination_fee = n(solicitud.origination_fee);
+      base.underwriting_fee = n(solicitud.underwriting_fee);
+      base.processing_fee = n(solicitud.processing_fee);
+      base.legal_fee = n(solicitud.legal_fee);
+      base.total_closing_costs = n(solicitud.total_closing_costs);
+
+      base.insurance = n(solicitud.insurance);
+      base.property_taxes = n(solicitud.property_taxes);
+      base.utilities = n(solicitud.utilities);
+      base.maintenance = n(solicitud.maintenance);
+      base.cash_reserves = n(solicitud.cash_reserves);
+
+      base.bank_statements_required = b(solicitud.bank_statements_required);
+      base.proof_of_funds = s(solicitud.proof_of_funds);
+
+      // Derivados razonables
+      base.property_value = base.property_value || n(solicitud.property_value || solicitud.after_repair_value || solicitud.purchase_price);
+      base.closing_costs = base.total_closing_costs;
+
+      if (tipo === 'construction') {
+        // Si existieran en la solicitud
+        base.construction_timeline = s(solicitud.construction_timeline);
+        base.permits_status = s(solicitud.permits_status);
+        base.construction_cost = n(solicitud.construction_cost);
+        base.land_cost = n(solicitud.land_cost);
+      }
+    }
+
+    return base;
+  };
 
   const buildParamsByType = () => {
     const params = { skip: 0, limit: 1 };
@@ -25,22 +302,38 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
     return params;
   };
 
-  const buildCreatePayload = () => {
-    // Incluir título y contenido requeridos por el backend
-    const base = { title: title?.trim(), content: content?.trim() };
-    if (requestType === 'dscr') return { ...base, dscr_request_id: Number(requestId) };
-    if (requestType === 'fixflip') return { ...base, fixflip_request_id: Number(requestId) };
-    if (requestType === 'construction') return { ...base, construction_request_id: Number(requestId) };
-    return base;
-  };
+  const buildCreatePayload = () => buildPayloadFromSolicitud(requestType, requestId, solicitud, title, content);
 
   const loadIntentLetter = async () => {
     try {
+      // 1) Consultar primero por tipo e ID de solicitud usando el nuevo endpoint
+      if (requestType && requestId) {
+        try {
+          const byReq = await getIntentLettersByRequest(String(requestType), Number(requestId));
+          if (Array.isArray(byReq) && byReq.length > 0) {
+            const found = byReq[0];
+            setIntentLetter(found);
+            if (found?.title) setTitle(found.title);
+            if (found?.content) setContent(found.content);
+            return;
+          }
+        } catch (inner) {
+          // Si falla, continuamos con el método genérico
+        }
+      }
+
+      // 2) Fallback: usar el listado genérico (mantener compatibilidad)
       const data = await getIntentLetters(buildParamsByType());
       if (Array.isArray(data) && data.length > 0) {
-        setIntentLetter(data[0]);
+        const found = data[0];
+        setIntentLetter(found);
+        if (found?.title) setTitle(found.title);
+        if (found?.content) setContent(found.content);
       } else if (data?.items && Array.isArray(data.items) && data.items.length > 0) {
-        setIntentLetter(data.items[0]);
+        const found = data.items[0];
+        setIntentLetter(found);
+        if (found?.title) setTitle(found.title);
+        if (found?.content) setContent(found.content);
       } else {
         setIntentLetter(null);
       }
@@ -115,12 +408,30 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
     setFeedback("");
 
     try {
+      // 1) Intentar generar/descargar desde el servicio oficial (PDF)
+      const blob = await generateDocument(String(requestType), Number(requestId));
+      if (blob) {
+        const fileName = `Carta_Intencion_${String(requestType).toUpperCase()}_${requestId}.pdf`;
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setFeedback("Descarga iniciada");
+        return;
+      }
+
+      // 2) Fallback: si existe una URL de archivo en la carta, abrirla
       if (intentLetter?.file_url) {
         window.open(intentLetter.file_url, '_blank');
         setFeedback("Abriendo carta de intención...");
-      } else {
-        setFeedback("No hay archivo de carta de intención cargado aún.");
+        return;
       }
+
+      setFeedback("No hay archivo de carta de intención disponible.");
     } catch (error) {
       console.error('Error descargando carta de intención:', error);
       const detail = error?.response?.data?.detail;
@@ -130,6 +441,12 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
       setError(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFocusForm = () => {
+    if (formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -185,154 +502,54 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
   return (
     <div className="container-fluid p-4">
       <div className="row">
-        <div className="col-12">
-          <h4 className="my_title_color fw-bold mb-4">Carta de Intención</h4>
-        </div>
-      </div>
-
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="card">
-            <div className="card-body">
-              <h5 className="card-title mb-4">Generar Carta de Intención</h5>
-
-              <div className="alert alert-info mb-4">
-                <i className="fas fa-info-circle me-2"></i>
-                La carta de intención es un documento que establece los términos y condiciones preliminares del préstamo.
-              </div>
-
-              {/* Campos de Título y Contenido */}
-              <div className="mb-3">
-                <label className="form-label small text-muted">Título</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Título de la carta"
-                />
-              </div>
-              <div className="mb-3">
-                <label className="form-label small text-muted">Contenido</label>
-                <textarea
-                  className="form-control"
-                  rows={4}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Contenido de la carta"
-                />
-              </div>
-
-              <div className="d-flex gap-3 flex-wrap align-items-center">
-                <button
-                  className="btn btn-primary"
-                  onClick={handleGenerateLetter}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Generando...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-file-alt me-2"></i>
-                      Generar Carta
-                    </>
-                  )}
-                </button>
-
-                <button
-                  className="btn btn-secondary"
-                  onClick={handleDownloadLetter}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Descargando...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-download me-2"></i>
-                      Descargar Carta
-                    </>
-                  )}
-                </button>
-
-                <div className="d-flex align-items-center gap-2">
-                  <input
-                    type="file"
-                    className="form-control form-control-sm"
-                    accept="application/pdf,image/*"
-                    onChange={handleFileChange}
-                    disabled={loading || !intentLetter}
-                    style={{ maxWidth: 260 }}
-                  />
-                  <button
-                    className="btn btn-outline-primary btn-sm"
-                    onClick={handleUploadFile}
-                    disabled={loading || !intentLetter || !file}
-                    title={!intentLetter ? 'Genere primero la carta' : ''}
-                  >
-                    <i className="fas fa-upload me-1"></i>
-                    Subir archivo
-                  </button>
-                </div>
-
-                {intentLetter && (
-                  <button
-                    className={`btn btn-sm ${intentLetter?.is_approved ? 'btn-success' : 'btn-outline-success'}`}
-                    onClick={handleToggleApproved}
-                    disabled={updatingStatus}
-                  >
-                    {updatingStatus ? 'Actualizando...' : intentLetter?.is_approved ? 'Aprobada' : 'Marcar Aprobada'}
-                  </button>
-                )}
-              </div>
-
-              {error && (
-                <div className="alert alert-danger mt-3">
-                  <i className="fas fa-exclamation-circle me-2"></i>
-                  {error}
-                </div>
-              )}
-
-              {feedback && (
-                <div className="alert alert-success mt-3">
-                  <i className="fas fa-check-circle me-2"></i>
-                  {feedback}
-                </div>
-              )}
-
-              {intentLetter && (
-                <div className="mt-3 small text-muted">
-                  <div><strong>ID Carta:</strong> {intentLetter.id}</div>
-                  {intentLetter.file_url && (
-                    <div><strong>Archivo:</strong> <a href={intentLetter.file_url} target="_blank" rel="noreferrer">Ver archivo</a></div>
-                  )}
-                  {typeof intentLetter.is_approved === 'boolean' && (
-                    <div><strong>Aprobación:</strong> {intentLetter.is_approved ? 'Aprobada' : 'Pendiente'}</div>
-                  )}
-                </div>
-              )}
-            </div>
+        <div className="col-12 d-flex align-items-center justify-content-between mb-3">
+          <h4 className="my_title_color fw-bold mb-0">Carta de Intención</h4>
+          <div className="d-flex gap-2">
+            {intentLetter ? (
+              <button
+                className="btn btn-secondary"
+                onClick={handleDownloadLetter}
+                disabled={loading}
+              >
+                <i className="fas fa-download me-2"></i>
+                Descargar Carta
+              </button>
+            ) : (
+              <button
+                className="btn btn-primary"
+                onClick={handleGenerateLetter}
+                disabled={loading}
+              >
+                <i className="fas fa-file-alt me-2"></i>
+                Crear carta de intención
+              </button>
+            )}
+            <button
+              className="btn btn-outline-primary"
+              onClick={handleFocusForm}
+            >
+              <i className="fas fa-edit me-2"></i>
+              Editar Formulario
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="row">
+      <div ref={formRef} className="row mt-3">
         <div className="col-12">
-          <div className="alert alert-warning">
-            <h5 className="alert-heading">
-              <i className="fas fa-exclamation-triangle me-2"></i>
-              Importante
-            </h5>
-            <p className="mb-0">
-              La carta de intención solo estará disponible cuando la solicitud esté en estado "Aprobada". 
-              Este documento es un paso preliminar y no constituye un compromiso final de financiamiento.
-            </p>
-          </div>
+          {solicitud ? (
+            requestType === 'dscr' ? (
+              <DscrForm solicitud={solicitud} cliente={null} editable={true} hideExternalLink={true} hideClientInfo={true} intentionLayout={true} />
+            ) : requestType === 'fixflip' ? (
+              <FixflipForm solicitud={solicitud} cliente={null} editable={true} hideExternalLink={true} hideClientInfo={true} intentionLayout={true} />
+            ) : requestType === 'construction' ? (
+              <ConstructionForm solicitud={solicitud} cliente={null} editable={true} hideExternalLink={true} hideClientInfo={true} intentionLayout={true} />
+            ) : (
+              <div className="alert alert-warning">Tipo de solicitud no soportado.</div>
+            )
+          ) : (
+            <div className="text-muted">Cargando datos de la solicitud...</div>
+          )}
         </div>
       </div>
     </div>

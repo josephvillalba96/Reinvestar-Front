@@ -60,14 +60,14 @@
 /* Caja de comentarios */
 .comment_box_container {
   background: #fff;
-  border-radius: 30px;
+  border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  padding: 2.5rem 2rem 2rem 2rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 270px;
-  max-width: 350px;
+  min-width: 260px;
+  max-width: 320px;
   margin: 0 auto;
 }
 
@@ -89,46 +89,46 @@
 }
 
 .comment_title {
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: bold;
   color: #1e295a;
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.8rem;
   text-align: center;
 }
 
 .comment_select {
   width: 100%;
-  padding: 0.7rem 1rem;
-  border-radius: 30px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
   border: none;
   background: #f3f4f6;
   color: #444;
-  margin-bottom: 1rem;
-  font-size: 1rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.95rem;
 }
 
 .comment_textarea {
   width: 100%;
-  min-height: 80px;
-  border-radius: 30px;
+  min-height: 60px;
+  border-radius: 20px;
   border: none;
   background: #e9ecef;
   color: #444;
-  padding: 1rem;
-  margin-bottom: 1.2rem;
-  font-size: 1rem;
-  resize: none;
+  padding: 0.75rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.95rem;
+  resize: vertical;
 }
 
 .comment_checkbox_row {
   width: 100%;
   display: flex;
   align-items: center;
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.6rem;
 }
 
 .comment_checkbox_label {
-  font-size: 0.98rem;
+  font-size: 0.9rem;
   color: #1e295a;
   display: flex;
   align-items: center;
@@ -140,8 +140,8 @@
   margin-left: 0.5rem;
   accent-color: #1e295a;
   border-radius: 30px;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .comment_button {
@@ -149,11 +149,11 @@
   background: #1e3a8a;
   color: #fff;
   border: none;
-  border-radius: 30px;
-  padding: 0.7rem 0;
-  font-weight: bold;
-  font-size: 1.05rem;
-  letter-spacing: 1px;
+  border-radius: 24px;
+  padding: 0.55rem 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
   transition: background 0.2s;
   cursor: pointer;
 }

@@ -1,5 +1,5 @@
 import styles from "./style.module.css";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 const Pagination = ({ currentPage, totalPages, handlePaginate }) => {
   return (

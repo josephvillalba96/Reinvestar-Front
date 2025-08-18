@@ -2,13 +2,13 @@
   border-radius: 30px !important;
   border: 1px solid #e5e7eb;
   background: #f3f4f6;
-  padding: 0.45rem 0.8rem;
+  padding: 0.4rem 0.75rem;
   font-size: 0.97rem;
   color: #444;
   margin-bottom: 0.55rem;
   /* width: 100%; */
   box-sizing: border-box;
-  min-height: 38px;
+  min-height: 36px;
 }
 
 .textarea {
@@ -54,6 +54,50 @@
   gap: 16px;
   flex-wrap: wrap;
 }
+
+/* Fuerza presentación en 2 columnas para este formulario */
+.twoColsWrap {
+  /* Aún más compacto */
+  --bs-gutter-y: 0.15rem;
+}
+.twoColsWrap :global(.row) > :global(div[class^="col-"]) {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+}
+
+@media (min-width: 768px) {
+  .twoColsWrap :global(.row) > :global(div[class^="col-"]) {
+    flex: 0 0 calc(50% - 8px) !important;
+    max-width: calc(50% - 8px) !important;
+  }
+}
+
+/* Compactar espaciado vertical de controles solo dentro del wrapper */
+.twoColsWrap .input, .twoColsWrap .select, .twoColsWrap .textarea {
+  margin-bottom: 0.15rem;
+}
+.twoColsWrap :global(.form-label) {
+  margin-bottom: 0.12rem;
+}
+
+/* Reducir márgenes de filas dentro del wrapper */
+.twoColsWrap :global(.row) {
+  margin-top: 0.2rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+/* Reducir padding y altura mínima sólo dentro del wrapper */
+.twoColsWrap .input, .twoColsWrap .select {
+  padding: 0.32rem 0.65rem;
+  min-height: 32px;
+}
+.twoColsWrap .textarea {
+  padding: 0.35rem 0.65rem;
+  min-height: 48px;
+}
+
+/* Utilidad full width (por si se usa) */
+.fullWidth { width: 100%; }
 
 
 .inputFull {

@@ -1,1 +1,12 @@
 
+/* Ensancha el grupo de búsqueda y permite que crezca en el espacio disponible */
+.searchGroup {
+	flex: 1 1 360px;
+	min-width: 280px;
+}
+
+/* Asegura que el input use todo el ancho del grupo */
+.searchInput {
+	width: 100%;
+}
+

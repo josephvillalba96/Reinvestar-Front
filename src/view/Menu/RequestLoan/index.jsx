@@ -480,10 +480,10 @@ const RequestLoan = () => {
             <option value="CLOSED">Cerrada</option>
           </select>
 
-          <div className="input-group">
+          <div className={`input-group ${styles.searchGroup}`}>
             <input 
               type="text" 
-              className="form-control" 
+              className={`form-control ${styles.searchInput}`} 
               placeholder="Buscar" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

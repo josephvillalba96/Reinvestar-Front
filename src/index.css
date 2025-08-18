@@ -50,7 +50,6 @@ body, html {
   padding: 0;
   font-family: 'Segoe UI', sans-serif;
   background-color: #f4f6f9;
-  height: 100vh;
 }
 
 /* Sidebar */
@@ -132,7 +131,7 @@ body, html {
 /* Layout */
 .layout {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 .main-content {
@@ -181,16 +180,15 @@ body, html {
 
 /*custom styles*/
 .internal_layout {
-   height: calc(100vh - 4.1rem) !important;
+   min-height: calc(100vh - 3.5rem) !important;
    overflow: hidden;
   /* Alinear vistas hacia arriba y comenzar a ~1% del alto de la ventana */
    justify-content: flex-start !important;
    align-items: stretch !important;
-  padding-top: 1vh;
 }
 
 .my_title_color {
-  color: var(--title-color);
+  color: var(--title-color) !important;
 }  
   
 .table_height {

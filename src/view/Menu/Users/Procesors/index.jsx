@@ -111,6 +111,7 @@ const Procesors = () => {
       </div>
       <div className="d-flex justify-content-between w-100 mb-4 px-4">
         <div>
+          
           <button
             className="btn btn-primary d-flex align-items-center"
             onClick={handleRedired}
@@ -122,19 +123,19 @@ const Procesors = () => {
           </button>
         </div>
         <div className={`${"d-flex gap-3"}`}>
-          <button className="btn d-flex align-items-center">
+          {/* <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
-          </button>
+          </button> */}
           <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange}>
             <option value="">Estado</option>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
           </select>
 
-          <div className="input-group">
+          <div className={`input-group ${styles.searchGroup}`}>
             <input 
               type="text" 
-              className="form-control" 
+              className={`form-control ${styles.searchInput}`} 
               placeholder="Buscar" 
               value={search} 
               onChange={handleSearchChange} 

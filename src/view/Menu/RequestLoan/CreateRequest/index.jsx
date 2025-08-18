@@ -26,16 +26,15 @@ const CreateRequest = () => {
   return (
     <>
       <div className="internal_layout">
-        <div className="d-flex align-items-center p-5">
+        <div className={`d-flex align-items-center justify-content-between px-4 py-2 ${styles.header}`}>
           <button className="btn border-none" onClick={handleback}>
             <img src={Back} alt="back" width={35} />
           </button>
-          <h2 className={`${styles.title} fw-bolder my_title_color`}>
-            Crear solicitud
-          </h2>
+          <h2 className={`${styles.title} fw-bolder my_title_color mb-0`}>Crear solicitud</h2>
         </div>
-        <div className="d-flex flex-column justify-content-center mx-5">
-          <ul className="nav nav-tabs mb-2" id="myTab" role="tablist">
+        <div className="d-flex flex-column justify-content-center mx-4">
+          <div className={styles.stickyTabs}>
+          <ul className="nav nav-tabs" id="myTab" role="tablist">
             <li className="nav-item" role="presentation">
               <button
                 className={`nav-link${activeTab === "home" ? " active" : ""}`}
@@ -82,6 +81,7 @@ const CreateRequest = () => {
               </button>
             </li> */}
           </ul>
+          </div>
           <div className="tab-content" id="myTabContent">
             <div
               className={`tab-pane fade${activeTab === "home" ? " show active" : ""}`}
