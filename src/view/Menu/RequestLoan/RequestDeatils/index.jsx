@@ -170,7 +170,7 @@ const DetalleSolicitud = () => {
                 Pipeline
               </button>
             </li>
-            {solicitud?.status === "ACCEPTED" && (
+            {solicitud?.status && ["PRICING", "ACCEPTED", "REJECTED", "CANCELLED", "CLOSED"].includes(solicitud.status.toUpperCase()) && (
               <li className="nav-item" role="presentation">
                 <button
                   className={`nav-link${activeTab === "intention" ? " active" : ""}`}
@@ -254,7 +254,7 @@ const DetalleSolicitud = () => {
             >
               <PipelineRequest requestId={id} requestType={type} />
             </div>
-            {solicitud?.status === "ACCEPTED" && (
+            {solicitud?.status && ["PRICING", "ACCEPTED", "REJECTED", "CANCELLED", "CLOSED"].includes(solicitud.status.toUpperCase()) && (
               <div
                 className={`tab-pane fade${activeTab === "intention" ? " show active" : ""}`}
                 id="intention"

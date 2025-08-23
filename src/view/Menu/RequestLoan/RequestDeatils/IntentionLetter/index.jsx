@@ -6,11 +6,12 @@ import {
   uploadIntentLetterFile,
   updateIntentLetterStatus,
   getIntentLettersByRequest,
+  updateIntentLetter,
 } from '../../../../../Api/intentLetters';
 import { generateDocument } from '../../../../../Api/documentGeneration';
-import DscrForm from "../FormRequest/Dscr";
-import FixflipForm from "../FormRequest/Fixflip";
-import ConstructionForm from "../FormRequest/Construction";
+import DscrIntentionForm from './DscrIntentionForm';
+import FixflipConstructionForm from './FixflipConstructionForm';
+import ConstructionIntentionForm from './ConstructionIntentionForm';
 
 const IntentionLetter = ({ requestId, requestType, solicitud }) => {
   const [loading, setLoading] = useState(false);
@@ -22,6 +23,61 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const formRef = useRef(null);
+
+  // Estados válidos para mostrar la carta de intención (basado en StatusEnum)
+  const validStates = [
+    'PRICING',         // En Pricing
+    'ACCEPTED',        // Aceptada
+    'REJECTED',        // Rechazada
+    'CANCELLED',       // Cancelada
+    'CLOSED'          // Cerrada
+  ];
+
+  // Verificar si el estado actual permite mostrar la carta de intención
+  const shouldShowIntentionLetter = () => {
+    if (!solicitud?.status) {
+      console.log('IntentionLetter: No status found');
+      return false;
+    }
+
+    const currentStatus = solicitud.status.toString().toUpperCase();
+    const isValid = validStates.includes(currentStatus);
+
+    console.log('IntentionLetter: Status check:', {
+      currentStatus,
+      isValid,
+      validStates
+    });
+
+    return isValid;
+  };
+
+  // Función para obtener el mensaje según el estado
+  const getStatusMessage = () => {
+    if (!solicitud?.status) return "Estado no definido";
+    
+    const status = solicitud.status.toString().toUpperCase();
+    
+    switch (status) {
+      case 'PRICING':
+        return "La solicitud está en proceso de determinación de tasa y condiciones.";
+      case 'ACCEPTED':
+        return "La solicitud ha sido aprobada y está lista para generar la carta de intención.";
+      case 'REJECTED':
+        return "La solicitud no cumple con los requisitos, pero puede generar una carta de intención.";
+      case 'CANCELLED':
+        return "La solicitud ha sido cancelada por el cliente.";
+      case 'CLOSED':
+        return "El proceso ha finalizado, puede generar la carta de intención final.";
+      default:
+        return `Estado actual: ${solicitud.status}`;
+    }
+  };
+
+  // Si no se debe mostrar la carta de intención, retornar null
+  if (!shouldShowIntentionLetter()) {
+    return null;
+  }
 
   // Utils de conversión segura
   const toISOOrNull = (dateStr) => {
@@ -247,7 +303,7 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
       base.renovation_timeline = s(solicitud.renovation_timeline);
       base.rehab_timeline = s(solicitud.rehab_timeline);
       base.contractor_info = s(solicitud.contractor_info);
-
+      
       base.monthly_payment = n(solicitud.monthly_payment);
       base.total_interest = n(solicitud.total_interest);
       base.total_loan_cost = n(solicitud.total_loan_cost);
@@ -262,22 +318,22 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
       base.purchase_type = s(solicitud.purchase_type);
       base.refinance_type = s(solicitud.refinance_type);
       base.cash_out_amount = n(solicitud.cash_out_amount);
-
+      
       base.origination_fee = n(solicitud.origination_fee);
       base.underwriting_fee = n(solicitud.underwriting_fee);
       base.processing_fee = n(solicitud.processing_fee);
       base.legal_fee = n(solicitud.legal_fee);
       base.total_closing_costs = n(solicitud.total_closing_costs);
-
+      
       base.insurance = n(solicitud.insurance);
       base.property_taxes = n(solicitud.property_taxes);
       base.utilities = n(solicitud.utilities);
       base.maintenance = n(solicitud.maintenance);
       base.cash_reserves = n(solicitud.cash_reserves);
-
+      
       base.bank_statements_required = b(solicitud.bank_statements_required);
       base.proof_of_funds = s(solicitud.proof_of_funds);
-
+      
       // Derivados razonables
       base.property_value = base.property_value || n(solicitud.property_value || solicitud.after_repair_value || solicitud.purchase_price);
       base.closing_costs = base.total_closing_costs;
@@ -306,18 +362,26 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
 
   const loadIntentLetter = async () => {
     try {
+      console.log('Cargando carta de intención:', { requestType, requestId });
+      
       // 1) Consultar primero por tipo e ID de solicitud usando el nuevo endpoint
       if (requestType && requestId) {
         try {
-          const byReq = await getIntentLettersByRequest(String(requestType), Number(requestId));
-          if (Array.isArray(byReq) && byReq.length > 0) {
-            const found = byReq[0];
+      const byReq = await getIntentLettersByRequest(String(requestType), Number(requestId));
+          console.log('Respuesta de getIntentLettersByRequest:', byReq);
+      
+      if (Array.isArray(byReq) && byReq.length > 0) {
+        const found = byReq[0];
+            console.log('Carta encontrada:', found);
             setIntentLetter(found);
             if (found?.title) setTitle(found.title);
             if (found?.content) setContent(found.content);
             return;
+          } else {
+            console.log('No se encontró carta de intención');
           }
         } catch (inner) {
+          console.error('Error en getIntentLettersByRequest:', inner);
           // Si falla, continuamos con el método genérico
         }
       }
@@ -343,6 +407,8 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
   };
 
   useEffect(() => {
+    console.log('IntentionLetter useEffect:', { requestId, requestType, solicitud });
+    
     if (requestId && requestType) {
       loadIntentLetter();
       const suggestedTitle = `Carta de Intención - ${String(requestType).toUpperCase()} #${requestId}`;
@@ -353,53 +419,49 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestId, requestType]);
 
-  const handleGenerateLetter = async () => {
-    if (!window.confirm("¿Estás seguro de generar la carta de intención?")) {
-      return;
-    }
-
+  const handleSubmit = async (formData) => {
     setLoading(true);
     setError("");
     setFeedback("");
 
     try {
-      if (!title?.trim() || !content?.trim()) {
-        setError('Título y contenido son obligatorios');
-        setLoading(false);
-        return;
-      }
-      const payload = buildCreatePayload();
-      const created = await createIntentLetter(payload);
-      setIntentLetter(created);
+      const payload = {
+        ...formData,
+        title: title || `Carta de Intención - ${String(requestType).toUpperCase()} #${requestId}`,
+        content: content || `Carta de Intención generada para la solicitud ${String(requestType).toUpperCase()} #${requestId}.`,
+        tipo: requestType,
+        request_id: Number(requestId)
+      };
+
+      let response;
+      if (intentLetter?.id) {
+        // Actualizar carta existente (PUT)
+        response = await updateIntentLetter(intentLetter.id, payload);
+        setFeedback("Carta de intención actualizada exitosamente");
+      } else {
+        // Crear nueva carta
+        response = await createIntentLetter(payload);
       setFeedback("Carta de intención generada exitosamente");
-    } catch (error) {
-      console.error('Error generando carta de intención:', error);
-      // Reintentar con forma alternativa si el backend espera request_type/request_id
-      if (error?.response?.status === 422) {
-        try {
-          const altPayload = { request_type: requestType, request_id: Number(requestId) };
-          const createdAlt = await createIntentLetter(altPayload);
-          setIntentLetter(createdAlt);
-          setFeedback("Carta de intención generada exitosamente");
-          return;
-        } catch (inner) {
-          console.error('Reintento createIntentLetter con request_type/request_id falló:', inner);
-          const detail2 = inner?.response?.data?.detail;
-          const message2 = Array.isArray(detail2)
-            ? detail2.map(d => d?.msg || JSON.stringify(d)).join(' | ')
-            : (typeof detail2 === 'string' ? detail2 : (inner.message || 'Error al generar la carta de intención'));
-          setError(message2);
-          return;
-        }
       }
+      
+      setIntentLetter(response);
+    } catch (error) {
+      console.error('Error con la carta de intención:', error);
       const detail = error?.response?.data?.detail;
       const message = Array.isArray(detail)
         ? detail.map(d => d?.msg || JSON.stringify(d)).join(' | ')
-        : (typeof detail === 'string' ? detail : (error.message || 'Error al generar la carta de intención'));
+        : (typeof detail === 'string' ? detail : (error.message || 'Error al procesar la carta de intención'));
       setError(message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGenerateLetter = () => {
+    if (!window.confirm("¿Estás seguro de generar la carta de intención?")) {
+      return;
+    }
+    handleFocusForm();
   };
 
   const handleDownloadLetter = async () => {
@@ -501,51 +563,92 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
 
   return (
     <div className="container-fluid p-4">
+      {/* Encabezado y Botones */}
       <div className="row">
         <div className="col-12 d-flex align-items-center justify-content-between mb-3">
           <h4 className="my_title_color fw-bold mb-0">Carta de Intención</h4>
           <div className="d-flex gap-2">
             {intentLetter ? (
-              <button
-                className="btn btn-secondary"
-                onClick={handleDownloadLetter}
-                disabled={loading}
-              >
-                <i className="fas fa-download me-2"></i>
-                Descargar Carta
-              </button>
+              <>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleDownloadLetter}
+                  disabled={loading}
+                >
+                      <i className="fas fa-download me-2"></i>
+                      Descargar Carta
+                </button>
+                  <button
+                  className="btn btn-primary"
+                  onClick={handleFocusForm}
+                  disabled={loading}
+                >
+                  <i className="fas fa-edit me-2"></i>
+                  Actualizar Carta
+                  </button>
+              </>
             ) : (
-              <button
+                  <button
                 className="btn btn-primary"
                 onClick={handleGenerateLetter}
                 disabled={loading}
               >
                 <i className="fas fa-file-alt me-2"></i>
-                Crear carta de intención
-              </button>
-            )}
-            <button
-              className="btn btn-outline-primary"
-              onClick={handleFocusForm}
-            >
-              <i className="fas fa-edit me-2"></i>
-              Editar Formulario
-            </button>
+                Crear Carta de Intención
+                  </button>
+                )}
           </div>
         </div>
-      </div>
+              </div>
 
+      {/* Mensaje informativo sobre el estado */}
+      <div className="row mb-3">
+        <div className="col-12">
+          <div className="alert alert-info d-flex align-items-center" role="alert">
+            <i className="fas fa-info-circle me-2"></i>
+            <div>
+              <strong>Carta de Intención Disponible</strong>
+              <br />
+              {getStatusMessage()}
+            </div>
+          </div>
+                </div>
+                </div>
+
+      {/* Formulario */}
       <div ref={formRef} className="row mt-3">
         <div className="col-12">
+          {console.log('Estado del formulario:', { solicitud, requestType, intentLetter, loading })}
           {solicitud ? (
             requestType === 'dscr' ? (
-              <DscrForm solicitud={solicitud} cliente={null} editable={true} hideExternalLink={true} hideClientInfo={true} intentionLayout={true} />
-            ) : requestType === 'fixflip' ? (
-              <FixflipForm solicitud={solicitud} cliente={null} editable={true} hideExternalLink={true} hideClientInfo={true} intentionLayout={true} />
-            ) : requestType === 'construction' ? (
-              <ConstructionForm solicitud={solicitud} cliente={null} editable={true} hideExternalLink={true} hideClientInfo={true} intentionLayout={true} />
+              <DscrIntentionForm 
+                requestId={Number(requestId)}
+                initialData={intentLetter || {}}
+                onSubmit={handleSubmit}
+                loading={loading}
+                editable={!intentLetter || intentLetter.status !== 'APPROVED'}
+              />
             ) : (
-              <div className="alert alert-warning">Tipo de solicitud no soportado.</div>
+              requestType === 'construction' ? (
+                <ConstructionIntentionForm
+                  requestId={Number(requestId)}
+                  initialData={intentLetter || {}}
+                  onFormChange={() => {}}
+                  onSubmit={handleSubmit}
+                  loading={loading}
+                  editable={!intentLetter || intentLetter.status !== 'APPROVED'}
+                />
+              ) : (
+                <FixflipConstructionForm
+                  requestId={Number(requestId)}
+                  initialData={intentLetter || {}}
+                  onFormChange={() => {}}
+                  onSubmit={handleSubmit}
+                  loading={loading}
+                  type={String(requestType)}
+                  editable={!intentLetter || intentLetter.status !== 'APPROVED'}
+                />
+              )
             )
           ) : (
             <div className="text-muted">Cargando datos de la solicitud...</div>

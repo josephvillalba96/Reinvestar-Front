@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./style.module.css";
-import FixflipForm, { FixflipForm as FixflipFormNamed } from "./Fixflip/index.jsx";
+import FixflipForm from "./Fixflip";
 import ConstructionForm from "./Construction";
 import DscrForm from "./Dscr";
 import { getClients, createClient } from "../../../../../Api/client";
@@ -364,12 +364,12 @@ const FormRequest = () => {
             </select>
           </div>
         </div>
-        <div className="col-6">
+        {/* <div className="col-6">
           <div className="w-100 d-flex flex-column">
             <label htmlFor="fecha_registro">Fecha de registor</label>
             <input type="date" id="fecha_registro" className={styles.input} />
           </div>
-        </div>
+        </div> */}
       </div>
       <hr className="mt-2 mb-2"/>
       {/* Formulario de producto solo si hay cliente y tipo de producto */}

@@ -151,7 +151,7 @@ const StatusManagement = ({ requestId, requestType, currentStatus, onStatusChang
               <li><strong>Pendiente:</strong> La solicitud está en espera de revisión inicial.</li>
               <li><strong>En Revisión:</strong> La solicitud está siendo evaluada por el equipo.</li>
               <li><strong>En Pricing:</strong> Se está determinando la tasa y condiciones.</li>
-              <li><strong>Aprobada:</strong> La solicitud ha sido aprobada y está lista para generar la carta de intención.</li>
+              <li><strong>Aprobada:</strong> Cliente recibe carta de intención y aprueba con su firma.</li>
               <li><strong>Rechazada:</strong> La solicitud no cumple con los requisitos.</li>
               <li><strong>Cancelada:</strong> El cliente ha cancelado la solicitud.</li>
               <li><strong>Cerrada:</strong> El proceso ha finalizado.</li>
