@@ -54,7 +54,6 @@ const DetailProcesor = () => {
       setLoading(true);
       const data = await getProcessorById(id);
       
-      // Manejar la nueva estructura de datos
       const processorData = {
         full_name: data.full_name || "",
         email: data.email || "",
@@ -96,7 +95,7 @@ const DetailProcesor = () => {
       }
     } else {
       navegate('/process');
-  }
+    }
   };
 
   const handleInputChange = (e) => {
@@ -107,22 +106,12 @@ const DetailProcesor = () => {
     }));
   };
 
-  const handleEnableEdit = () => {
+  const handleUpdate = () => {
     setEditMode(true);
     setFeedback("");
   };
 
-  const handleCancel = () => {
-    if (window.confirm('¿Estás seguro de que deseas cancelar? Los cambios no guardados se perderán.')) {
-      setEditMode(false);
-      setFeedback("");
-      setFormData(originalData);
-      setCompanyError("");
-      setRoleError("");
-    }
-  };
-
-  const handleSaveChanges = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     setLoading(true);
@@ -154,9 +143,9 @@ const DetailProcesor = () => {
     }
 
     try {
-    const payload = {
+      const payload = {
         full_name: formData.full_name,
-      email: formData.email,
+        email: formData.email,
         phone: formData.phone,
         identification: formData.identification,
         address: formData.address,
@@ -164,7 +153,7 @@ const DetailProcesor = () => {
         url_profile_photo: formData.url_profile_photo,
         role: formData.role,
         is_active: formData.is_active
-    };
+      };
 
       if (formData.password) {
         payload.password = formData.password;
@@ -184,7 +173,6 @@ const DetailProcesor = () => {
     } catch (error) {
       console.error('Error al actualizar procesador:', error);
       if (error.response?.data?.detail) {
-        // Manejar errores específicos del backend
         const errorDetails = error.response.data.detail;
         if (Array.isArray(errorDetails)) {
           const passwordError = errorDetails.find(err => err.loc?.includes('password'));
@@ -226,220 +214,213 @@ const DetailProcesor = () => {
         </div>
       </div>
     );
-    }
+  }
 
   return (
-    <div className={`${styles.mainContainer} internal_layout`}>
-      <div className={styles.headerSection}>
-          <div className="d-flex align-items-start">
-            <button className="btn border-none" onClick={handleback}>
-              <img src={Back} alt="back" width={35} />
-            </button>
-            <h2 className={`${styles.title} fw-bolder my_title_color`}>
+    <div className="internal_layout">
+      <div className="container-fluid mb-4">
+        <div className="d-flex align-items-start">
+          <button className="btn border-none" onClick={handleback}>
+            <img src={Back} alt="back" width={35} />
+          </button>
+          <h2 className={`${styles.title} fw-bolder my_title_color`}>
             {id ? "Detalle del procesador" : "Crear procesador"}
-            </h2>
-          </div>
+          </h2>
         </div>
+      </div>
 
-      <div className={styles.scrollContainer}>
-        <div className={styles.section}>
-          <div className="card" style={{ border: '1px solid #eee', borderRadius: '8px' }}>
-            <div className="card-header" style={{ backgroundColor: '#1B2559', color: 'white', borderRadius: '8px 8px 0 0' }}>
-              <h5 className="card-title mb-0 fw-bolder">Información Personal</h5>
-            </div>
-            <div className="card-body">
+      {/* Main Content */}
+      <div className="container-fluid p-4">
         <div className="row">
-                <div className="col-md-7">
-                  <form onSubmit={handleSaveChanges} autoComplete="off">
-                    <div className="row mb-4">
+          {/* Form Column */}
+          <div className="col-md-7 col-lg-6">
+            <form onSubmit={handleSubmit} autoComplete="off">
+              <div className="row mb-2">
                 <div className="col-md-6 mb-3">
-                        <label className="form-label my_title_color">Nombre completo</label>
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Nombre completo</label>
                   <input
                     type="text"
-                          className={`form-control ${styles.input}`}
-                          name="full_name"
-                          value={formData.full_name}
+                    className={`form-control  ${styles.input}`}
+                    name="full_name"
+                    value={formData.full_name}
                     onChange={handleInputChange}
-                          disabled={!editMode}
+                    disabled={!editMode}
                   />
                 </div>
                 <div className="col-md-6 mb-3">
-                        <label className="form-label my_title_color">Email</label>
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Email</label>
                   <input
                     type="email"
-                          className={`form-control ${styles.input}`}
+                    className={`form-control  ${styles.input}`}
                     name="email"
                     value={formData.email}
-                          disabled
+                    disabled
                   />
                 </div>
               </div>
 
-                    <div className="row mb-4">
+              <div className="row mb-3">
                 <div className="col-md-6 mb-3">
-                        <label className="form-label my_title_color">Celular</label>
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Celular</label>
                   <input
                     type="tel"
-                          className={`form-control ${styles.input}`}
-                          name="phone"
-                          value={formData.phone}
+                    className={`form-control  ${styles.input}`}
+                    name="phone"
+                    value={formData.phone}
                     onChange={handleInputChange}
-                          disabled={!editMode}
+                    disabled={!editMode}
                   />
                 </div>
-                      <div className="col-md-6 mb-3">
-                        <label className="form-label my_title_color">Identificación</label>
+                <div className="col-md-6 mb-2">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Identificación</label>
                   <input
                     type="text"
-                          className={`form-control ${styles.input}`}
-                          name="identification"
-                          value={formData.identification}
+                    className={`form-control  ${styles.input}`}
+                    name="identification"
+                    value={formData.identification}
                     onChange={handleInputChange}
-                          disabled={!editMode}
+                    disabled={!editMode}
                   />
                 </div>
               </div>
 
               <div className="row mb-4">
-                      <div className="col-12 mb-3">
-                        <label className="form-label my_title_color">Dirección</label>
+                <div className="col-12 mb-2">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Dirección</label>
                   <input
                     type="text"
-                          className={`form-control ${styles.input}`}
-                          name="address"
-                          value={formData.address}
+                    className={`form-control  ${styles.input}`}
+                    name="address"
+                    value={formData.address}
                     onChange={handleInputChange}
-                          disabled={!editMode}
+                    disabled={!editMode}
                   />
                 </div>
               </div>
 
-                    <div className="row mb-4">
-                      <div className="col-12 mb-3">
-                        <label className="form-label my_title_color">Compañía</label>
-                        <select
-                          className={`form-select ${styles.input} ${companyError ? 'is-invalid' : ''}`}
-                          name="company_id"
-                          value={formData.company_id}
-                          onChange={handleInputChange}
-                          disabled={!editMode}
-                        >
-                          <option value="">Seleccione una compañía</option>
-                          {companies && companies.map(({ id, name }) => (
-                            <option value={id} key={id}>{name}</option>
-                          ))}
-                        </select>
-                        {companyError && <div className="invalid-feedback">{companyError}</div>}
-                      </div>
-                    </div>
-
-                    {/* Campo de Estado */}
-                    <div className="row mb-4">
-                      <div className="col-12 mb-3">
-                        <div className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id="is_active"
-                            name="is_active"
-                            checked={formData.is_active}
-                            onChange={handleInputChange}
-                            disabled={!editMode}
-                          />
-                          <label className="form-check-label my_title_color" htmlFor="is_active">
-                            Procesador Activo
-                          </label>
-                        </div>
-                        <small className="text-muted">
-                          {editMode ? "Desmarca esta casilla para desactivar el procesador" : "Estado actual del procesador"}
-                        </small>
-                      </div>
-                    </div>
-
-                    {editMode && (
-                      <div className="row mb-4">
-                <div className="col-md-6 mb-3">
-                          <label className="form-label my_title_color">Nueva contraseña</label>
-                  <input
-                    type="password"
-                            className={`form-control ${styles.input}`}
-                            name="password"
-                            value={formData.password}
+              <div className="row mb-4">
+                <div className="col-12 mb-2">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Compañía</label>
+                  <select
+                    className={`form-select ${styles.input} ${companyError ? 'is-invalid' : ''}`}
+                    name="company_id"
+                    value={formData.company_id}
                     onChange={handleInputChange}
-                            placeholder="Dejar en blanco para mantener la actual (mínimo 8 caracteres)"
-                  />
-                  {formData.password && formData.password.length < 8 && (
-                    <small className="text-warning">
-                      La contraseña debe tener al menos 8 caracteres
-                    </small>
-                  )}
-                </div>
-                <div className="col-md-6 mb-3">
-                          <label className="form-label my_title_color">Confirmar contraseña</label>
-                  <input
-                    type="password"
-                            className={`form-control ${styles.input}`}
-                    name="confirmarContrasena"
-                    value={formData.confirmarContrasena}
-                    onChange={handleInputChange}
-                            placeholder="Confirmar nueva contraseña"
-                  />
-                  {formData.confirmarContrasena && formData.password !== formData.confirmarContrasena && (
-                    <small className="text-danger">
-                      Las contraseñas no coinciden
-                    </small>
-                  )}
+                    required
+                    disabled={!editMode}
+                  >
+                    <option value="">Seleccione una compañía</option>
+                    {companies && companies.map(({ id, name }) => (
+                      <option value={id} key={id}>{name}</option>
+                    ))}
+                  </select>
+                  {companyError && <div className="invalid-feedback d-block">{companyError}</div>}
                 </div>
               </div>
-                    )}
 
-              {feedback && (
-                      <div className={`alert ${feedback.includes("exitosamente") ? "alert-success" : "alert-danger"} py-2 mb-3`}>
-                        {feedback}
-                      </div>
+              {/* Campo de Estado */}
+              <div className="row mb-4">
+                <div className="col-12 mb-2">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="is_active"
+                      name="is_active"
+                      checked={formData.is_active}
+                      onChange={handleInputChange}
+                      disabled={!editMode}
+                    />
+                    <label className="form-check-label my_title_color" htmlFor="is_active">
+                      Procesador Activo
+                    </label>
+                  </div>
+                  <small className="text-muted">
+                    {editMode ? "Desmarca esta casilla para desactivar el procesador" : "Estado actual del procesador"}
+                  </small>
+                </div>
+              </div>
+
+              {roleError && (
+                <div className="alert alert-danger py-2 mb-3">{roleError}</div>
               )}
 
-                    <div className="d-flex justify-content-end gap-2">
-                      {editMode && (
-                        <>
-              <button
-                            type="submit"
-                            disabled={loading}
-                            className="btn text-white fw-semibold px-3 py-2 rounded-pill"
-                style={{
-                              backgroundColor: "#1B2559",
-                  border: "none",
-                  fontSize: "16px",
-                            }}
-                          >
-                            {loading ? "Guardando..." : "GUARDAR CAMBIOS"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleCancel}
-                disabled={loading}
-                            className="btn btn-secondary fw-semibold px-3 py-2 rounded-pill"
-              >
-                            CANCELAR
-              </button>
-                        </>
-                      )}
-                    </div>
+              {/* Campos de contraseña - solo visibles en modo edición */}
+              {editMode && (
+                <div className="row mb-5">
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Contraseña</label>
+                    <input
+                      type="password"
+                      placeholder="Mínimo 8 caracteres"
+                      className={`form-control  ${styles.input}`}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      minLength={8}
+                    />
+                    {formData.password && formData.password.length < 8 && (
+                      <small className="text-warning">
+                        La contraseña debe tener al menos 8 caracteres
+                      </small>
+                    )}
+                  </div>
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Confirmar contraseña</label>
+                    <input
+                      type="password"
+                      placeholder="Confirma tu contraseña"
+                      className={`form-control  ${styles.input}`}
+                      name="confirmarContrasena"
+                      value={formData.confirmarContrasena}
+                      onChange={handleInputChange}
+                    />
+                    {formData.confirmarContrasena && formData.password !== formData.confirmarContrasena && (
+                      <small className="text-danger">
+                        Las contraseñas no coinciden
+                      </small>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {feedback && (
+                <div className={`alert ${feedback.includes("exitosamente") ? "alert-success" : "alert-danger"} py-2 mb-3`}>
+                  {feedback}
+                </div>
+              )}
+
+              {editMode && (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn text-white fw-semibold px-3 py-2 rounded-pill "
+                  style={{
+                    backgroundColor: "#2c3e50",
+                    border: "none",
+                    fontSize: "16px",
+                    minWidth: "180px",
+                  }}
+                >
+                  {loading ? "Guardando..." : "GUARDAR CAMBIOS"}
+                </button>
+              )}
             </form>
-                  {!editMode && (
-                    <div className="d-flex justify-content-end gap-2 mt-3">
-                      <button
-                        type="button"
-                        className="btn btn-warning fw-semibold px-3 py-2 rounded-pill"
-                        onClick={handleEnableEdit}
-                      >
-                        ACTUALIZAR
-                      </button>
-                    </div>
-                  )}
+
+            {!editMode && (
+              <button
+                type="button"
+                className="btn btn-warning fw-semibold px-3 py-2 rounded-pill me-3 mb-3"
+                style={{ minWidth: "180px" }}
+                onClick={handleUpdate}
+              >
+                ACTUALIZAR
+              </button>
+            )}
           </div>
 
-                <div className="col-md-5 d-flex justify-content-center align-items-start">
+          {/* Image Upload Column */}
+          <div className="col-md-5 col-lg-6 d-flex justify-content-center align-items-start">
             <div className="text-center">
               <div
                 className="d-flex align-items-center justify-content-center mb-3 border border-2 border-light rounded"
@@ -448,36 +429,36 @@ const DetailProcesor = () => {
                   height: "300px",
                   backgroundColor: "#e9ecef",
                   borderStyle: "dashed !important",
-                        overflow: "hidden",
-                        position: "relative"
+                  overflow: "hidden",
+                  position: "relative"
                 }}
               >
-                      {formData.url_profile_photo ? (
-                        <img
-                          src={formData.url_profile_photo}
-                          alt="Profile"
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover"
-                          }}
-                        />
-                      ) : (
-                <div className="text-center text-muted">
-                  <svg
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                  >
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21,15 16,10 5,21"></polyline>
-                  </svg>
-                </div>
-                      )}
+                {formData.url_profile_photo ? (
+                  <img
+                    src={formData.url_profile_photo}
+                    alt="Profile"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover"
+                    }}
+                  />
+                ) : (
+                  <div className="text-center text-muted">
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21,15 16,10 5,21"></polyline>
+                    </svg>
+                  </div>
+                )}
               </div>
               <div className="small text-muted mb-3">300 x 300</div>
               <input
@@ -486,132 +467,121 @@ const DetailProcesor = () => {
                 className="d-none"
                 accept="image/*"
                 onChange={handleImageUpload}
-                      disabled={!editMode}
+                disabled={!editMode}
               />
-                    {editMode && (
-              <label
-                htmlFor="imageUpload"
-                        className="btn text-white fw-semibold px-4 py-2 rounded-pill"
-                style={{
-                          backgroundColor: "#1B2559",
-                  border: "none",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                }}
-              >
-                SUBIR IMAGEN
-              </label>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sección 3: Estadísticas y Métricas */}
-        <div className={styles.section}>
-          <div className="card mb-4" style={{ border: '1px solid #eee', borderRadius: '8px' }}>
-            <div className="card-header" style={{ backgroundColor: '#1B2559', color: 'white', borderRadius: '8px 8px 0 0' }}>
-              <h5 className="card-title mb-0 fw-bolder">Carga de Trabajo</h5>
-            </div>
-            <div className="card-body">
-              <div className="alert alert-info mb-4">
-                <i className="bi bi-info-circle me-2"></i>
-                <strong>Nota:</strong> Los datos de carga de trabajo se cargarán próximamente desde el backend.
-              </div>
-              
-              <div className="row g-3">
-                <div className="col-md-3">
-                  <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
-                    <div className="small my_title_color">Asignaciones Activas</div>
-                    <div className="h3 mb-0 my_title_color">{workload?.active_assignments_count || 0}</div>
-                  </div>
-                </div>
-                <div className="col-md-3">
-                  <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
-                    <div className="small my_title_color">Pendientes</div>
-                    <div className="h3 mb-0 my_title_color">{workload?.pending_requests || 0}</div>
-                  </div>
-                </div>
-                <div className="col-md-3">
-                  <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
-                    <div className="small my_title_color">En Progreso</div>
-                    <div className="h3 mb-0 my_title_color">{workload?.in_progress_requests || 0}</div>
-                  </div>
-                </div>
-                <div className="col-md-3">
-                  <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
-                    <div className="small my_title_color">Completadas</div>
-                    <div className="h3 mb-0 my_title_color">{workload?.completed_requests || 0}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sección 4: Asignaciones Activas */}
-        <div className={styles.section}>
-          <div className="card" style={{ border: '1px solid #eee', borderRadius: '8px' }}>
-            <div className="card-header" style={{ backgroundColor: '#1B2559', color: 'white', borderRadius: '8px 8px 0 0' }}>
-              <h5 className="card-title mb-0 fw-bolder">Asignaciones Activas</h5>
-            </div>
-            <div className="card-body">
-              {activeAssignments && activeAssignments.length > 0 ? (
-                <div className="table-responsive">
-                  <table className="table table-hover mb-0">
-                    <thead>
-                      <tr>
-                        <th className="my_title_color">Tipo</th>
-                        <th className="my_title_color">Cliente</th>
-                        <th className="my_title_color">Estado</th>
-                        <th className="my_title_color">Fecha</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {activeAssignments.map(assignment => (
-                        <tr key={assignment.id}>
-                          <td>
-                            <span className="badge" style={{ backgroundColor: '#1B2559', color: 'white' }}>
-                              {assignment.request_type}
-                            </span>
-                          </td>
-                          <td className="my_title_color">{assignment.client_name}</td>
-                          <td>
-                            <span 
-                              className="badge" 
-                              style={{ 
-                                backgroundColor: assignment.request_status === 'PENDING' ? '#f8f9fa' : '#e3f2fd',
-                                color: '#1B2559'
-                              }}
-                            >
-                              {assignment.request_status}
-                            </span>
-                          </td>
-                          <td>
-                            <small className="my_title_color">
-                              {new Date(assignment.assigned_at).toLocaleDateString()}
-                            </small>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <div className="alert alert-info mb-0">
-                    <i className="bi bi-info-circle me-2"></i>
-                    <strong>No hay asignaciones activas</strong>
-                    <br />
-                    <small className="text-muted">
-                      Los datos de asignaciones se cargarán próximamente desde el backend.
-                    </small>
-                  </div>
-                </div>
+              {editMode && (
+                <label
+                  htmlFor="imageUpload"
+                  className="btn text-white fw-semibold px-4 py-2 rounded-pill "
+                  style={{
+                    backgroundColor: "#2c3e50",
+                    border: "none",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                  }}
+                >
+                  SUBIR IMAGEN
+                </label>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Sección de Estadísticas y Métricas */}
+        <div className="row mt-5">
+          <div className="col-12">
+            <h3 className="fw-bold mb-4" style={{color: "#000"}}>Carga de Trabajo</h3>
+            <div className="alert alert-info mb-4">
+              <i className="bi bi-info-circle me-2"></i>
+              <strong>Nota:</strong> Los datos de carga de trabajo se cargarán próximamente desde el backend.
+            </div>
+            
+            <div className="row g-3 mb-4">
+              <div className="col-md-3">
+                <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
+                  <div className="small my_title_color">Asignaciones Activas</div>
+                  <div className="h3 mb-0 my_title_color">{workload?.active_assignments_count || 0}</div>
+                </div>
+              </div>
+              <div className="col-md-3">
+                <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
+                  <div className="small my_title_color">Pendientes</div>
+                  <div className="h3 mb-0 my_title_color">{workload?.pending_requests || 0}</div>
+                </div>
+              </div>
+              <div className="col-md-3">
+                <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
+                  <div className="small my_title_color">En Progreso</div>
+                  <div className="h3 mb-0 my_title_color">{workload?.in_progress_requests || 0}</div>
+                </div>
+              </div>
+              <div className="col-md-3">
+                <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
+                  <div className="small my_title_color">Completadas</div>
+                  <div className="h3 mb-0 my_title_color">{workload?.completed_requests || 0}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sección de Asignaciones Activas */}
+        <div className="row mt-4">
+          <div className="col-12">
+            <h3 className="fw-bold mb-4" style={{color: "#000"}}>Asignaciones Activas</h3>
+            {activeAssignments && activeAssignments.length > 0 ? (
+              <div className="table-responsive">
+                <table className="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th className="my_title_color">Tipo</th>
+                      <th className="my_title_color">Cliente</th>
+                      <th className="my_title_color">Estado</th>
+                      <th className="my_title_color">Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activeAssignments.map(assignment => (
+                      <tr key={assignment.id}>
+                        <td>
+                          <span className="badge" style={{ backgroundColor: '#000', color: 'white' }}>
+                            {assignment.request_type}
+                          </span>
+                        </td>
+                        <td className="my_title_color">{assignment.client_name}</td>
+                        <td>
+                          <span 
+                            className="badge" 
+                            style={{ 
+                              backgroundColor: assignment.request_status === 'PENDING' ? '#f8f9fa' : '#e3f2fd',
+                              color: '#000'
+                            }}
+                          >
+                            {assignment.request_status}
+                          </span>
+                        </td>
+                        <td>
+                          <small className="my_title_color">
+                            {new Date(assignment.assigned_at).toLocaleDateString()}
+                          </small>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <div className="alert alert-info mb-0">
+                  <i className="bi bi-info-circle me-2"></i>
+                  <strong>No hay asignaciones activas</strong>
+                  <br />
+                  <small className="text-muted">
+                    Los datos de asignaciones se cargarán próximamente desde el backend.
+                  </small>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -176,139 +176,165 @@ const CreateOrEditClient = () => {
           {editMode ? "Actualizar cliente" : "Registrar cliente"}
         </h2>
       </div>
-      {loading ? (
-        <div>Cargando datos...</div>
-      ) : (
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.row}>
-            <input
-              type="text"
-              placeholder="Nombre del cliente"
-              className={styles.input}
-              name="nombre"
-              value={form.nombre}
-              onChange={handleChange}
-              required
-            />
-            {/* --------------EMPRESAS--------------- */}
-            <select
-              name="empresa"
-              id="options_companies"
-              className={styles.input}
-              value={form.empresa}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Seleccione una empresa</option>
-              {companies && companies.map(({ id, name }) => (
-                <option value={id} key={id}>{name}</option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.row}>
-            <input
-              type="email"
-              placeholder="Correo electrónico"
-              className={styles.input}
-              name="correo"
-              value={form.correo}
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="tel"
-              placeholder="Número de teléfono"
-              className={styles.input}
-              name="telefono"
-              value={form.telefono}
-              onChange={handleChange}
-            />
-          </div>
-          <div className={`${styles.row} mb-4`}>
-            <input
-              type="text"
-              placeholder="Dirección de la propiedad"
-              className={`${styles.inputFull} me-4`}
-              name="direccion"
-              value={form.direccion}
-              onChange={handleChange}
-              required
-            />
-            <label className={styles.checkboxContainer}>
-              <input
-                type="checkbox"
-                name="compraRefinanciacion"
-                checked={form.compraRefinanciacion}
-                onChange={handleChange}
-              />
-              <span>¿Compra o refinanciación?</span>
-            </label>
-          </div>
-          <div className={`${styles.checkboxGroup} mb-4`}>
-            <label className={styles.checkboxContainer}>
-              <input
-                type="checkbox"
-                name="hipoteca"
-                checked={form.hipoteca}
-                onChange={handleChange}
-              />
-              <span>¿Tiene hipoteca?</span>
-            </label>
-            <label className={styles.checkboxContainer}>
-              <input
-                type="checkbox"
-                name="morosidad"
-                checked={form.morosidad}
-                onChange={handleChange}
-              />
-              <span>¿Tiene morosidad?</span>
-            </label>
-            <label className={styles.checkboxContainer}>
-              <input
-                type="checkbox"
-                name="impuestos"
-                checked={form.impuestos}
-                onChange={handleChange}
-              />
-              <span>¿Paga impuestos?</span>
-            </label>
-            <label className={styles.checkboxContainer}>
-              <input
-                type="checkbox"
-                name="hoa"
-                checked={form.hoa}
-                onChange={handleChange}
-              />
-              <span>¿HOA vigente?</span>
-            </label>
-            <label className={styles.checkboxContainer}>
-              <input
-                type="checkbox"
-                name="llc"
-                checked={form.llc}
-                onChange={handleChange}
-              />
-              <span>¿Sujeto bajo LLC?</span>
-            </label>
-          </div>
-          {feedback && (
-            <div style={{ 
-              color: feedback.includes("Error") ? 'red' : 'green', 
-              marginBottom: 10,
-              padding: '10px',
-              borderRadius: '5px',
-              backgroundColor: feedback.includes("Error") ? '#ffe6e6' : '#e6ffe6'
-            }}>
-              {feedback}
-            </div>
-          )}
-          <button type="submit" className={styles.button} disabled={loading}>
-            {loading ? "Guardando..." : (editMode ? "ACTUALIZAR" : "CREAR")}
-          </button>
-        </form>
-      )}
-    </div>
-  );
-};
+             {loading ? (
+         <div>Cargando datos...</div>
+       ) : (
+         <div className="container-fluid p-4">
+           <div className="row">
+             <div className="col-12 col-lg-8 col-xl-6">
+               <form className={styles.form} onSubmit={handleSubmit}>
+                 <div className="row g-3">
+                   <div className="col-12 col-md-6">
+                     <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Nombre del cliente</label>
+                     <input
+                       type="text"
+                       className={`form-control ${styles.input}`}
+                       name="nombre"
+                       value={form.nombre}
+                       onChange={handleChange}
+                       required
+                     />
+                   </div>
+                   <div className="col-12 col-md-6">
+                     <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Empresa</label>
+                     <select
+                       name="empresa"
+                       id="options_companies"
+                       className={`form-select ${styles.input}`}
+                       value={form.empresa}
+                       onChange={handleChange}
+                       required
+                     >
+                       <option value="">Seleccione una empresa</option>
+                       {companies && companies.map(({ id, name }) => (
+                         <option value={id} key={id}>{name}</option>
+                       ))}
+                     </select>
+                   </div>
+                   <div className="col-12 col-md-6">
+                     <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Correo electrónico</label>
+                     <input
+                       type="email"
+                       className={`form-control ${styles.input}`}
+                       name="correo"
+                       value={form.correo}
+                       onChange={handleChange}
+                       required
+                     />
+                   </div>
+                   <div className="col-12 col-md-6">
+                     <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Número de teléfono</label>
+                     <input
+                       type="tel"
+                       className={`form-control ${styles.input}`}
+                       name="telefono"
+                       value={form.telefono}
+                       onChange={handleChange}
+                     />
+                   </div>
+                   <div className="col-12">
+                     <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Dirección de la propiedad</label>
+                     <input
+                       type="text"
+                       className={`form-control ${styles.input}`}
+                       name="direccion"
+                       value={form.direccion}
+                       onChange={handleChange}
+                       required
+                     />
+                   </div>
+                 </div>
+                 
+                 {/* <label className={styles.checkboxContainer}>
+                   <input
+                     type="checkbox"
+                     name="compraRefinanciacion"
+                     checked={form.compraRefinanciacion}
+                     onChange={handleChange}
+                   />
+                   <span>¿Compra o refinanciación?</span>
+                 </label> */}
+                 
+                 {/* <div className={`${styles.checkboxGroup} mb-4`}>
+                   <label className={styles.checkboxContainer}>
+                     <input
+                       type="checkbox"
+                       name="hipoteca"
+                       checked={form.hipoteca}
+                       onChange={handleChange}
+                     />
+                     <span>¿Tiene hipoteca?</span>
+                   </label>
+                   <label className={styles.checkboxContainer}>
+                     <input
+                       type="checkbox"
+                       name="morosidad"
+                       checked={form.morosidad}
+                       onChange={handleChange}
+                     />
+                     <span>¿Tiene morosidad?</span>
+                   </label>
+                   <label className={styles.checkboxContainer}>
+                     <input
+                       type="checkbox"
+                       name="impuestos"
+                       checked={form.impuestos}
+                       onChange={handleChange}
+                     />
+                     <span>¿Paga impuestos?</span>
+                   </label>
+                   <label className={styles.checkboxContainer}>
+                     <input
+                       type="checkbox"
+                       name="hoa"
+                       checked={form.hoa}
+                       onChange={handleChange}
+                     />
+                     <span>¿HOA vigente?</span>
+                   </label>
+                   <label className={styles.checkboxContainer}>
+                     <input
+                       type="checkbox"
+                       name="llc"
+                       checked={form.llc}
+                       onChange={handleChange}
+                     />
+                     <span>¿Sujeto bajo LLC?</span>
+                   </label>
+                 </div> */}
+                 
+                 {feedback && (
+                   <div style={{ 
+                     color: feedback.includes("Error") ? 'red' : 'green', 
+                     marginBottom: 10,
+                     padding: '10px',
+                     borderRadius: '5px',
+                     backgroundColor: feedback.includes("Error") ? '#ffe6e6' : '#e6ffe6'
+                   }}>
+                     {feedback}
+                   </div>
+                 )}
+                 
+                 <button 
+                   type="submit" 
+                   disabled={loading}
+                   className="btn text-white fw-semibold px-3 py-2 rounded-pill"
+                   style={{
+                     backgroundColor: "#2c3e50",
+                     border: "none",
+                     fontSize: "16px",
+                     minWidth: "180px",
+                   }}
+                 >
+                   {loading ? "Guardando..." : (editMode ? "ACTUALIZAR" : "CREAR")}
+                 </button>
+               </form>
+             </div>
+           </div>
+         </div>
+       )}
+     </div>
+   );
+ };
 
 export default CreateOrEditClient;

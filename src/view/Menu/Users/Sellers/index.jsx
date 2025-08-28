@@ -139,16 +139,16 @@ const Sellers = () => {
         <table className="table table-bordered table-hover">
           <thead className="sticky-top">
             <tr>
-              <th style={{ color: "#1B2559" }}>ID</th>
-              <th style={{ color: "#1B2559" }}>Nombre Completo</th>
-              <th style={{ color: "#1B2559" }}>Email</th>
-              <th style={{ color: "#1B2559" }}>Identificación</th>
-              <th style={{ color: "#1B2559" }}>Dirección</th>
-              <th style={{ color: "#1B2559" }}>Celular</th>
-              <th style={{ color: "#1B2559" }}>Compañía</th>
-              <th style={{ color: "#1B2559" }}>Rol</th>
-              <th style={{ color: "#1B2559" }}>Estado</th>
-              <th style={{ color: "#1B2559" }}>Opciones</th>
+              <th style={{ color: "#000" }}>ID</th>
+              <th style={{ color: "#000" }}>Nombre Completo</th>
+              <th style={{ color: "#000" }}>Email</th>
+              <th style={{ color: "#000" }}>Identificación</th>
+              {/* <th style={{ color: "#000" }}>Dirección</th> */}
+              <th style={{ color: "#000" }}>Celular</th>
+              <th style={{ color: "#000" }}>Compañía</th>
+              <th style={{ color: "#000" }}>Rol</th>
+              <th style={{ color: "#000" }}>Estado</th>
+              <th style={{ color: "#000" }}>Opciones</th>
             </tr>
           </thead>
           <tbody>
@@ -163,7 +163,7 @@ const Sellers = () => {
                   <td>{seller.full_name}</td>
                   <td>{seller.email}</td>
                   <td>{seller.identification}</td>
-                  <td>{seller.address}</td>
+                  {/* <td>{seller.address}</td> */}
                   <td>{seller.phone}</td>
                   <td>{companyMap[seller.company_id] || '-'}</td>
                   <td>{Array.isArray(seller.roles) && seller.roles.length > 0 ? seller.roles[0] : '-'}</td>
@@ -175,13 +175,13 @@ const Sellers = () => {
                   <td>
                     {/* <button
                       className="btn btn-sm me-1"
-                      style={{ backgroundColor: "#1B2559" }}
+                      style={{ backgroundColor: "#000" }}
                     >
                       <img src={BookCheck} alt="check-data" width={15} />
                     </button> */}
                     <button
                       className="btn btn-sm"
-                      style={{ backgroundColor: "#1B2559" }}
+                      style={{ backgroundColor: "#000" }}
                       onClick={() => handleRedirectDetails(seller.id)}
                     >
                       <img src={Eye} alt="detail-client" width={10}/>

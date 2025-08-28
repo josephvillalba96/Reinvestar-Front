@@ -96,9 +96,9 @@ const Dashboard = () => {
   const getRequestTypeData = () => {
     const { summary } = dashboardData;
     return [
-      { name: 'DSCR', value: summary.dscr_requests, color: '#0d6efd' },
-      { name: 'Fixflip', value: summary.fixflip_requests, color: '#198754' },
-      { name: 'Construction', value: summary.construction_requests, color: '#fd7e14' }
+      { name: 'DSCR', value: summary.dscr_requests, color: '#000' },
+      { name: 'Fixflip', value: summary.fixflip_requests, color: '#666' },
+      { name: 'Construction', value: summary.construction_requests, color: '#999' }
     ].filter(item => item.value > 0);
   };
 
@@ -106,10 +106,10 @@ const Dashboard = () => {
   const getRequestStatusData = () => {
     const { summary } = dashboardData;
     return [
-      { name: 'Pendientes', value: summary.pending_approval, color: '#ffc107' },
-      { name: 'En Proceso', value: summary.in_process, color: '#0d6efd' },
-      { name: 'Aprobadas', value: summary.approved, color: '#198754' },
-      { name: 'Rechazadas', value: summary.rejected, color: '#dc3545' }
+      { name: 'Pendientes', value: summary.pending_approval, color: '#000' },
+      { name: 'En Proceso', value: summary.in_process, color: '#666' },
+      { name: 'Aprobadas', value: summary.approved, color: '#999' },
+      { name: 'Rechazadas', value: summary.rejected, color: '#ccc' }
     ].filter(item => item.value > 0);
   };
 
@@ -128,10 +128,11 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+      <div className={styles.loadingContainer}>
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Cargando...</span>
         </div>
+        <p className="mt-3">Cargando Dashboard...</p>
       </div>
     );
   }
@@ -157,13 +158,13 @@ const Dashboard = () => {
   const pipelineTrendData = getPipelineTrendData();
 
   return (
-    <div className={`${styles.dashboardContainer} container-fluid`}>
+    <div className={styles.dashboardContainer}>
       {/* Header */}
       <div className="row mb-4">
         <div className="col-12">
           <div className="d-flex justify-content-between align-items-center">
             <div>
-              <h1 className="h3 mb-0 text-dark fw-bold">Dashboard</h1>
+              <h1 className="h3 mb-0 my_title_color fw-bolder">Dashboard</h1>
               <p className="text-muted mb-0">Resumen ejecutivo de solicitudes</p>
             </div>
             <div className="d-flex gap-2">
@@ -171,14 +172,12 @@ const Dashboard = () => {
                 className="btn btn-primary"
                 onClick={() => navigate('/requests/new-request')}
               >
-                <i className="fas fa-plus me-2"></i>
                 Nueva Solicitud
               </button>
               <button 
                 className="btn btn-outline-secondary"
                 onClick={() => navigate('/requests')}
               >
-                <i className="fas fa-list me-2"></i>
                 Ver Solicitudes
               </button>
             </div>
@@ -188,90 +187,66 @@ const Dashboard = () => {
 
       {/* Métricas principales */}
       <div className="row mb-4">
-        <div className="col-xl-3 col-md-6 mb-4">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <div className="flex-shrink-0">
-                  <div className="bg-primary rounded-3 p-3">
-                    <i className="fas fa-file-alt text-white fs-4"></i>
-                  </div>
-                </div>
-                <div className="flex-grow-1 ms-3">
-                  <h6 className="text-muted mb-1">Total Solicitudes</h6>
-                  <h3 className="mb-0 fw-bold text-dark">{summary.total_requests.toLocaleString()}</h3>
-                  <small className="text-success">
-                    <i className="fas fa-arrow-up me-1"></i>
-                    +12% este mes
-                  </small>
-                </div>
-              </div>
+        <div className="col-xl-3 col-md-6 mb-3">
+          <div className={styles.metricCard}>
+            <div className={styles.metricIcon}>
+              <i className="fas fa-file-alt"></i>
+            </div>
+            <div className={styles.metricContent}>
+              <h6 className="text-muted mb-1">Total Solicitudes</h6>
+              <h3 className="mb-0 fw-bold my_title_color">{summary.total_requests.toLocaleString()}</h3>
+              <small className="text-success">
+                <i className="fas fa-arrow-up me-1"></i>
+                +12% este mes
+              </small>
             </div>
           </div>
         </div>
 
-        <div className="col-xl-3 col-md-6 mb-4">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <div className="flex-shrink-0">
-                  <div className="bg-warning rounded-3 p-3">
-                    <i className="fas fa-clock text-white fs-4"></i>
-                  </div>
-                </div>
-                <div className="flex-grow-1 ms-3">
-                  <h6 className="text-muted mb-1">En Proceso</h6>
-                  <h3 className="mb-0 fw-bold text-dark">{summary.in_process.toLocaleString()}</h3>
-                  <small className="text-warning">
-                    <i className="fas fa-arrow-down me-1"></i>
-                    -5% esta semana
-                  </small>
-                </div>
-              </div>
+        <div className="col-xl-3 col-md-6 mb-3">
+          <div className={styles.metricCard}>
+            <div className={styles.metricIcon}>
+              <i className="fas fa-clock"></i>
+            </div>
+            <div className={styles.metricContent}>
+              <h6 className="text-muted mb-1">En Proceso</h6>
+              <h3 className="mb-0 fw-bold my_title_color">{summary.in_process.toLocaleString()}</h3>
+              <small className="text-warning">
+                <i className="fas fa-arrow-down me-1"></i>
+                -5% esta semana
+              </small>
             </div>
           </div>
         </div>
 
-        <div className="col-xl-3 col-md-6 mb-4">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <div className="flex-shrink-0">
-                  <div className="bg-success rounded-3 p-3">
-                    <i className="fas fa-check-circle text-white fs-4"></i>
-                  </div>
-                </div>
-                <div className="flex-grow-1 ms-3">
-                  <h6 className="text-muted mb-1">Aprobadas</h6>
-                  <h3 className="mb-0 fw-bold text-dark">{summary.approved.toLocaleString()}</h3>
-                  <small className="text-success">
-                    <i className="fas fa-arrow-up me-1"></i>
-                    +8% este mes
-                  </small>
-                </div>
-              </div>
+        <div className="col-xl-3 col-md-6 mb-3">
+          <div className={styles.metricCard}>
+            <div className={styles.metricIcon}>
+              <i className="fas fa-check-circle"></i>
+            </div>
+            <div className={styles.metricContent}>
+              <h6 className="text-muted mb-1">Aprobadas</h6>
+              <h3 className="mb-0 fw-bold my_title_color">{summary.approved.toLocaleString()}</h3>
+              <small className="text-success">
+                <i className="fas fa-arrow-up me-1"></i>
+                +8% este mes
+              </small>
             </div>
           </div>
         </div>
 
-        <div className="col-xl-3 col-md-6 mb-4">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <div className="flex-shrink-0">
-                  <div className="bg-info rounded-3 p-3">
-                    <i className="fas fa-percentage text-white fs-4"></i>
-                  </div>
-                </div>
-                <div className="flex-grow-1 ms-3">
-                  <h6 className="text-muted mb-1">Progreso Documentos</h6>
-                  <h3 className="mb-0 fw-bold text-dark">{summary.document_progress}%</h3>
-                  <small className="text-info">
-                    <i className="fas fa-arrow-up me-1"></i>
-                    +15% esta semana
-                  </small>
-                </div>
-              </div>
+        <div className="col-xl-3 col-md-6 mb-3">
+          <div className={styles.metricCard}>
+            <div className={styles.metricIcon}>
+              <i className="fas fa-percentage"></i>
+            </div>
+            <div className={styles.metricContent}>
+              <h6 className="text-muted mb-1">Progreso Documentos</h6>
+              <h3 className="mb-0 fw-bold my_title_color">{summary.document_progress}%</h3>
+              <small className="text-info">
+                <i className="fas fa-arrow-up me-1"></i>
+                +15% esta semana
+              </small>
             </div>
           </div>
         </div>
@@ -281,14 +256,13 @@ const Dashboard = () => {
       <div className="row mb-4">
         {/* Gráfico de dona - Tipos de solicitud */}
         <div className="col-lg-6 mb-4">
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-0">
-              <h5 className="card-title mb-0 fw-bold">
-                <i className="fas fa-chart-pie me-2 text-primary"></i>
+          <div className={styles.chartCard}>
+            <div className={styles.chartHeader}>
+              <h5 className="card-title mb-0 fw-bold my_title_color">
                 Distribución por Tipo
               </h5>
             </div>
-            <div className="card-body">
+            <div className={styles.chartBody}>
               {requestTypeData.length > 0 ? (
                 <div className="d-flex align-items-center justify-content-center">
                   <div className="position-relative me-4">
@@ -298,7 +272,7 @@ const Dashboard = () => {
                         cy="60"
                         r="50"
                         fill="none"
-                        stroke="#e9ecef"
+                        stroke="#e5e7eb"
                         strokeWidth="10"
                       />
                       {requestTypeData.map((item, index) => {
@@ -323,13 +297,12 @@ const Dashboard = () => {
                             strokeDasharray={circumference}
                             strokeDashoffset={strokeDashoffset}
                             transform={`rotate(${rotation} 60 60)`}
-                            className="transition-all"
                           />
                         );
                       })}
                     </svg>
                     <div className="position-absolute top-50 start-50 translate-middle text-center">
-                      <div className="fw-bold fs-4">{summary.total_requests}</div>
+                      <div className="fw-bold fs-4 my_title_color">{summary.total_requests}</div>
                       <small className="text-muted">Total</small>
                     </div>
                   </div>
@@ -345,8 +318,8 @@ const Dashboard = () => {
                             borderRadius: '2px'
                           }}
                         ></div>
-                        <span className="me-2">{item.name}:</span>
-                        <strong>{item.value}</strong>
+                        <span className="me-2 my_title_color">{item.name}:</span>
+                        <strong className="my_title_color">{item.value}</strong>
                       </div>
                     ))}
                   </div>
@@ -363,14 +336,13 @@ const Dashboard = () => {
 
         {/* Gráfico de barras - Estados de solicitudes */}
         <div className="col-lg-6 mb-4">
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-0">
-              <h5 className="card-title mb-0 fw-bold">
-                <i className="fas fa-chart-bar me-2 text-success"></i>
+          <div className={styles.chartCard}>
+            <div className={styles.chartHeader}>
+              <h5 className="card-title mb-0 fw-bold my_title_color">
                 Estados de Solicitudes
               </h5>
             </div>
-            <div className="card-body">
+            <div className={styles.chartBody}>
               {requestStatusData.length > 0 ? (
                 <div className="d-flex flex-column gap-3">
                   {requestStatusData.map((item) => {
@@ -394,7 +366,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div style={{ width: '40px', textAlign: 'right' }}>
-                          <strong>{item.value}</strong>
+                          <strong className="my_title_color">{item.value}</strong>
                         </div>
                       </div>
                     );
@@ -411,241 +383,118 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Gráfico de línea - Tendencias */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-0">
-              <h5 className="card-title mb-0 fw-bold">
-                <i className="fas fa-chart-line me-2 text-info"></i>
-                Tendencias de Solicitudes
-              </h5>
-            </div>
-            <div className="card-body">
-              <div className="d-flex align-items-center justify-content-center" style={{ height: '200px' }}>
-                <svg width="100%" height="180" viewBox="0 0 800 180">
-                  {/* Grid lines */}
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <line
-                      key={i}
-                      x1={i * 133.33}
-                      y1="0"
-                      x2={i * 133.33}
-                      y2="180"
-                      stroke="#e9ecef"
-                      strokeWidth="1"
-                    />
-                  ))}
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <line
-                      key={i}
-                      x1="0"
-                      y1={i * 45}
-                      x2="800"
-                      y2={i * 45}
-                      stroke="#e9ecef"
-                      strokeWidth="1"
-                    />
-                  ))}
-                  
-                  {/* DSCR Line */}
-                  <polyline
-                    points={pipelineTrendData.map((d, i) => `${i * 133.33 + 66.67},${180 - (d.dscr / 60) * 180}`).join(' ')}
-                    fill="none"
-                    stroke="#0d6efd"
-                    strokeWidth="3"
-                  />
-                  
-                  {/* Fixflip Line */}
-                  <polyline
-                    points={pipelineTrendData.map((d, i) => `${i * 133.33 + 66.67},${180 - (d.fixflip / 60) * 180}`).join(' ')}
-                    fill="none"
-                    stroke="#198754"
-                    strokeWidth="3"
-                  />
-                  
-                  {/* Construction Line */}
-                  <polyline
-                    points={pipelineTrendData.map((d, i) => `${i * 133.33 + 66.67},${180 - (d.construction / 60) * 180}`).join(' ')}
-                    fill="none"
-                    stroke="#fd7e14"
-                    strokeWidth="3"
-                  />
-                  
-                  {/* Data points */}
-                  {pipelineTrendData.map((d, i) => (
-                    <g key={i}>
-                      <circle
-                        cx={i * 133.33 + 66.67}
-                        cy={180 - (d.dscr / 60) * 180}
-                        r="4"
-                        fill="#0d6efd"
-                      />
-                      <circle
-                        cx={i * 133.33 + 66.67}
-                        cy={180 - (d.fixflip / 60) * 180}
-                        r="4"
-                        fill="#198754"
-                      />
-                      <circle
-                        cx={i * 133.33 + 66.67}
-                        cy={180 - (d.construction / 60) * 180}
-                        r="4"
-                        fill="#fd7e14"
-                      />
-                    </g>
-                  ))}
-                  
-                  {/* Labels */}
-                  {pipelineTrendData.map((d, i) => (
-                    <text
-                      key={i}
-                      x={i * 133.33 + 66.67}
-                      y="195"
-                      textAnchor="middle"
-                      fontSize="12"
-                      fill="#6c757d"
-                    >
-                      {d.month}
-                    </text>
-                  ))}
-                </svg>
-              </div>
-              <div className="d-flex justify-content-center gap-4 mt-3">
-                <div className="d-flex align-items-center">
-                  <div className="me-2" style={{ width: '12px', height: '12px', backgroundColor: '#0d6efd' }}></div>
-                  <small>DSCR</small>
-                </div>
-                <div className="d-flex align-items-center">
-                  <div className="me-2" style={{ width: '12px', height: '12px', backgroundColor: '#198754' }}></div>
-                  <small>Fixflip</small>
-                </div>
-                <div className="d-flex align-items-center">
-                  <div className="me-2" style={{ width: '12px', height: '12px', backgroundColor: '#fd7e14' }}></div>
-                  <small>Construction</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Tablas de rendimiento */}
       <div className="row mb-4">
         {/* Rendimiento de vendedores */}
         <div className="col-lg-6 mb-4">
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-0">
-              <h5 className="card-title mb-0 fw-bold">
-                <i className="fas fa-users me-2 text-primary"></i>
+          <div className={styles.tableCard}>
+            <div className={styles.tableHeader}>
+              <h5 className="card-title mb-0 fw-bold my_title_color">
                 Rendimiento de Vendedores
               </h5>
             </div>
-            <div className="card-body p-0">
-              <div className="table-responsive">
-                <table className="table table-hover mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Vendedor</th>
-                      <th>Total</th>
-                      <th>Aprobadas</th>
-                      <th>Tasa</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {vendors_performance.map((vendor) => (
-                      <tr key={vendor.id}>
-                        <td>
-                          <div className="d-flex align-items-center">
-                            <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '32px', height: '32px' }}>
-                              <i className="fas fa-user text-white small"></i>
-                            </div>
-                            <span className="fw-medium">{vendor.name}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="badge bg-secondary">{vendor.total_requests}</span>
-                        </td>
-                        <td>
-                          <span className="badge bg-success">{vendor.approved_requests}</span>
-                        </td>
-                        <td>
-                          <span className={`badge ${vendor.approval_rate > 80 ? 'bg-success' : vendor.approval_rate > 60 ? 'bg-warning' : 'bg-danger'}`}>
-                            {vendor.approval_rate}%
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    {vendors_performance.length === 0 && (
+            <div className={styles.tableBody}>
+              {vendors_performance.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-hover mb-0">
+                    <thead>
                       <tr>
-                        <td colSpan="4" className="text-center text-muted py-4">
-                          <i className="fas fa-users fs-1 mb-3 d-block"></i>
-                          No hay datos de vendedores
-                        </td>
+                        <th className="my_title_color">Vendedor</th>
+                        <th className="my_title_color">Total</th>
+                        <th className="my_title_color">Aprobadas</th>
+                        <th className="my_title_color">Tasa</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {vendors_performance.map((vendor) => (
+                        <tr key={vendor.id}>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '32px', height: '32px' }}>
+                                <i className="fas fa-user text-white small"></i>
+                              </div>
+                              <span className="fw-medium my_title_color">{vendor.name}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="badge bg-secondary">{vendor.total_requests}</span>
+                          </td>
+                          <td>
+                            <span className="badge bg-success">{vendor.approved_requests}</span>
+                          </td>
+                          <td>
+                            <span className={`badge ${vendor.approval_rate > 80 ? 'bg-success' : vendor.approval_rate > 60 ? 'bg-warning' : 'bg-danger'}`}>
+                              {vendor.approval_rate}%
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center text-muted py-4">
+                  <i className="fas fa-users fs-1 mb-3 d-block"></i>
+                  No hay datos de vendedores
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Carga de trabajo de procesadores */}
         <div className="col-lg-6 mb-4">
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-0">
-              <h5 className="card-title mb-0 fw-bold">
-                <i className="fas fa-cogs me-2 text-success"></i>
+          <div className={styles.tableCard}>
+            <div className={styles.tableHeader}>
+              <h5 className="card-title mb-0 fw-bold my_title_color">
                 Carga de Trabajo - Procesadores
               </h5>
             </div>
-            <div className="card-body p-0">
-              <div className="table-responsive">
-                <table className="table table-hover mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Procesador</th>
-                      <th>Activas</th>
-                      <th>Completadas</th>
-                      <th>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {processors_workload.map((processor) => (
-                      <tr key={processor.id}>
-                        <td>
-                          <div className="d-flex align-items-center">
-                            <div className="bg-success rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '32px', height: '32px' }}>
-                              <i className="fas fa-user-cog text-white small"></i>
-                            </div>
-                            <span className="fw-medium">{processor.name}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className={`badge ${processor.active_assignments > 5 ? 'bg-danger' : processor.active_assignments > 2 ? 'bg-warning' : 'bg-success'}`}>
-                            {processor.active_assignments}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="badge bg-info">{processor.completed_assignments}</span>
-                        </td>
-                        <td>
-                          <strong className="text-dark">{processor.active_assignments + processor.completed_assignments}</strong>
-                        </td>
-                      </tr>
-                    ))}
-                    {processors_workload.length === 0 && (
+            <div className={styles.tableBody}>
+              {processors_workload.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-hover mb-0">
+                    <thead>
                       <tr>
-                        <td colSpan="4" className="text-center text-muted py-4">
-                          <i className="fas fa-cogs fs-1 mb-3 d-block"></i>
-                          No hay datos de procesadores
-                        </td>
+                        <th className="my_title_color">Procesador</th>
+                        <th className="my_title_color">Activas</th>
+                        <th className="my_title_color">Completadas</th>
+                        <th className="my_title_color">Total</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {processors_workload.map((processor) => (
+                        <tr key={processor.id}>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <div className="bg-success rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '32px', height: '32px' }}>
+                                <i className="fas fa-user-cog text-white small"></i>
+                              </div>
+                              <span className="fw-medium my_title_color">{processor.name}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className={`badge ${processor.active_assignments > 5 ? 'bg-danger' : processor.active_assignments > 2 ? 'bg-warning' : 'bg-success'}`}>
+                              {processor.active_assignments}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="badge bg-info">{processor.completed_assignments}</span>
+                          </td>
+                          <td>
+                            <strong className="my_title_color">{processor.active_assignments + processor.completed_assignments}</strong>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center text-muted py-4">
+                  <i className="fas fa-cogs fs-1 mb-3 d-block"></i>
+                  No hay datos de procesadores
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -654,14 +503,13 @@ const Dashboard = () => {
       {/* Actividad reciente */}
       <div className="row mb-4">
         <div className="col-12">
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-0">
-              <h5 className="card-title mb-0 fw-bold">
-                <i className="fas fa-history me-2 text-info"></i>
+          <div className={styles.tableCard}>
+            <div className={styles.tableHeader}>
+              <h5 className="card-title mb-0 fw-bold my_title_color">
                 Actividad Reciente
               </h5>
             </div>
-            <div className="card-body">
+            <div className={styles.tableBody}>
               <div className="row">
                 {recent_activity.slice(0, 6).map((activity, index) => (
                   <div key={index} className="col-md-6 mb-3">
@@ -670,7 +518,7 @@ const Dashboard = () => {
                         <i className={`fas ${activity.type === 'status_update' ? 'fa-sync-alt' : activity.type === 'document_upload' ? 'fa-file-upload' : 'fa-plus-circle'} text-white`}></i>
                       </div>
                       <div className="flex-grow-1">
-                        <p className="mb-1 fw-medium">{activity.description}</p>
+                        <p className="mb-1 fw-medium my_title_color">{activity.description}</p>
                         <small className="text-muted">
                           <i className="fas fa-clock me-1"></i>
                           {new Date(activity.timestamp).toLocaleString()}
@@ -694,31 +542,29 @@ const Dashboard = () => {
       {/* Pipeline de Vendedores */}
       <div className="row mb-4">
         <div className="col-12">
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-0">
-              <h5 className="card-title mb-0 fw-bold">
-                <i className="fas fa-sitemap me-2 text-primary"></i>
+          <div className={styles.tableCard}>
+            <div className={styles.tableHeader}>
+              <h5 className="card-title mb-0 fw-bold my_title_color">
                 Pipeline de Vendedores
               </h5>
             </div>
-            <div className="card-body">
+            <div className={styles.tableBody}>
               <div className="row">
                 {/* DSCR Pipeline */}
                 <div className="col-lg-4 mb-4">
-                  <div className="card border h-100">
-                    <div className="card-header bg-light">
-                      <h6 className="mb-0 fw-bold">
-                        <i className="fas fa-home me-2 text-primary"></i>
+                  <div className={styles.pipelineCard}>
+                    <div className={styles.pipelineHeader}>
+                      <h6 className="mb-0 fw-bold my_title_color">
                         DSCR
                         <span className="badge bg-primary ms-2">
                           {getPipelineTotal(vendor_pipeline.dscr)}
                         </span>
                       </h6>
                     </div>
-                    <div className="card-body">
+                    <div className={styles.pipelineBody}>
                       {vendor_pipeline.dscr.length > 0 ? (
                         vendor_pipeline.dscr.map((stage, index) => (
-                          <div key={index} className="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                          <div key={index} className={styles.pipelineStage}>
                             <div>
                               <small className="text-muted d-block">{stage.stage || 'Sin etapa'}</small>
                               <strong className="text-success">${(stage.total_amount || 0).toLocaleString()}</strong>
@@ -738,20 +584,19 @@ const Dashboard = () => {
 
                 {/* Fixflip Pipeline */}
                 <div className="col-lg-4 mb-4">
-                  <div className="card border h-100">
-                    <div className="card-header bg-light">
-                      <h6 className="mb-0 fw-bold">
-                        <i className="fas fa-tools me-2 text-success"></i>
+                  <div className={styles.pipelineCard}>
+                    <div className={styles.pipelineHeader}>
+                      <h6 className="mb-0 fw-bold my_title_color">
                         Fixflip
                         <span className="badge bg-success ms-2">
                           {getPipelineTotal(vendor_pipeline.fixflip)}
                         </span>
                       </h6>
                     </div>
-                    <div className="card-body">
+                    <div className={styles.pipelineBody}>
                       {vendor_pipeline.fixflip.length > 0 ? (
                         vendor_pipeline.fixflip.map((stage, index) => (
-                          <div key={index} className="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                          <div key={index} className={styles.pipelineStage}>
                             <div>
                               <small className="text-muted d-block">{stage.stage || 'Sin etapa'}</small>
                               <strong className="text-success">${(stage.total_amount || 0).toLocaleString()}</strong>
@@ -771,20 +616,19 @@ const Dashboard = () => {
 
                 {/* Construction Pipeline */}
                 <div className="col-lg-4 mb-4">
-                  <div className="card border h-100">
-                    <div className="card-header bg-light">
-                      <h6 className="mb-0 fw-bold">
-                        <i className="fas fa-building me-2 text-warning"></i>
+                  <div className={styles.pipelineCard}>
+                    <div className={styles.pipelineHeader}>
+                      <h6 className="mb-0 fw-bold my_title_color">
                         Construction
                         <span className="badge bg-warning ms-2">
                           {getPipelineTotal(vendor_pipeline.construction)}
                         </span>
                       </h6>
                     </div>
-                    <div className="card-body">
+                    <div className={styles.pipelineBody}>
                       {vendor_pipeline.construction.length > 0 ? (
                         vendor_pipeline.construction.map((stage, index) => (
-                          <div key={index} className="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                          <div key={index} className={styles.pipelineStage}>
                             <div>
                               <small className="text-muted d-block">{stage.stage || 'Sin etapa'}</small>
                               <strong className="text-success">${(stage.total_amount || 0).toLocaleString()}</strong>
@@ -811,10 +655,9 @@ const Dashboard = () => {
       {selectedRequest && timeline.length > 0 && (
         <div className="row mb-4">
           <div className="col-12">
-            <div className="card border-0 shadow-sm">
-              <div className="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                <h5 className="card-title mb-0 fw-bold">
-                  <i className="fas fa-clock me-2 text-info"></i>
+            <div className={styles.tableCard}>
+              <div className={styles.tableHeader}>
+                <h5 className="card-title mb-0 fw-bold my_title_color">
                   Línea de Tiempo de la Solicitud
                 </h5>
                 <button 
@@ -824,7 +667,7 @@ const Dashboard = () => {
                   <i className="fas fa-times"></i>
                 </button>
               </div>
-              <div className="card-body">
+              <div className={styles.tableBody}>
                 <div className="timeline">
                   {timeline.map((event, index) => (
                     <div key={index} className="d-flex mb-3">
@@ -836,7 +679,7 @@ const Dashboard = () => {
                       <div className="flex-grow-1">
                         <div className="d-flex justify-content-between align-items-start">
                           <div>
-                            <h6 className="mb-1 fw-bold">{event.title || 'Sin título'}</h6>
+                            <h6 className="mb-1 fw-bold my_title_color">{event.title || 'Sin título'}</h6>
                             <p className="mb-1 text-muted">{event.description || 'Sin descripción'}</p>
                             {event.status && (
                               <span className={`badge ${event.status === 'approved' ? 'bg-success' : event.status === 'rejected' ? 'bg-danger' : event.status === 'pending' ? 'bg-warning' : 'bg-info'}`}>

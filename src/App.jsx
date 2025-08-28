@@ -56,9 +56,9 @@ function App() {
             <Route path='coordinators' element={<Coordinators/>} />
             <Route path='coordinators/new-coordinator' element={<CreateCoordinators/>} />
             <Route path='/coordinators/:id/details' element={<DetailCoordinator/>} />
-            <Route path='process' element={<Procesors/>}/>
-            <Route path='process/new-process' element={<CreateProcesor/>}/>
-            <Route path='process/:id/details' element={<DetailProcesor/>}/>
+            <Route path='processors' element={<Procesors/>}/>
+            <Route path='processors/new-process' element={<CreateProcesor/>}/>
+            <Route path='processors/:id/details' element={<DetailProcesor/>}/>
             <Route path='users' element={<System/>}/>
             <Route path='users/new-admin' element={<CreateUserSystem/>}/>
             <Route path='users/:id/details' element={<DetailUserSystem/>}/>

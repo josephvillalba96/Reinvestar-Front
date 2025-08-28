@@ -23,7 +23,7 @@
   .title {
     font-size: 1.3rem;
     font-weight: bold;
-    color: #1B2559;
+    color: #000;
     margin-bottom: 1.5rem;
   }
   
@@ -56,7 +56,7 @@
   
   .step_type {
     font-weight: 600;
-    color: #1B2559;
+    color: #000;
   }
   
   .step_date {
@@ -234,7 +234,7 @@
 }
 
 .modal-title {
-  color: #1B2559;
+  color: #000;
   font-weight: bold;
 }
 

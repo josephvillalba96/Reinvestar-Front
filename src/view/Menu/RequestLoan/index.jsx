@@ -268,16 +268,16 @@ const RequestLoan = () => {
         <table className="table table-bordered table-hover">
           <thead className="sticky-top">
             <tr>
-              <th style={{ color: "#1B2559" }}>ID</th>
-              <th style={{ color: "#1B2559" }}>Radicado</th>
-              <th style={{ color: "#1B2559" }}>Nombre Completo</th>
-              <th style={{ color: "#1B2559" }}>Email</th>
-              <th style={{ color: "#1B2559" }}>Celular</th>
-              <th style={{ color: "#1B2559" }}>Monto del préstamo</th>
-              <th style={{ color: "#1B2559" }}>Precio de compra</th>
-              <th style={{ color: "#1B2559" }}>ARV</th>
-              <th style={{ color: "#1B2559" }}>Estado</th>
-              <th style={{ color: "#1B2559" }}>Opciones</th>
+              <th style={{ color: "#000" }}>ID</th>
+              <th style={{ color: "#000" }}>Radicado</th>
+              <th style={{ color: "#000" }}>Nombre Completo</th>
+              <th style={{ color: "#000" }}>Email</th>
+              <th style={{ color: "#000" }}>Celular</th>
+              <th style={{ color: "#000" }}>Monto del préstamo</th>
+              <th style={{ color: "#000" }}>Precio de compra</th>
+              <th style={{ color: "#000" }}>ARV</th>
+              <th style={{ color: "#000" }}>Estado</th>
+              <th style={{ color: "#000" }}>Opciones</th>
             </tr>
           </thead>
           <tbody>
@@ -294,10 +294,10 @@ const RequestLoan = () => {
                   <td>{formatMonetaryValue(request.arv)}</td>
                   <td>{formatStatus(request.status)}</td>
                   <td>
-                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
+                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#000" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
                       <img src={BookCheck} alt="check-data" width={10} />
                     </button>
-                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
+                    <button className="btn btn-sm" style={{ backgroundColor: "#000" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
                       <img src={Eye} alt="detail-client" width={10} />
                     </button>
                   </td>
@@ -316,16 +316,16 @@ const RequestLoan = () => {
         <table className="table table-bordered table-hover">
           <thead className="sticky-top">
             <tr>
-              <th style={{ color: "#1B2559" }}>ID</th>
-              <th style={{ color: "#1B2559" }}>Radicado</th>
-              <th style={{ color: "#1B2559" }}>Nombre Completo</th>
-              <th style={{ color: "#1B2559" }}>Email</th>
-              <th style={{ color: "#1B2559" }}>Celular</th>
-              <th style={{ color: "#1B2559" }}>Monto del préstamo</th>
-              <th style={{ color: "#1B2559" }}>Valor de la propiedad</th>
-              <th style={{ color: "#1B2559" }}>Costo de construcción</th>
-              <th style={{ color: "#1B2559" }}>Estado</th>
-              <th style={{ color: "#1B2559" }}>Opciones</th>
+              <th style={{ color: "#000" }}>ID</th>
+              <th style={{ color: "#000" }}>Radicado</th>
+              <th style={{ color: "#000" }}>Nombre Completo</th>
+              <th style={{ color: "#000" }}>Email</th>
+              <th style={{ color: "#000" }}>Celular</th>
+              <th style={{ color: "#000" }}>Monto del préstamo</th>
+              <th style={{ color: "#000" }}>Valor de la propiedad</th>
+              <th style={{ color: "#000" }}>Costo de construcción</th>
+              <th style={{ color: "#000" }}>Estado</th>
+              <th style={{ color: "#000" }}>Opciones</th>
             </tr>
           </thead>
           <tbody>
@@ -342,10 +342,10 @@ const RequestLoan = () => {
                   <td>{formatMonetaryValue(request.construction_cost)}</td>
                   <td>{formatStatus(request.status)}</td>
                   <td>
-                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
+                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#000" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
                       <img src={BookCheck} alt="check-data" width={10} />
                     </button>
-                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
+                    <button className="btn btn-sm" style={{ backgroundColor: "#000" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
                       <img src={Eye} alt="detail-client" width={10} />
                     </button>
                   </td>
@@ -365,16 +365,16 @@ const RequestLoan = () => {
         <table className="table table-bordered table-hover">
           <thead className="sticky-top">
             <tr>
-              <th style={{ color: "#1B2559" }}>ID</th>
-              <th style={{ color: "#1B2559" }}>Radicado</th>
-              <th style={{ color: "#1B2559" }}>Nombre Completo</th>
-              <th style={{ color: "#1B2559" }}>Email</th>
-              <th style={{ color: "#1B2559" }}>Celular</th>
-              <th style={{ color: "#1B2559" }}>Monto Alquiler</th>
-              <th style={{ color: "#1B2559" }}>Valor de tasación</th>
-              <th style={{ color: "#1B2559" }}>LTV Solicitado</th>
-              <th style={{ color: "#1B2559" }}>Estado</th>
-              <th style={{ color: "#1B2559" }}>Opciones</th>
+              <th style={{ color: "#000" }}>ID</th>
+              <th style={{ color: "#000" }}>Radicado</th>
+              <th style={{ color: "#000" }}>Nombre Completo</th>
+              <th style={{ color: "#000" }}>Email</th>
+              <th style={{ color: "#000" }}>Celular</th>
+              <th style={{ color: "#000" }}>Monto Alquiler</th>
+              <th style={{ color: "#000" }}>Valor de tasación</th>
+              <th style={{ color: "#000" }}>LTV Solicitado</th>
+              <th style={{ color: "#000" }}>Estado</th>
+              <th style={{ color: "#000" }}>Opciones</th>
             </tr>
           </thead>
           <tbody>
@@ -391,10 +391,10 @@ const RequestLoan = () => {
                   <td>{formatPercent(request.ltv_request)}</td>
                   <td>{formatStatus(request.status)}</td>
                   <td>
-                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#1B2559" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
+                    <button className="btn btn-sm me-1" style={{ backgroundColor: "#000" }} onClick={() => openAssignPopup(request.id, requestType || 'dscr')}>
                       <img src={BookCheck} alt="check-data" width={10} />
                     </button>
-                    <button className="btn btn-sm" style={{ backgroundColor: "#1B2559" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
+                    <button className="btn btn-sm" style={{ backgroundColor: "#000" }} onClick={() => navegate(`/requests/${requestType || 'dscr'}/${request.id}/details`)}>
                       <img src={Eye} alt="detail-client" width={10} />
                     </button>
                   </td>

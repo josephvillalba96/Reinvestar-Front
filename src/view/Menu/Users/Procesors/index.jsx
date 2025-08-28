@@ -22,7 +22,7 @@ const Procesors = () => {
   const navegate = useNavigate();
 
   const handleRedirect = (id) => {
-    navegate(`/process/${id}/details`)
+    navegate(`/processors/${id}/details`)
   }
 
   const fetchProcessors = async (page = 1, searchValue = "", estadoValue = "") => {
@@ -159,13 +159,13 @@ const Procesors = () => {
         <table className="table table-bordered table-hover">
           <thead className="sticky-top">
             <tr>
-              <th style={{ color: "#1B2559" }}>ID</th>
-              <th style={{ color: "#1B2559" }}>Nombre Completo</th>
-              <th style={{ color: "#1B2559" }}>Email</th>
-              <th style={{ color: "#1B2559" }}>Celular</th>
-              <th style={{ color: "#1B2559" }}>Identificación</th>
-              <th style={{ color: "#1B2559" }}>Estado</th>
-              <th style={{ color: "#1B2559" }}>Opciones</th>
+              <th style={{ color: "#000" }}>ID</th>
+              <th style={{ color: "#000" }}>Nombre Completo</th>
+              <th style={{ color: "#000" }}>Email</th>
+              <th style={{ color: "#000" }}>Celular</th>
+              <th style={{ color: "#000" }}>Identificación</th>
+              <th style={{ color: "#000" }}>Estado</th>
+              <th style={{ color: "#000" }}>Opciones</th>
             </tr>
           </thead>
           <tbody>
@@ -185,7 +185,7 @@ const Procesors = () => {
                 <td>
                   <button
                     className="btn btn-sm me-1"
-                    style={{ backgroundColor: "#1B2559" }}
+                    style={{ backgroundColor: "#000" }}
                         onClick={() => handleShowWorkload(processor)}
                         data-bs-toggle="modal"
                         data-bs-target="#workloadModal"
@@ -195,7 +195,7 @@ const Procesors = () => {
                   <button
                         onClick={() => handleRedirect(processor.id)}
                     className="btn btn-sm"
-                    style={{ backgroundColor: "#1B2559" }}
+                    style={{ backgroundColor: "#000" }}
                   >
                     <img src={Eye} alt="detail-client" width={10}/>
                   </button>

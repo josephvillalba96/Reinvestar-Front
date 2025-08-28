@@ -307,9 +307,10 @@ const DetailSeller = () => {
 
               <div className="row mb-5">
                 <div className="col-md-6 mb-3">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Contraseña</label>
                   <input
                     type="password"
-                    placeholder="Contraseña (mínimo 8 caracteres)"
+                    placeholder="Mínimo 8 caracteres"
                     className={`form-control  ${styles.input}`}
                     name="password"
                     value={formData.password}
@@ -324,9 +325,10 @@ const DetailSeller = () => {
                   )}
                 </div>
                 <div className="col-md-6 mb-3">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Confirmar contraseña</label>
                   <input
                     type="password"
-                    placeholder="Confirmar contraseña"
+                    placeholder="Confirma tu contraseña"
                     className={`form-control  ${styles.input}`}
                     name="confirmarContrasena"
                     value={formData.confirmarContrasena}

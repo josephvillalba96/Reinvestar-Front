@@ -16,7 +16,7 @@
   border: 1px solid #ccc;
   border-radius: 20px;
   font-size: 1rem;
-  max-width: 25%;
+  /* max-width: 25%; */
 }
 
 .inputFull {
@@ -25,7 +25,7 @@
   border: 1px solid #ccc;
   border-radius: 20px;
   font-size: 1rem;
-  max-width: 51%;
+
 }
 
 .checkboxGroup {

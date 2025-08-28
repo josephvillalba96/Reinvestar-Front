@@ -27,6 +27,7 @@ const DetailUserSystem = () => {
   const [companyError, setCompanyError] = useState("");
   const [roleError, setRoleError] = useState("");
   const [editMode, setEditMode] = useState(false);
+  const [changePassword, setChangePassword] = useState(false);
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -79,6 +80,19 @@ const DetailUserSystem = () => {
   const handleUpdate = () => {
     setEditMode(true);
     setFeedback("");
+    setChangePassword(false);
+  };
+
+  const handleChangePasswordToggle = () => {
+    setChangePassword(!changePassword);
+    if (!changePassword) {
+      // Si se activa el cambio de contraseña, limpiar los campos
+      setFormData(prev => ({
+        ...prev,
+        password: "",
+        confirmarContrasena: ""
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -93,10 +107,18 @@ const DetailUserSystem = () => {
       setLoading(false);
       return;
     }
-    if (formData.password && formData.password !== formData.confirmarContrasena) {
-      setFeedback("Las contraseñas no coinciden");
-      setLoading(false);
-      return;
+    // Validar contraseña solo si se quiere cambiar
+    if (changePassword) {
+      if (!formData.password || !formData.confirmarContrasena) {
+        setFeedback("Si quieres cambiar la contraseña, ambos campos son obligatorios");
+        setLoading(false);
+        return;
+      }
+      if (formData.password !== formData.confirmarContrasena) {
+        setFeedback("Las contraseñas no coinciden");
+        setLoading(false);
+        return;
+      }
     }
     const payload = {
       full_name: formData.full_name,
@@ -109,7 +131,10 @@ const DetailUserSystem = () => {
       role: formData.role,
       is_active: formData.is_active
     };
-    if (formData.password) payload.password = formData.password;
+    // Solo incluir contraseña en el payload si se quiere cambiar
+    if (changePassword && formData.password) {
+      payload.password = formData.password;
+    }
     if (!payload.role) {
       setRoleError("El campo rol es obligatorio");
       setLoading(false);
@@ -232,56 +257,86 @@ const DetailUserSystem = () => {
                 </div>
               </div>
 
-              {/* Campo de Estado */}
-              <div className="row mb-4">
-                <div className="col-12 mb-2">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="is_active"
-                      name="is_active"
-                      checked={formData.is_active}
-                      onChange={handleInputChange}
-                      disabled={!editMode}
-                    />
-                    <label className="form-check-label my_title_color" htmlFor="is_active">
-                      Usuario Activo
-                    </label>
-                  </div>
-                  <small className="text-muted">
-                    {editMode ? "Desmarca esta casilla para desactivar el usuario" : "Estado actual del usuario"}
-                  </small>
-                </div>
-              </div>
+                             {/* Campo de Estado */}
+               <div className="row mb-4">
+                 <div className="col-12 mb-2">
+                   <div className="form-check">
+                     <input
+                       className="form-check-input"
+                       type="checkbox"
+                       id="is_active"
+                       name="is_active"
+                       checked={formData.is_active}
+                       onChange={handleInputChange}
+                       disabled={!editMode}
+                     />
+                     <label className="form-check-label my_title_color" htmlFor="is_active">
+                       Usuario Activo
+                     </label>
+                   </div>
+                   <small className="text-muted">
+                     {editMode ? "Desmarca esta casilla para desactivar el usuario" : "Estado actual del usuario"}
+                   </small>
+                 </div>
+               </div>
+
+               {/* Checkbox para cambiar contraseña */}
+               {editMode && (
+                 <div className="row mb-4">
+                   <div className="col-12 mb-2">
+                     <div className="form-check">
+                       <input
+                         className="form-check-input"
+                         type="checkbox"
+                         id="changePassword"
+                         checked={changePassword}
+                         onChange={handleChangePasswordToggle}
+                       />
+                       <label className="form-check-label my_title_color" htmlFor="changePassword">
+                         Cambiar contraseña
+                       </label>
+                     </div>
+                     <small className="text-muted">
+                       Marca esta casilla si quieres cambiar la contraseña del usuario
+                     </small>
+                   </div>
+                 </div>
+               )}
 
               {roleError && (
                 <div className="alert alert-danger py-2 mb-3">{roleError}</div>
               )}
-              <div className="row mb-5">
-                <div className="col-md-6 mb-3">
-                  <input
-                    type="password"
-                    placeholder="Contraseña"
-                    className={`form-control  ${styles.input}`}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    disabled={!editMode}
-                  />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <input
-                    type="password"
-                    placeholder="Confirmar contraseña"
-                    className={`form-control  ${styles.input}`}
-                    name="confirmarContrasena"
-                    value={formData.confirmarContrasena}
-                    onChange={handleInputChange}
-                    disabled={!editMode}
-                  />
-                </div>
-              </div>
+                             {/* Campos de contraseña - solo visibles si se quiere cambiar */}
+               {changePassword && (
+                 <div className="row mb-5">
+                   <div className="col-md-6 mb-3">
+                     <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Nueva contraseña *</label>
+                     <input
+                       type="password"
+                       placeholder="Nueva contraseña"
+                       className={`form-control  ${styles.input}`}
+                       name="password"
+                       value={formData.password}
+                       onChange={handleInputChange}
+                       required
+                     />
+                     <small className="text-muted">Campo obligatorio para cambiar contraseña</small>
+                   </div>
+                   <div className="col-md-6 mb-3">
+                     <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Confirmar nueva contraseña *</label>
+                     <input
+                       type="password"
+                       placeholder="Confirmar nueva contraseña"
+                       className={`form-control  ${styles.input}`}
+                       name="confirmarContrasena"
+                       value={formData.confirmarContrasena}
+                       onChange={handleInputChange}
+                       required
+                     />
+                     <small className="text-muted">Campo obligatorio para cambiar contraseña</small>
+                   </div>
+                 </div>
+               )}
               {feedback && (
                 <div className={`alert ${feedback.includes("exitosamente") ? "alert-success" : "alert-danger"} py-2 mb-3`}>{feedback}</div>
               )}

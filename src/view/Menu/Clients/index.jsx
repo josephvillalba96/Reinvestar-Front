@@ -110,9 +110,9 @@ const Clients = () => {
           </button>
         </div>
         <div className="d-flex gap-3">
-          <button className="btn d-flex align-items-center">
+          {/* <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18}/>
-          </button>
+          </button> */}
           <select className="form-select my_title_color" name="company" value={companyId} onChange={handleCompanyChange}>
             <option value="">Empresa</option>
             {companies && companies.map(({ id, name }) => (
@@ -143,16 +143,16 @@ const Clients = () => {
         <table className="table table-bordered table-hover">
           <thead className="sticky-top">
             <tr>
-              <th style={{color:"#1B2559"}}>ID</th>
-              <th style={{color:"#1B2559"}}>Nombre Completo</th>
-              <th style={{color:"#1B2559"}}>Email</th>
-              <th style={{color:"#1B2559"}}>Celular</th>
-              <th style={{color:"#1B2559"}}>Dirección</th>
-              <th style={{color:"#1B2559"}}>Cant. propiedades</th>
-              <th style={{color:"#1B2559"}}>Tot. Solicitudes</th>
-              <th style={{color:"#1B2559"}}>Solicitudes activas</th>
-              <th style={{color:"#1B2559"}}>Estado</th>
-              <th style={{color:"#1B2559"}}>Opciones</th>
+              <th style={{color:"#000"}}>ID</th>
+              <th style={{color:"#000"}}>Nombre Completo</th>
+              <th style={{color:"#000"}}>Email</th>
+              <th style={{color:"#000"}}>Celular</th>
+              {/* <th style={{color:"#000"}}>Dirección</th> */}
+              <th style={{color:"#000"}}>Cant. propiedades</th>
+              <th style={{color:"#000"}}>Tot. Solicitudes</th>
+              <th style={{color:"#000"}}>Solicitudes activas</th>
+              <th style={{color:"#000"}}>Estado</th>
+              <th style={{color:"#000"}}>Opciones</th>
             </tr>
           </thead>
           <tbody>
@@ -167,7 +167,7 @@ const Clients = () => {
                   <td>{client.full_name}</td>
                   <td>{client.email}</td>
                   <td>{client.phone}</td>
-                  <td>{client.address}</td>
+                  {/* <td>{client.address}</td> */}
                   <td>{client.producto || '-'}</td>
                   <td>{client.monto_alquiler || '-'}</td>
                   <td>{client.valor_tasa || '-'}</td>
@@ -177,10 +177,10 @@ const Clients = () => {
                     </span>
                   </td>
                   <td>
-                    {/* <button className="btn btn-sm me-1" style={{backgroundColor:"#1B2559"}}>
+                    {/* <button className="btn btn-sm me-1" style={{backgroundColor:"#000"}}>
                       <img src={BookCheck} alt="check-data" width={15}/>
                     </button> */}
-                    <button className="btn btn-sm" style={{backgroundColor:"#1B2559"}} onClick={() => handleViewDetails(client.id)}>
+                    <button className="btn btn-sm" style={{backgroundColor:"#000"}} onClick={() => handleViewDetails(client.id)}>
                       <img src={Eye} alt="detail-client" width={10}/>
                     </button>
                   </td>

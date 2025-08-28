@@ -123,9 +123,9 @@ const CreateProcesor = () => {
             <form>
               <div className="row mb-2">
                 <div className="col-md-6 mb-3">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Nombre completo</label>
                   <input
                     type="text"
-                    placeholder="Nombre completo"
                     className={`form-control  ${styles.input}`}
                     name="nombreCompleto"
                     value={formData.nombreCompleto}
@@ -134,9 +134,9 @@ const CreateProcesor = () => {
                   />
                 </div>
                 <div className="col-md-6 mb-3">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Email</label>
                   <input
                     type="email"
-                    placeholder="Email"
                     className={`form-control  ${styles.input}`}
                     name="email"
                     value={formData.email}
@@ -148,9 +148,9 @@ const CreateProcesor = () => {
 
               <div className="row mb-3">
                 <div className="col-md-6 mb-3">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Celular</label>
                   <input
                     type="tel"
-                    placeholder="Celular"
                     className={`form-control  ${styles.input}`}
                     name="celular"
                     value={formData.celular}
@@ -159,9 +159,9 @@ const CreateProcesor = () => {
                   />
                 </div>
                 <div className="col-md-6 mb-2">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Identificación</label>
                   <input
                     type="text"
-                    placeholder="Identificación"
                     className={`form-control  ${styles.input}`}
                     name="identificacion"
                     value={formData.identificacion}
@@ -173,9 +173,9 @@ const CreateProcesor = () => {
 
               <div className="row mb-4">
                 <div className="col-12 mb-2">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Dirección</label>
                   <input
                     type="text"
-                    placeholder=" Dirección"
                     className={`form-control  ${styles.input}`}
                     name="direccion"
                     value={formData.direccion}
@@ -187,9 +187,10 @@ const CreateProcesor = () => {
 
               <div className="row mb-5">
                 <div className="col-md-6 mb-3">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Contraseña *</label>
                   <input
                     type="password"
-                    placeholder="Contraseña (mínimo 8 caracteres)"
+                    placeholder="Mínimo 8 caracteres"
                     className={`form-control  ${styles.input}`}
                     name="contrasena"
                     value={formData.contrasena}
@@ -204,9 +205,10 @@ const CreateProcesor = () => {
                   )}
                 </div>
                 <div className="col-md-6 mb-3">
+                  <label className="form-label fw-semibold mb-2" style={{color: "#000"}}>Confirmar contraseña *</label>
                   <input
                     type="password"
-                    placeholder="Confirmar contraseña"
+                    placeholder="Confirma tu contraseña"
                     className={`form-control  ${styles.input}`}
                     name="confirmarContrasena"
                     value={formData.confirmarContrasena}
