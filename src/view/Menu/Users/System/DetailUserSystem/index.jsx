@@ -66,7 +66,7 @@ const DetailUserSystem = () => {
   }, [id]);
 
   const handleback = () => {
-    navegate('/users');
+    navegate('/system');
   };
 
   const handleInputChange = (e) => {
@@ -114,6 +114,11 @@ const DetailUserSystem = () => {
         setLoading(false);
         return;
       }
+      if (formData.password.length < 8) {
+        setFeedback("La contraseña debe tener al menos 8 caracteres");
+        setLoading(false);
+        return;
+      }
       if (formData.password !== formData.confirmarContrasena) {
         setFeedback("Las contraseñas no coinciden");
         setLoading(false);
@@ -129,26 +134,37 @@ const DetailUserSystem = () => {
       company_id: Number(formData.company_id),
       url_profile_photo: formData.url_profile_photo,
       role: formData.role,
-      is_active: formData.is_active
+      is_active: formData.is_active,
+      // Siempre enviar password: nueva contraseña si se quiere cambiar, o cadena vacía si no
+      password: changePassword && formData.password && formData.password.length >= 8 
+        ? formData.password 
+        : ""
     };
-    // Solo incluir contraseña en el payload si se quiere cambiar
-    if (changePassword && formData.password) {
-      payload.password = formData.password;
-    }
+    
     if (!payload.role) {
       setRoleError("El campo rol es obligatorio");
       setLoading(false);
       return;
     }
     try {
+      console.log("Payload a enviar:", payload);
+      console.log("changePassword:", changePassword);
+      console.log("formData.password:", formData.password);
+      
       await updateAdmin(id, payload);
       setFeedback("¡Usuario actualizado exitosamente!");
       setEditMode(false);
       setTimeout(() => {
-        navegate('/users');
+        navegate('/system');
       }, 1500);
     } catch (error) {
-      setFeedback("Error al actualizar el usuario. Inténtalo de nuevo.");
+      console.error("Error completo:", error);
+      if (error.response) {
+        console.error("Error response:", error.response.data);
+        setFeedback(`Error al actualizar: ${error.response.data.detail?.[0]?.msg || 'Error desconocido'}`);
+      } else {
+        setFeedback("Error al actualizar el usuario. Inténtalo de nuevo.");
+      }
     }
     setLoading(false);
   };

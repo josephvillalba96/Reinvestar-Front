@@ -20,7 +20,7 @@ const CreateUserSystem = () => {
   const [roleError, setRoleError] = useState("");
 
   const handleback = () => {
-    navegate('/users')
+    navegate('/system')
   }
 
   const handleInputChange = (e) => {
@@ -66,7 +66,7 @@ const CreateUserSystem = () => {
       await createAdmin(payload);
       setFeedback("¡Administrador creado exitosamente!");
       setTimeout(() => {
-        navegate('/users');
+        navegate('/system');
       }, 1500);
     } catch (error) {
       // Manejo de errores específicos

@@ -142,7 +142,7 @@ const Coordinator = () => {
               <th style={{ color: "#000" }}>Nombre Completo</th>
               <th style={{ color: "#000" }}>Email</th>
               <th style={{ color: "#000" }}>Identificación</th>
-              <th style={{ color: "#000" }}>Dirección</th>
+              {/* <th style={{ color: "#000" }}>Dirección</th> */}
               <th style={{ color: "#000" }}>Celular</th>
               <th style={{ color: "#000" }}>Compañía</th>
               <th style={{ color: "#000" }}>Rol</th>
@@ -162,7 +162,7 @@ const Coordinator = () => {
                   <td>{coordinator.full_name}</td>
                   <td>{coordinator.email}</td>
                   <td>{coordinator.identification}</td>
-                  <td>{coordinator.address}</td>
+                  {/* <td>{coordinator.address}</td> */}
                   <td>{coordinator.phone}</td>
                   <td>{companyMap[coordinator.company_id] || '-'}</td>
                   <td>{Array.isArray(coordinator.roles) && coordinator.roles.length > 0 ? coordinator.roles[0] : '-'}</td>

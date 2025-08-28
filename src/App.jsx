@@ -59,9 +59,9 @@ function App() {
             <Route path='processors' element={<Procesors/>}/>
             <Route path='processors/new-process' element={<CreateProcesor/>}/>
             <Route path='processors/:id/details' element={<DetailProcesor/>}/>
-            <Route path='users' element={<System/>}/>
-            <Route path='users/new-admin' element={<CreateUserSystem/>}/>
-            <Route path='users/:id/details' element={<DetailUserSystem/>}/>
+            <Route path='system' element={<System/>}/>
+            <Route path='system/new-admin' element={<CreateUserSystem/>}/>
+            <Route path='system/:id/details' element={<DetailUserSystem/>}/>
             <Route path="*" element={<h1>404 Not Found</h1>} />
           </Route>
         </Route>

@@ -20,7 +20,7 @@ const System = () => {
   const navegate = useNavigate();
 
   const handleRedirect = (id) => {
-    navegate(`/users/${id}/details`); 
+    navegate(`/system/${id}/details`); 
   }
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const System = () => {
   };
 
   const handleRedired = () => {
-    navegate("/users/new-admin");
+    navegate("/system/new-admin");
   };
 
   const handleSearchChange = (e) => {
