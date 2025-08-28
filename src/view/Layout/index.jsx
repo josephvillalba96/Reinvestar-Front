@@ -12,7 +12,7 @@ import VendedoresIcon from "../../assets/sidebar_icons/Vendedores.svg";
 import ProcesadoresIcon from "../../assets/sidebar_icons/Procesadores.svg";
 import CoordinadoresIcon from "../../assets/sidebar_icons/Coordinadores.svg";
 import ParametrosIcon from "../../assets/sidebar_icons/Parametros.svg";
-import LogoutIcon from "../../assets/sidebar_icons/Logout.svg";
+import LogoutIcon from "../../assets/sidebar_icons/logout.svg";
 import ProfileIcon from "../../assets/circle-user.svg";
 
 // image- profile (removed - using Bootstrap icon instead)
