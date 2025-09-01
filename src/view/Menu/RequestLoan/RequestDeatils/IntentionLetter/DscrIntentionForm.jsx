@@ -16,8 +16,9 @@ const DscrIntentionForm = ({
   const [error, setError] = useState("");
   const [intentLetter, setIntentLetter] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  
+
   const [form, setForm] = useState({
+
     // BORROWER INFORMATION
     borrower_name: "",
     legal_status: "",
@@ -28,7 +29,6 @@ const DscrIntentionForm = ({
     residency_status: "",
     subject_prop_under_llc: "",
     
-
     // -----LOAN DETAILS ------
     loan_type: "",
     property_type: "",
@@ -55,7 +55,6 @@ const DscrIntentionForm = ({
     total_closing_cost: 0,
 
     //--- TYPE OF PROGRAM ---
-    dscr_flag: false,
     closing_cost_approx: 0,
     down_payment_percent: 0,
     dscr_requirement: 0, //DSCR  MUST BE 1%
@@ -199,104 +198,101 @@ const DscrIntentionForm = ({
 
   const buildDataToSend = () => ({
     // BORROWER INFORMATION
-    borrower_name: form.borrower_name,
-    legal_status: form.legal_status,
-    guarantor_name: form.guarantor_name,
-    entity_name: form.entity_name,
-    fico: Number(form.fico),
-    estimated_fico_score: Number(form.estimated_fico_score),
-    residency_status: form.residency_status,
-    subject_prop_under_llc: form.subject_prop_under_llc,
-    
-    // PROPERTY INFORMATION
-    property_address: form.property_address,
-    property_type: form.property_type,
-    property_city: form.property_city,
-    property_state: form.property_state,
-    property_zip: form.property_zip,
-    property_units: Number(form.property_units),
-    
-    // LOAN DETAILS
-    loan_type: form.loan_type,
-    loan_amount: Number(form.loan_amount),
-    loan_term: Number(form.loan_term),
-    interest_rate_structure: form.interest_rate_structure,
-    annual_interest_rate: Number(form.annual_interest_rate),
-    max_ltv: Number(form.max_ltv),
-    prepayment_penalty: Number(form.prepayment_penalty),
-    prepayment_penalty_type: form.prepayment_penalty_type,
-    type_of_program: form.type_of_program,
-    type_of_transaction: form.type_of_transaction,
-    primary_own_or_rent: form.primary_own_or_rent,
-    mortgage_late_payments: form.mortgage_late_payments,
-    
-    // DATES
+    borrower_name: form.borrower_name || "",
+    legal_status: form.legal_status || "",
+    property_address: form.property_address || "",
     issued_date: toISOOrNull(form.issued_date),
+    fico: Number(form.fico || 0),
+    estimated_fico_score: Number(form.estimated_fico_score || 0),
+    residency_status: form.residency_status || "",
+    subject_prop_under_llc: form.subject_prop_under_llc || "",
+
+    // LOAN DETAILS
+    loan_type: form.loan_type || "",
+    property_type: form.property_type || "",
     closing_date: toISOOrNull(form.closing_date),
-    client_submitted_at: toISOOrNull(form.client_submitted_at),
-    
-    // FEES AND COSTS
-    origination_fee: Number(form.origination_fee),
-    origination_fee_percentage: Number(form.origination_fee_percentage),
-    discount_points: Number(form.discount_points),
-    underwriting_fee: Number(form.underwriting_fee),
-    credit_report_fee: Number(form.credit_report_fee),
-    processing_fee: Number(form.processing_fee),
-    recording_fee: Number(form.recording_fee),
-    legal_fee: Number(form.legal_fee),
-    service_fee: Number(form.service_fee),
-    title_fees: Number(form.title_fees),
-    government_fees: Number(form.government_fees),
-    escrow_tax_insurance: Number(form.escrow_tax_insurance),
-    appraisal_fee: Number(form.appraisal_fee),
-    total_closing_cost: Number(form.total_closing_cost),
-    closing_cost_approx: Number(form.closing_cost_approx),
-    closing_cost_liquidity: Number(form.closing_cost_liquidity),
-    
-    // LOAN AMOUNTS
-    down_payment_percent: Number(form.down_payment_percent),
-    dscr_requirement: Number(form.dscr_requirement),
-    appraisal_value: Number(form.appraisal_value),
-    rent_amount: Number(form.rent_amount),
-    down_payment_liquidity: Number(form.down_payment_liquidity),
-    cash_out: Number(form.cash_out),
-    
-    // MONTHLY PAYMENTS
-    property_taxes: Number(form.property_taxes),
-    property_insurance: Number(form.property_insurance),
-    hoa_fees: Number(form.hoa_fees),
-    flood_insurance: Number(form.flood_insurance),
-    pay_off_amount: Number(form.pay_off_amount),
-    mortgage_payment_piti: Number(form.mortgage_payment_piti),
-    principal_interest: Number(form.principal_interest),
-    property_taxes_estimated: Number(form.property_taxes_estimated),
-    property_insurance_estimated: Number(form.property_insurance_estimated),
-    hoa_estimated: Number(form.hoa_estimated),
-    flood_insurance_estimated: Number(form.flood_insurance_estimated),
-    
-    // LIQUIDITY
-    other_liquidity: Number(form.other_liquidity),
-    total_liquidity: Number(form.total_liquidity),
-    six_months_reserves: Number(form.six_months_reserves),
-    
-    // DSCR
-    dscr_ratio: Number(form.dscr_ratio),
+    interest_rate_structure: form.interest_rate_structure || "",
+    loan_term: Number(form.loan_term || 0),
+    prepayment_penalty: Number(form.prepayment_penalty || 0),
+    prepayment_penalty_type: form.prepayment_penalty_type || "",
+    max_ltv: Number(form.max_ltv || 0),
+
+    // LOAN CLOSING COST ESTIMATED
+    origination_fee: Number(form.origination_fee || 0),
+    discount_points: Number(form.discount_points || 0),
+    underwriting_fee: Number(form.underwriting_fee || 0),
+    credit_report_fee: Number(form.credit_report_fee || 0),
+    processing_fee: Number(form.processing_fee || 0),
+    recording_fee: Number(form.recording_fee || 0),
+    legal_fee: Number(form.legal_fee || 0),
+    service_fee: Number(form.service_fee || 0),
+    title_fees: Number(form.title_fees || 0),
+    government_fees: Number(form.government_fees || 0),
+    escrow_tax_insurance: Number(form.escrow_tax_insurance || 0),
+    appraisal_fee: Number(form.appraisal_fee || 0),
+    total_closing_cost: Number(form.total_closing_cost || 0),
+
+    // TYPE OF PROGRAM
+    closing_cost_approx: Number(form.closing_cost_approx || 0),
+    down_payment_percent: Number(form.down_payment_percent || 0),
+    dscr_requirement: Number(form.dscr_requirement || 0),
     dscr_required: Boolean(form.dscr_required),
-    dscr_flag: Boolean(form.dscr_flag),
-    
-    // STATUS AND TRACKING
-    radicado: form.radicado,
-    status: form.status,
+
+    // LOAN SUMMARY
+    appraisal_value: Number(form.appraisal_value || 0),
+    annual_interest_rate: Number(form.annual_interest_rate || 0),
+    rent_amount: Number(form.rent_amount || 0),
+    property_taxes: Number(form.property_taxes || 0),
+    property_insurance: Number(form.property_insurance || 0),
+    hoa_fees: Number(form.hoa_fees || 0),
+    flood_insurance: Number(form.flood_insurance || 0),
+    pay_off_amount: Number(form.pay_off_amount || 0),
+    loan_amount: Number(form.loan_amount || 0),
+    cash_out: Number(form.cash_out || 0),
+    mortgage_payment_piti: Number(form.mortgage_payment_piti || 0),
+    down_payment: Number(form.down_payment || 0),
+
+    // DSCR - PITI
+    principal_interest: Number(form.principal_interest || 0),
+    property_taxes_estimated: Number(form.property_taxes_estimated || 0),
+    property_insurance_estimated: Number(form.property_insurance_estimated || 0),
+    flood_insurance_estimated: Number(form.flood_insurance_estimated || 0),
+    hoa_estimated: Number(form.hoa_estimated || 0),
+
+    // MINIMUM BORROWER'S LIQUIDITY REQUIREMENTS
+    down_payment_liquidity: Number(form.down_payment_liquidity || 0),
+    closing_cost_liquidity: Number(form.closing_cost_liquidity || 0),
+    six_months_reserves: Number(form.six_months_reserves || 0),
+    other_liquidity: Number(form.other_liquidity || 0),
+    total_liquidity: Number(form.total_liquidity || 0),
+
+    // Campos adicionales requeridos por el API
+    client_id: Number(form.client_id || 0),
+    user_id: Number(form.user_id || 0),
     client_submitted: Boolean(form.client_submitted),
     client_form_completed: Boolean(form.client_form_completed),
-    client_id: Number(form.client_id),
-    user_id: Number(form.user_id),
-    comments: form.comments,
-    rejection_reason: form.rejection_reason,
-    
-    // SIGNATURES
+    client_submitted_at: toISOOrNull(form.client_submitted_at),
+    status: form.status || "PENDING",
+    comments: form.comments || "",
+    rejection_reason: form.rejection_reason || "",
     borrower_signed: Boolean(form.borrower_signed),
-    guarantor_signed: Boolean(form.guarantor_signed)
+    guarantor_signed: Boolean(form.guarantor_signed),
+    radicado: form.radicado || "",
+    dscr_ratio: Number(form.dscr_ratio || 0),
+    // dscr_required: Boolean(form.dscr_required),
+    origination_fee_percentage: Number(form.origination_fee_percentage || 0),
+    
+    // Campos adicionales del formulario
+    property_city: form.property_city || "",
+    property_state: form.property_state || "",
+    property_zip: form.property_zip || "",
+    property_units: Number(form.property_units || 0),
+    type_of_program: form.type_of_program || "",
+    type_of_transaction: form.type_of_transaction || "",
+    primary_own_or_rent: form.primary_own_or_rent || "",
+    mortgage_late_payments: form.mortgage_late_payments || "",
+    guarantor_name: form.guarantor_name || "",
+    entity_name: form.entity_name || ""
   });
 
   const handleCreateIntentLetter = async () => {
@@ -749,18 +745,6 @@ const DscrIntentionForm = ({
                     prefix="$"
                   />
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-bold">Closing Cost Approx</label>
-                  <NumericFormat
-                    name="closing_cost_approx"
-                    className={`form-control ${styles.input}`}
-                    value={form.closing_cost_approx}
-                    onValueChange={(values) => handleNumberFormat('closing_cost_approx', values.value)}
-                    disabled={!editable}
-                    thousandSeparator={true}
-                    prefix="$"
-                  />
-                </div>
               </div>
             </div>
           </div>
@@ -776,18 +760,7 @@ const DscrIntentionForm = ({
             <div className="col-12">
               <div className="row g-3">
                 <div className="col-md-6">
-                  <label className="form-label fw-bold">DSCR</label>
-                  <input
-                    type="text"
-                    name="type_of_program"
-                    className={`form-control ${styles.input}`}
-                    value={form.type_of_program || 'DSCR'}
-                    onChange={handleChange}
-                    disabled
-                  />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-bold">CLOSING COST APROX</label>
+                  <label className="form-label fw-bold">Closing Cost Approx</label>
                   <NumericFormat
                     name="closing_cost_approx"
                     className={`form-control ${styles.input}`}
@@ -821,6 +794,19 @@ const DscrIntentionForm = ({
                     decimalScale={2}
                     suffix="%"
                   />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">DSCR Required</label>
+                  <select
+                    name="dscr_required"
+                    className={`form-control ${styles.input}`}
+                    value={form.dscr_required ? 'YES' : 'NO'}
+                    onChange={(e) => setForm(prev => ({ ...prev, dscr_required: e.target.value === 'YES' }))}
+                    disabled={!editable}
+                  >
+                    <option value="YES">Yes</option>
+                    <option value="NO">No</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -947,10 +933,10 @@ const DscrIntentionForm = ({
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Downpayment</label>
                   <NumericFormat
-                    name="down_payment_liquidity"
+                    name="down_payment"
                     className={`form-control ${styles.input}`}
-                    value={form.down_payment_liquidity}
-                    onValueChange={(values) => handleNumberFormat('down_payment_liquidity', values.value)}
+                    value={form.down_payment}
+                    onValueChange={(values) => handleNumberFormat('down_payment', values.value)}
                     disabled={!editable}
                     thousandSeparator={true}
                     prefix="$"
@@ -1069,17 +1055,40 @@ const DscrIntentionForm = ({
             <div className="col-12">
               <div className="row g-3">
                 <div className="col-md-6">
-                  <label className="form-label fw-bold">DSCR Ratio</label>
-                  <select
-                    name="dscr_required"
+                  <label className="form-label fw-bold">Down Payment Liquidity</label>
+                  <NumericFormat
+                    name="down_payment_liquidity"
                     className={`form-control ${styles.input}`}
-                    value={form.dscr_required ? 'YES' : 'NO'}
-                    onChange={(e) => setForm(prev => ({ ...prev, dscr_required: e.target.value === 'YES' }))}
+                    value={form.down_payment_liquidity}
+                    onValueChange={(values) => handleNumberFormat('down_payment_liquidity', values.value)}
                     disabled={!editable}
-                  >
-                    <option value="YES">Yes</option>
-                    <option value="NO">No</option>
-                  </select>
+                    thousandSeparator={true}
+                    prefix="$"
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Closing Cost Liquidity</label>
+                  <NumericFormat
+                    name="closing_cost_liquidity"
+                    className={`form-control ${styles.input}`}
+                    value={form.closing_cost_liquidity}
+                    onValueChange={(values) => handleNumberFormat('closing_cost_liquidity', values.value)}
+                    disabled={!editable}
+                    thousandSeparator={true}
+                    prefix="$"
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Six Months Reserves</label>
+                  <NumericFormat
+                    name="six_months_reserves"
+                    className={`form-control ${styles.input}`}
+                    value={form.six_months_reserves}
+                    onValueChange={(values) => handleNumberFormat('six_months_reserves', values.value)}
+                    disabled={!editable}
+                    thousandSeparator={true}
+                    prefix="$"
+                  />
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Other Liquidity</label>
@@ -1105,38 +1114,9 @@ const DscrIntentionForm = ({
                     prefix="$"
                   />
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-bold">Six Months Reserves</label>
-                  <NumericFormat
-                    name="six_months_reserves"
-                    className={`form-control ${styles.input}`}
-                    value={form.six_months_reserves}
-                    onValueChange={(values) => handleNumberFormat('six_months_reserves', values.value)}
-                    disabled={!editable}
-                    thousandSeparator={true}
-                    prefix="$"
-                  />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-bold">Closing Cost Liquidity</label>
-                  <NumericFormat
-                    name="closing_cost_liquidity"
-                    className={styles.input}
-                    value={form.closing_cost_liquidity}
-                    onValueChange={(values) => handleNumberFormat('closing_cost_liquidity', values.value)}
-                    disabled={!editable}
-                    thousandSeparator={true}
-                    prefix="$"
-                  />
-                </div>
               </div>
             </div>
           </div>
-
-
-          
-
-          
 
           {/* BOTONES */}
           <div className="row">
