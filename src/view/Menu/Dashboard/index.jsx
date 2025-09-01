@@ -209,7 +209,7 @@ const Dashboard = () => {
           <div className={styles.mainMetricCard}>
             <div className={styles.metricIcon}>
               <i className="fas fa-chart-line"></i>
-            </div>
+                  </div>
             <div className={styles.metricContent}>
               <h3 className={styles.metricValue}>{summary.total_requests.toLocaleString()}</h3>
               <p className={styles.metricTitle}>Total Solicitudes</p>
@@ -223,14 +223,14 @@ const Dashboard = () => {
           <div className={styles.metricCard}>
             <div className={styles.metricIcon} style={{backgroundColor: '#FFC862'}}>
               <i className="fas fa-clock text-white"></i>
-            </div>
+                  </div>
             <div className={styles.metricContent}>
               <h4 className={styles.metricValue}>{summary.in_process.toLocaleString()}</h4>
               <p className={styles.metricTitle}>En Proceso</p>
               <small className={styles.metricSubtitle}>Solicitudes activas</small>
-            </div>
-          </div>
-        </div>
+                </div>
+                </div>
+              </div>
 
         {/* Solicitudes Aprobadas */}
         <div className="col-lg-3 mb-4">
@@ -251,15 +251,15 @@ const Dashboard = () => {
           <div className={styles.metricCard}>
             <div className={styles.metricIcon} style={{backgroundColor: '#f59e0b'}}>
               <i className="fas fa-hourglass-half text-white"></i>
-            </div>
+                  </div>
             <div className={styles.metricContent}>
               <h4 className={styles.metricValue}>{summary.pending_approval.toLocaleString()}</h4>
               <p className={styles.metricTitle}>Pendientes</p>
               <small className={styles.metricSubtitle}>Esperando aprobación</small>
+                </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
       {/* Segunda fila - Gráfico combinado de tendencias de solicitudes */}
       <div className="row mb-4">
@@ -272,7 +272,7 @@ const Dashboard = () => {
                 Tendencias de Solicitudes por Tipo
               </h5>
               <p className={styles.chartSubtitle}>Evolución mensual comparativa de DSCR, Fixflip y Construction</p>
-            </div>
+          </div>
             <div className={styles.combinedLineChart}>
               <svg width="100%" height="300" viewBox="0 0 800 300">
                 <defs>
@@ -497,7 +497,7 @@ const Dashboard = () => {
                 <div className={styles.legendItem}>
                   <span className={styles.legendColor} style={{backgroundColor: '#FFC862'}}></span>
                   <span>DSCR: {summary.dscr_requests}</span>
-                </div>
+                  </div>
                 <div className={styles.legendItem}>
                   <span className={styles.legendColor} style={{backgroundColor: '#1B2559'}}></span>
                   <span>Fixflip: {summary.fixflip_requests}</span>
@@ -529,32 +529,32 @@ const Dashboard = () => {
                 <>
                   <svg width="200" height="200" viewBox="0 0 200 200">
                     <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" strokeWidth="40"/>
-                    {requestTypeData.map((item, index) => {
-                      const total = requestTypeData.reduce((sum, d) => sum + d.value, 0);
-                      const percentage = (item.value / total) * 100;
+                      {requestTypeData.map((item, index) => {
+                        const total = requestTypeData.reduce((sum, d) => sum + d.value, 0);
+                        const percentage = (item.value / total) * 100;
                       const circumference = 2 * Math.PI * 80;
-                      const strokeDasharray = (percentage / 100) * circumference;
-                      const strokeDashoffset = circumference - strokeDasharray;
-                      const rotation = requestTypeData
-                        .slice(0, index)
-                        .reduce((sum, d) => sum + (d.value / total) * 360, 0);
-                      
-                      return (
-                        <circle
-                          key={item.name}
+                        const strokeDasharray = (percentage / 100) * circumference;
+                        const strokeDashoffset = circumference - strokeDasharray;
+                        const rotation = requestTypeData
+                          .slice(0, index)
+                          .reduce((sum, d) => sum + (d.value / total) * 360, 0);
+                        
+                        return (
+                          <circle
+                            key={item.name}
                           cx="100"
                           cy="100"
                           r="80"
-                          fill="none"
-                          stroke={item.color}
+                            fill="none"
+                            stroke={item.color}
                           strokeWidth="40"
-                          strokeDasharray={circumference}
-                          strokeDashoffset={strokeDashoffset}
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeDashoffset}
                           transform={`rotate(${rotation} 100 100)`}
-                        />
-                      );
-                    })}
-                  </svg>
+                          />
+                        );
+                      })}
+                    </svg>
                   <div className={styles.pieLegend}>
                     {requestTypeData.map((item) => (
                       <div key={item.name} className={styles.legendItem}>
@@ -587,25 +587,25 @@ const Dashboard = () => {
             <div className={styles.barChart}>
               {requestStatusData.length > 0 ? (
                 requestStatusData.map((item) => {
-                  const maxValue = Math.max(...requestStatusData.map(d => d.value));
-                  const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
-                  
-                  return (
+                    const maxValue = Math.max(...requestStatusData.map(d => d.value));
+                    const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
+                    
+                    return (
                     <div key={item.name} className={styles.barGroup}>
                       <div className={styles.barLabel}>{item.name}</div>
                       <div className={styles.barContainer}>
                         <div 
                           className={styles.bar} 
-                          style={{
-                            width: `${percentage}%`,
-                            backgroundColor: item.color
-                          }}
+                              style={{ 
+                                width: `${percentage}%`, 
+                                backgroundColor: item.color 
+                              }}
                         >
                           {item.value}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
+                    );
                 })
               ) : (
                 <div className="text-center text-muted py-4">
@@ -630,52 +630,52 @@ const Dashboard = () => {
               <h4 className={styles.kpiValue}>{summary.document_progress}%</h4>
               <p className={styles.kpiTitle}>Progreso Documentos</p>
               <small className={styles.kpiSubtitle}>Completitud general</small>
-            </div>
-          </div>
-        </div>
+              </div>
+                </div>
+                </div>
 
         {/* Solicitudes Rechazadas */}
         <div className="col-lg-3 mb-4">
           <div className={styles.kpiCard}>
             <div className={styles.kpiIcon} style={{backgroundColor: '#ef4444'}}>
               <i className="fas fa-times text-white"></i>
-            </div>
+                </div>
             <div className={styles.kpiContent}>
               <h4 className={styles.kpiValue}>{summary.rejected.toLocaleString()}</h4>
               <p className={styles.kpiTitle}>Rechazadas</p>
               <small className={styles.kpiSubtitle}>Solicitudes rechazadas</small>
+              </div>
             </div>
           </div>
-        </div>
 
         {/* Rendimiento Vendedores */}
         <div className="col-lg-3 mb-4">
           <div className={styles.kpiCard}>
             <div className={styles.kpiIcon} style={{backgroundColor: '#FFC862'}}>
               <i className="fas fa-users text-white"></i>
-            </div>
+        </div>
             <div className={styles.kpiContent}>
               <h4 className={styles.kpiValue}>{vendors_performance.length}</h4>
               <p className={styles.kpiTitle}>Vendedores Activos</p>
               <small className={styles.kpiSubtitle}>Total de vendedores</small>
+      </div>
             </div>
-          </div>
-        </div>
+                            </div>
 
         {/* Procesadores Activos */}
         <div className="col-lg-3 mb-4">
           <div className={styles.kpiCard}>
             <div className={styles.kpiIcon} style={{backgroundColor: '#1B2559'}}>
               <i className="fas fa-cogs text-white"></i>
-            </div>
+                          </div>
             <div className={styles.kpiContent}>
               <h4 className={styles.kpiValue}>{processors_workload.length}</h4>
               <p className={styles.kpiTitle}>Procesadores</p>
               <small className={styles.kpiSubtitle}>Total de procesadores</small>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
       {/* Quinta fila - Gráficos de rendimiento */}
       <div className="row mb-4">
@@ -702,13 +702,13 @@ const Dashboard = () => {
                       }}
                     >
                       {vendor.approval_rate || 0}%
-                    </div>
-                  </div>
+                            </div>
+                          </div>
                 </div>
               ))}
-            </div>
           </div>
         </div>
+      </div>
 
         {/* Carga de Trabajo Procesadores */}
         <div className="col-lg-6 mb-4">
@@ -733,10 +733,10 @@ const Dashboard = () => {
                       }}
                     >
                       {processor.active_assignments || 0}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         </div>

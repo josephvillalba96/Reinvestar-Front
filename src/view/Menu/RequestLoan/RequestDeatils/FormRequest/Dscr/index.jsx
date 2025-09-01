@@ -105,11 +105,32 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
   // Inicializar el formulario con los datos de la solicitud si existen
   useEffect(() => {
     if (solicitud) {
+      console.log("Datos de solicitud recibidos:", solicitud);
+      console.log("issued_date original:", solicitud.issued_date);
+      
+      // Función para formatear fecha si es necesario
+      const formatDateForInput = (dateString) => {
+        if (!dateString) return "";
+        
+        // Si ya está en formato YYYY-MM-DD, devolverlo tal como está
+        if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+          return dateString;
+        }
+        
+        // Si es una fecha válida, convertirla al formato requerido
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0];
+        }
+        
+        return "";
+      };
+
       setForm({
         // Borrower Information
         borrower_name: solicitud.borrower_name || "",
         legal_status: solicitud.legal_status || "",
-        issued_date: solicitud.issued_date || "",
+        issued_date: formatDateForInput(solicitud.issued_date),
         property_address: solicitud.property_address || "",
         estimated_fico_score: solicitud.estimated_fico_score || solicitud.fico || "",
         subject_prop_under_llc: solicitud.subject_prop_under_llc || "",
@@ -128,7 +149,7 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
         fico: solicitud.fico || 0,
         loan_type: solicitud.loan_type || "",
         property_type: solicitud.property_type || "",
-        closing_date: solicitud.closing_date || "",
+        closing_date: formatDateForInput(solicitud.closing_date),
         interest_rate_structure: solicitud.interest_rate_structure || "",
         loan_term: solicitud.loan_term || 0,
         prepayment_penalty: solicitud.prepayment_penalty || 0,
@@ -187,9 +208,16 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
         comments: solicitud.comments || "",
         rejection_reason: solicitud.rejection_reason || "",
       });
+      
+      console.log("Formulario establecido con issued_date:", formatDateForInput(solicitud.issued_date));
       setIsEditMode(false);
     }
   }, [solicitud]);
+
+  // Debug: Monitorear cambios en el formulario
+  useEffect(() => {
+    console.log("Estado actual del formulario - issued_date:", form.issued_date);
+  }, [form.issued_date]);
 
   useEffect(() => {
     if (solicitud && solicitud.id) {
@@ -261,15 +289,28 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
         return;
       }
 
+      // Limpiar campos de fecha vacíos para evitar errores 422
+      const cleanFormData = { ...form };
+      
+      // Remover campos de fecha vacíos
+      if (!cleanFormData.issued_date || cleanFormData.issued_date === "") {
+        delete cleanFormData.issued_date;
+      }
+      if (!cleanFormData.closing_date || cleanFormData.closing_date === "") {
+        delete cleanFormData.closing_date;
+      }
+
       const dataToSend = {
-        ...form,
+        ...cleanFormData,
         user_id: user_id
       };
 
+      console.log("Datos a enviar (update):", dataToSend);
       await updateDscr(solicitud.id, dataToSend);
       setFeedback("¡Solicitud actualizada exitosamente!");
       setIsEditMode(false);
     } catch (error) {
+      console.error("Error en update:", error);
       setFeedback("Error al actualizar la solicitud. Inténtalo de nuevo.");
     }
     setLoading(false);
@@ -291,11 +332,24 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
         return;
       }
 
+      // Limpiar campos de fecha vacíos para evitar errores 422
+      const cleanFormData = { ...form };
+      
+      // Remover campos de fecha vacíos
+      if (!cleanFormData.issued_date || cleanFormData.issued_date === "") {
+        delete cleanFormData.issued_date;
+      }
+      if (!cleanFormData.closing_date || cleanFormData.closing_date === "") {
+        delete cleanFormData.closing_date;
+      }
+
       const dataToSend = {
-        ...form,
+        ...cleanFormData,
         client_id: Number(client_id),
         user_id: user_id
       };
+
+      console.log("Datos a enviar (create):", dataToSend);
       const response = await createDscr(dataToSend);
       setIsEditMode(false);
       setFeedback("¡DSCR creado exitosamente!");
@@ -303,6 +357,7 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
         goToDocumentsTab(response.id, 'dscr');
       }
     } catch (error) {
+      console.error("Error en create:", error);
       setFeedback("Error al crear el DSCR. Inténtalo de nuevo.");
     }
     setLoading(false);

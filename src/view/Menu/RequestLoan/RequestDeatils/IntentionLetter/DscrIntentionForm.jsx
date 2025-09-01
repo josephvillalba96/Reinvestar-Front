@@ -16,6 +16,7 @@ const DscrIntentionForm = ({
   const [error, setError] = useState("");
   const [intentLetter, setIntentLetter] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  
   const [form, setForm] = useState({
     // BORROWER INFORMATION
     borrower_name: "",
@@ -27,36 +28,19 @@ const DscrIntentionForm = ({
     residency_status: "",
     subject_prop_under_llc: "",
     
-    // PROPERTY INFORMATION
-    property_address: "",
-    property_type: "",
-    property_city: "",
-    property_state: "",
-    property_zip: "",
-    property_units: 0,
-    
-    // LOAN DETAILS
+
+    // -----LOAN DETAILS ------
     loan_type: "",
-    loan_amount: 0,
-    loan_term: 0,
+    property_type: "",
+    closing_date: "",
     interest_rate_structure: "",
-    annual_interest_rate: 0,
-    max_ltv: 0,
+    loan_term: 0,
     prepayment_penalty: 0,
     prepayment_penalty_type: "",
-    type_of_program: "",
-    type_of_transaction: "",
-    primary_own_or_rent: "",
-    mortgage_late_payments: "",
-    
-    // DATES
-    issued_date: "",
-    closing_date: "",
-    client_submitted_at: "",
-    
-    // FEES AND COSTS
+    max_ltv: 0,
+
+    //--- LOAN CLOSING COST ESTIMATED ---
     origination_fee: 0,
-    origination_fee_percentage: 0,
     discount_points: 0,
     underwriting_fee: 0,
     credit_report_fee: 0,
@@ -69,41 +53,48 @@ const DscrIntentionForm = ({
     escrow_tax_insurance: 0,
     appraisal_fee: 0,
     total_closing_cost: 0,
+
+    //--- TYPE OF PROGRAM ---
+    dscr_flag: false,
     closing_cost_approx: 0,
-    closing_cost_liquidity: 0,
-    
-    // LOAN AMOUNTS
     down_payment_percent: 0,
-    dscr_requirement: 0,
-    appraisal_value: 0,
-    rent_amount: 0,
-    down_payment_liquidity: 0,
-    cash_out: 0,
+    dscr_requirement: 0, //DSCR  MUST BE 1%
     
-    // MONTHLY PAYMENTS
+    //--- LOAN SUMMARY ---
+    appraisal_value: 0,
+    annual_interest_rate: 0,
+    rent_amount: 0,
     property_taxes: 0,
     property_insurance: 0,
     hoa_fees: 0,
     flood_insurance: 0,
     pay_off_amount: 0,
+    loan_amount: 0,
+    cash_out: 0,
     mortgage_payment_piti: 0,
+    down_payment:0,
+
+    
+    // --- DSCR - PITI ---
     principal_interest: 0,
     property_taxes_estimated: 0,
     property_insurance_estimated: 0,
-    hoa_estimated: 0,
     flood_insurance_estimated: 0,
-    
-    // LIQUIDITY
+    hoa_estimated: 0,
+
+    //--- MINIMUM BORROWER'S LIQUIDITY REQUIREMENTS ---
+    down_payment_liquidity: 0,
+    closing_cost_liquidity: 0,
+    six_months_reserves: 0,
     other_liquidity: 0,
     total_liquidity: 0,
-    six_months_reserves: 0,
     
-    // DSCR
+    // --- No pertenecen a la carta de intension de una solicitud dscr ---
+    issued_date: "",
+    client_submitted_at: "",
+    origination_fee_percentage: 0,
     dscr_ratio: 0,
     dscr_required: false,
-    dscr_flag: false,
-    
-    // STATUS AND TRACKING
     radicado: "",
     status: "PENDING",
     client_submitted: false,
@@ -112,10 +103,17 @@ const DscrIntentionForm = ({
     user_id: 0,
     comments: "",
     rejection_reason: "",
-    
-    // SIGNATURES
     borrower_signed: false,
-    guarantor_signed: false
+    guarantor_signed: false,
+    property_address: "",
+    property_city: "",
+    property_state: "",
+    property_zip: "",
+    property_units: 0,
+    type_of_program: "",
+    type_of_transaction: "",
+    primary_own_or_rent: "",
+    mortgage_late_payments: ""
   });
 
   const toISOOrNull = (dateStr) => {
@@ -472,14 +470,19 @@ const DscrIntentionForm = ({
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Property Type</label>
-                  <input
-                    type="text"
+                  <select
                     name="property_type"
                     className={`form-control ${styles.input}`}
                     value={form.property_type}
                     onChange={handleChange}
                     disabled={!editable}
-                  />
+                  >
+                    <option value="">Seleccione...</option>
+                    <option value="SFR - D">SFR - D</option>
+                    <option value="2-4 UNITS">2-4 UNITS</option>
+                    <option value="CONDO">CONDO</option>
+                    <option value="PUD">PUD</option>
+                  </select>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Estimated Closing Date</label>
@@ -494,48 +497,68 @@ const DscrIntentionForm = ({
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Interest Rate Estructure</label>
-                  <input
-                    type="text"
+                  <select
                     name="interest_rate_structure"
                     className={`form-control ${styles.input}`}
                     value={form.interest_rate_structure}
                     onChange={handleChange}
                     disabled={!editable}
-                  />
+                  >
+                    <option value="">Seleccione...</option>
+                    <option value="FIXED">FIXED</option>
+                    <option value="ARM">ARM</option>
+                    <option value="INTEREST ONLY">INTEREST ONLY</option>
+                  </select>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Loan Term</label>
-                  <NumericFormat
+                  <select
                     name="loan_term"
                     className={`form-control ${styles.input}`}
                     value={form.loan_term}
-                    onValueChange={(values) => handleNumberFormat('loan_term', values.value)}
+                    onChange={(e) => handleNumberFormat('loan_term', e.target.value)}
                     disabled={!editable}
-                    thousandSeparator={false}
-                  />
+                  >
+                    <option value={0}>Seleccione...</option>
+                    <option value={40}>40 años</option>
+                    <option value={30}>30 años</option>
+                    <option value={25}>25 años</option>
+                    <option value={20}>20 años</option>
+                    <option value={15}>15 años</option>
+                    <option value={10}>10 años</option>
+                  </select>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Prepayment Penalty</label>
-                  <NumericFormat
+                  <select
                     name="prepayment_penalty"
                     className={`form-control ${styles.input}`}
                     value={form.prepayment_penalty}
-                    onValueChange={(values) => handleNumberFormat('prepayment_penalty', values.value)}
+                    onChange={(e) => handleNumberFormat('prepayment_penalty', e.target.value)}
                     disabled={!editable}
-                    thousandSeparator={true}
-                    prefix="$"
-                  />
+                  >
+                    <option value={0}>NOT APPLICABLE</option>
+                    <option value={1}>1 YR</option>
+                    <option value={2}>2 YR</option>
+                    <option value={3}>3 YR</option>
+                    <option value={4}>4 YR</option>
+                    <option value={5}>5 YR</option>
+                  </select>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Prepayment Penalty Type</label>
-                  <input
-                    type="text"
+                  <select
                     name="prepayment_penalty_type"
                     className={`form-control ${styles.input}`}
                     value={form.prepayment_penalty_type}
                     onChange={handleChange}
                     disabled={!editable}
-                  />
+                  >
+                    <option value="">Seleccione...</option>
+                    <option value="NOT APPLICABLE">NOT APPLICABLE</option>
+                    <option value="DECREASING">DECREASING</option>
+                    <option value="FIXED">FIXED</option>
+                  </select>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Maximun LTV (Loan To Value)</label>
