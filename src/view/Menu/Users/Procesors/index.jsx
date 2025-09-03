@@ -86,7 +86,7 @@ const Procesors = () => {
   }, [currentPage, search, estado]);
 
   const handleRedired = () => {
-    navegate("/process/new-process");
+    navegate("/processors/new-process");
   };
 
   const handleSearch = () => {

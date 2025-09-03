@@ -19,7 +19,7 @@ const CreateProcesor = () => {
   const [feedback, setFeedback] = useState("");
 
   const handleback = () => {
-    navegate('/process')
+    navegate('/processors')
   }
 
   const handleInputChange = (e) => {
@@ -103,7 +103,7 @@ const CreateProcesor = () => {
   };
 
   return (
-    <div className="internal_layout">
+    <div className="internal_layout pt-4">
        <div className="container-fluid mb-4">
           <div className="d-flex align-items-start">
             <button className="btn border-none" onClick={handleback}>
@@ -246,7 +246,7 @@ const CreateProcesor = () => {
 
           {/* Image Upload Column */}
           <div className="col-md-5 col-lg-6 d-flex justify-content-center align-items-start">
-            <div className="text-center">
+            {/* <div className="text-center">
               <div
                 className="d-flex align-items-center justify-content-center mb-3 border border-2 border-light rounded"
                 style={{
@@ -298,7 +298,7 @@ const CreateProcesor = () => {
               >
                 SUBIR IMAGEN
               </label>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

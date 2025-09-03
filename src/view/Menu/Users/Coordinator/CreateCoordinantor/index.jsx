@@ -135,7 +135,7 @@ const CreateCoordinators = () => {
   };
 
   return (
-    <div className="internal_layout">
+    <div className="internal_layout pt-4">
        <div className="container-fluid mb-4">
           <div className="d-flex align-items-start">
             <button className="btn border-none" onClick={handleback}>
@@ -311,7 +311,7 @@ const CreateCoordinators = () => {
 
           {/* Image Upload Column */}
           <div className="col-md-5 col-lg-6 d-flex justify-content-center align-items-start">
-            <div className="text-center">
+            {/* <div className="text-center">
               <div
                 className="d-flex align-items-center justify-content-center mb-3 border border-2 border-light rounded"
                 style={{
@@ -363,7 +363,7 @@ const CreateCoordinators = () => {
               >
                 SUBIR IMAGEN
               </label>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
