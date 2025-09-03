@@ -34,55 +34,55 @@ const CreateRequest = () => {
         </div>
         <div className="d-flex flex-column justify-content-center mx-4">
           <div className={styles.stickyTabs}>
-          <ul className="nav nav-tabs" id="myTab" role="tablist">
-            <li className="nav-item" role="presentation">
-              <button
-                className={`nav-link${activeTab === "home" ? " active" : ""}`}
-                id="home-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#home"
-                type="button"
-                role="tab"
-                aria-controls="home"
-                aria-selected={activeTab === "home"}
-                onClick={() => setActiveTab("home")}
-              >
-                Solicitud
-              </button>
-            </li>
-            <li className="nav-item" role="presentation">
-              <button
-                className={`nav-link${activeTab === "profile" ? " active" : ""}`}
-                id="profile-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#profile"
-                type="button"
-                role="tab"
-                aria-controls="profile"
-                aria-selected={activeTab === "profile"}
-                onClick={() => setActiveTab("profile")}
-              >
-                Documentos
-              </button>
-            </li>
-            {/* <li className="nav-item" role="presentation">
-              <button
-                className={`nav-link${activeTab === "contact" ? " active" : ""}`}
-                id="contact-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#contact"
-                type="button"
-                role="tab"
-                aria-controls="contact"
-                aria-selected={activeTab === "contact"}
-                onClick={() => setActiveTab("contact")}
-              >
-                Pipeline
-              </button>
-            </li> */}
-          </ul>
+            <ul className="nav nav-tabs" id="myTab" role="tablist">
+              <li className="nav-item" role="presentation">
+                <button
+                  className={`nav-link${activeTab === "home" ? " active" : ""}`}
+                  id="home-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#home"
+                  type="button"
+                  role="tab"
+                  aria-controls="home"
+                  aria-selected={activeTab === "home"}
+                  onClick={() => setActiveTab("home")}
+                >
+                  Solicitud
+                </button>
+              </li>
+              <li className="nav-item" role="presentation">
+                <button
+                  className={`nav-link${activeTab === "profile" ? " active" : ""}`}
+                  id="profile-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#profile"
+                  type="button"
+                  role="tab"
+                  aria-controls="profile"
+                  aria-selected={activeTab === "profile"}
+                  onClick={() => setActiveTab("profile")}
+                >
+                  Documentos
+                </button>
+              </li>
+              {/* <li className="nav-item" role="presentation">
+                <button
+                  className={`nav-link${activeTab === "contact" ? " active" : ""}`}
+                  id="contact-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#contact"
+                  type="button"
+                  role="tab"
+                  aria-controls="contact"
+                  aria-selected={activeTab === "contact"}
+                  onClick={() => setActiveTab("contact")}
+                >
+                  Pipeline
+                </button>
+              </li> */}
+            </ul>
           </div>
-          <div className="tab-content" id="myTabContent">
+          <div className="tab-content mt-5" id="myTabContent">
             <div
               className={`tab-pane fade${activeTab === "home" ? " show active" : ""}`}
               id="home"

@@ -246,7 +246,7 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
   };
 
   return (
-    <form className="container-fluid" onSubmit={handleSubmit}>
+    <form className="container-fluid pb-5 mb-5" onSubmit={handleSubmit}>
       <div className="d-flex align-items-center mb-4 gap-3">
         <h4 className="my_title_color fw-bold mb-0" style={{ letterSpacing: 0.5 }}>Construction - Información Básica</h4>
         {externalLink && (
@@ -403,7 +403,7 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
 
       <div className="row">
         <div className="col-12 mt-4">
-          <button type="submit" className="btn btn-primary" style={{ minWidth: "200px" }} disabled={loading}>
+          <button type="submit" className="btn btn-primary px-4 py-2" style={{ minWidth: "200px" }} disabled={loading}>
             {loading ? "CREANDO..." : "Guardar"}
           </button>
         </div>
