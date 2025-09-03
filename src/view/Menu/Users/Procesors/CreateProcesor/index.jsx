@@ -70,7 +70,7 @@ const CreateProcesor = () => {
       await createProcessor(payload);
       setFeedback("¡Procesador creado exitosamente!");
       setTimeout(() => {
-        navegate('/process');
+        navegate('/processors');
       }, 1500);
     } catch (error) {
       console.error('Error al crear procesador:', error);
