@@ -118,7 +118,7 @@ const Sellers = () => {
           {/* <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
           </button> */}
-          <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange}>
+          <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange} style={{ padding: "0 2rem" }}>
             <option value="">Estado</option>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
@@ -142,11 +142,11 @@ const Sellers = () => {
               <th style={{ color: "#000" }}>ID</th>
               <th style={{ color: "#000" }}>Nombre Completo</th>
               <th style={{ color: "#000" }}>Email</th>
+              <th style={{ color: "#000" }}>Celular</th>
               <th style={{ color: "#000" }}>Identificación</th>
               {/* <th style={{ color: "#000" }}>Dirección</th> */}
-              <th style={{ color: "#000" }}>Celular</th>
               <th style={{ color: "#000" }}>Compañía</th>
-              <th style={{ color: "#000" }}>Rol</th>
+              {/* <th style={{ color: "#000" }}>Rol</th> */}
               <th style={{ color: "#000" }}>Estado</th>
               <th style={{ color: "#000" }}>Opciones</th>
             </tr>
@@ -166,7 +166,7 @@ const Sellers = () => {
                   {/* <td>{seller.address}</td> */}
                   <td>{seller.phone}</td>
                   <td>{companyMap[seller.company_id] || '-'}</td>
-                  <td>{Array.isArray(seller.roles) && seller.roles.length > 0 ? seller.roles[0] : '-'}</td>
+                  {/* <td>{Array.isArray(seller.roles) && seller.roles.length > 0 ? seller.roles[0] : '-'}</td> */}
                   <td>
                     <span className={`badge ${seller.is_active ? 'bg-success' : 'bg-secondary'}`}>
                       {seller.is_active ? "Activo" : "Inactivo"}

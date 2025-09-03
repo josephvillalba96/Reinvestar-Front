@@ -111,10 +111,36 @@ const Layout = ({ children }) => {
   
   if (user && user.roles) {
     const role = user.roles[0];
-    // Por ahora mostramos todo el menú mientras se define la lógica de roles
-    filteredMainRoutes = mainRoutes;
-    filteredUserRoutes = userRoutes;
-    filteredOtherRoutes = otherRoutes;
+
+    if (role.toLowerCase() === 'vendedor') {
+      // Para vendedores, solo mostrar Solicitudes y Clientes
+      filteredMainRoutes = mainRoutes.filter(
+        route => route.name === 'Solicitudes' || route.name === 'Clientes'
+      );
+      filteredUserRoutes = []; // Ocultar sección de Usuarios
+      filteredOtherRoutes = []; // Ocultar sección de Configuraciones
+    } else if (role.toLowerCase() === 'procesador') {
+      // Para procesadores, solo mostrar Solicitudes
+      filteredMainRoutes = mainRoutes.filter(
+        route => route.name === 'Solicitudes'
+      );
+      filteredUserRoutes = []; // Ocultar sección de Usuarios
+      filteredOtherRoutes = []; // Ocultar sección de Configuraciones
+    } else if (role.toLowerCase() === 'coordinador') {
+      // Para coordinadores, ver todo excepto Parámetros, Sistema y Coordinadores
+      filteredMainRoutes = mainRoutes;
+      filteredUserRoutes = userRoutes.filter(
+        route => route.name !== 'Sistema' && route.name !== 'Coordinadores'
+      );
+      filteredOtherRoutes = otherRoutes.filter(
+        route => route.name !== 'Parámetros'
+      );
+    } else {
+      // Para otros roles, mostrar todo
+      filteredMainRoutes = mainRoutes;
+      filteredUserRoutes = userRoutes;
+      filteredOtherRoutes = otherRoutes;
+    }
   }
 
   return (
@@ -143,9 +169,11 @@ const Layout = ({ children }) => {
           ))}
 
           {/* Sección de Usuarios */}
-          <div className={`${"nav-section-title"} mb-2 mt-4`}>
-            <p className="title_section" style={{color:'#9CA3AF'}}>Usuarios</p>
-          </div>
+          {filteredUserRoutes.length > 0 && (
+            <div className={`${"nav-section-title"} mb-2 mt-4`}>
+              <p className="title_section" style={{color:'#9CA3AF'}}>Usuarios</p>
+            </div>
+          )}
           {filteredUserRoutes.map((route) => (
             <NavLink
               key={route.id}
@@ -158,9 +186,11 @@ const Layout = ({ children }) => {
           ))}
 
           {/* Sección de Configuraciones */}
-          <div className={`${"nav-section-title"} mb-2 mt-4`}>
-            <p className="title_section" style={{color:'#9CA3AF'}}>Configuraciones</p>
-          </div>
+          {filteredOtherRoutes.length > 0 && (
+            <div className={`${"nav-section-title"} mb-2 mt-4`}>
+              <p className="title_section" style={{color:'#9CA3AF'}}>Configuraciones</p>
+            </div>
+          )}
           {filteredOtherRoutes.map((route) => (
             <NavLink
               key={route.id}

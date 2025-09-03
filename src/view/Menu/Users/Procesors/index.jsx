@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../../../components/Pagination";
 import { getProcessors } from "../../../../Api/procesor";
+import { getCompanies } from "../../../../Api/admin";
 
 const Procesors = () => {
   // Estado para la paginación
@@ -19,6 +20,8 @@ const Procesors = () => {
   const [search, setSearch] = useState("");
   const [estado, setEstado] = useState("");
   const [selectedWorkload, setSelectedWorkload] = useState(null);
+  const [companies, setCompanies] = useState([]);
+  const [companyMap, setCompanyMap] = useState({});
   const navegate = useNavigate();
 
   const handleRedirect = (id) => {
@@ -59,6 +62,23 @@ const Procesors = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const data = await getCompanies({ skip: 0, limit: 100 });
+        setCompanies(data);
+        // Crear un diccionario para acceso rápido por id
+        const map = {};
+        data.forEach(c => { map[c.id] = c.name; });
+        setCompanyMap(map);
+      } catch (e) {
+        setCompanies([]);
+        setCompanyMap({});
+      }
+    };
+    fetchCompanies();
+  }, []);
 
   useEffect(() => {
     fetchProcessors(currentPage, search, estado);
@@ -126,7 +146,7 @@ const Procesors = () => {
           {/* <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
           </button> */}
-          <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange}>
+          <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange} style={{ padding: "0 2rem" }}>
             <option value="">Estado</option>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
@@ -164,6 +184,7 @@ const Procesors = () => {
               <th style={{ color: "#000" }}>Email</th>
               <th style={{ color: "#000" }}>Celular</th>
               <th style={{ color: "#000" }}>Identificación</th>
+              <th style={{ color: "#000" }}>Compañía</th>
               <th style={{ color: "#000" }}>Estado</th>
               <th style={{ color: "#000" }}>Opciones</th>
             </tr>
@@ -177,6 +198,8 @@ const Procesors = () => {
                     <td>{processor.email}</td>
                     <td>{processor.phone || '-'}</td>
                     <td>{processor.identification || '-'}</td>
+                    {/* <td>{processor.company_id || '-'}</td> */}
+                    <td>{companyMap[processor.company_id] || '-'}</td>
                     <td>
                       <span className={`badge ${processor.is_active ? 'bg-success' : 'bg-secondary'}`}>
                         {processor.is_active ? "Activo" : "Inactivo"}

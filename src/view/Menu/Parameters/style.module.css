@@ -28,14 +28,14 @@
 
 .tabsContainer {
   display: flex;
-  gap: 10px;
+  /* gap: 10px; */
   flex-wrap: wrap;
 }
 
 .tabButton {
   padding: 12px 20px;
   border: none;
-  background-color: #f8f9fa;
+  background-color: #fff;
   color: #6c757d;
   border-radius: 8px 8px 0 0;
   cursor: pointer;
@@ -46,7 +46,7 @@
 }
 
 .tabButton:hover {
-  background-color: #e9ecef;
+  background-color: #fff;
   color: #495057;
 }
 
@@ -89,7 +89,7 @@
 .parameterGroup {
   margin-bottom: 30px;
   padding: 20px;
-  background: #f8f9fa;
+  /* background: #f8f9fa; */
   border-radius: 6px;
 }
 

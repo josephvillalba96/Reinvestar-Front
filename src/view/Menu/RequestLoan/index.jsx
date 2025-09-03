@@ -457,7 +457,7 @@ const RequestLoan = () => {
               value={selectedSeller}
               onChange={(e) => setSelectedSeller(e.target.value)}
             >
-              <option value="">Todos los vendedores</option>
+              <option value="">Vendedores</option>
               {sellers.map((seller) => (
                 <option key={seller.id} value={seller.id}>
                   {seller.full_name}
@@ -470,7 +470,7 @@ const RequestLoan = () => {
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
           >
-            <option value="">Todos los estados</option>
+            <option value="">Estados</option>
             <option value="PENDING">Pendiente</option>
             <option value="IN_REVIEW">En Revisión</option>
             <option value="PRICING">En Pricing</option>

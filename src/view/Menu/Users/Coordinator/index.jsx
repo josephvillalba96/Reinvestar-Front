@@ -117,7 +117,7 @@ const Coordinator = () => {
           {/* <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
           </button> */}
-          <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange}>
+          <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange} style={{ padding: "0 2rem" }}>
             <option value="">Estado</option>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
@@ -141,11 +141,11 @@ const Coordinator = () => {
               <th style={{ color: "#000" }}>ID</th>
               <th style={{ color: "#000" }}>Nombre Completo</th>
               <th style={{ color: "#000" }}>Email</th>
+              <th style={{ color: "#000" }}>Celular</th>
               <th style={{ color: "#000" }}>Identificación</th>
               {/* <th style={{ color: "#000" }}>Dirección</th> */}
-              <th style={{ color: "#000" }}>Celular</th>
               <th style={{ color: "#000" }}>Compañía</th>
-              <th style={{ color: "#000" }}>Rol</th>
+              {/* <th style={{ color: "#000" }}>Rol</th> */}
               <th style={{ color: "#000" }}>Estado</th>
               <th style={{ color: "#000" }}>Opciones</th>
             </tr>
@@ -161,11 +161,11 @@ const Coordinator = () => {
                   <td>{coordinator.id}</td>
                   <td>{coordinator.full_name}</td>
                   <td>{coordinator.email}</td>
+                  <td>{coordinator.phone}</td>
                   <td>{coordinator.identification}</td>
                   {/* <td>{coordinator.address}</td> */}
-                  <td>{coordinator.phone}</td>
                   <td>{companyMap[coordinator.company_id] || '-'}</td>
-                  <td>{Array.isArray(coordinator.roles) && coordinator.roles.length > 0 ? coordinator.roles[0] : '-'}</td>
+                  {/* <td>{Array.isArray(coordinator.roles) && coordinator.roles.length > 0 ? coordinator.roles[0] : '-'}</td> */}
                   <td>
                     <span className={`badge ${coordinator.is_active ? 'bg-success' : 'bg-secondary'}`}>
                       {coordinator.is_active ? "Activo" : "Inactivo"}

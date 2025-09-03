@@ -91,7 +91,7 @@ const DscrIntentionForm = ({
     // --- No pertenecen a la carta de intension de una solicitud dscr ---
     issued_date: "",
     client_submitted_at: "",
-    origination_fee_percentage: 0,
+    origination_fee_percentage: "2.0",
     dscr_ratio: 0,
     dscr_required: false,
     radicado: "",
@@ -131,7 +131,12 @@ const DscrIntentionForm = ({
     
     if (Object.keys(initialData).length > 0) {
       console.log('Actualizando formulario con datos iniciales');
-      setForm(prev => ({ ...prev, ...initialData }));
+      setForm(prev => ({ 
+        ...prev, 
+        ...initialData,
+        // Asegurar que origination_fee_percentage se maneje correctamente
+        origination_fee_percentage: initialData.origination_fee_percentage ? String(initialData.origination_fee_percentage) : "2.0"
+      }));
       setShowCreateForm(false);
       setLoadingData(false);
     } else if (requestId) {
@@ -147,9 +152,9 @@ const DscrIntentionForm = ({
           if (dscrData) {
             setForm(prev => ({
               ...prev,
-              borrower_name: dscrData.borrower_name || "",
-              property_address: dscrData.property_address || "",
-              // Mapear todos los campos disponibles
+              ...dscrData,
+              // Asegurar que origination_fee_percentage se maneje correctamente
+              origination_fee_percentage: dscrData.origination_fee_percentage ? String(dscrData.origination_fee_percentage) : "2.0"
             }));
           }
           setShowCreateForm(true);
@@ -180,10 +185,28 @@ const DscrIntentionForm = ({
   };
 
   const handleNumberFormat = (name, value) => {
-    setForm(prev => ({
-      ...prev,
-      [name]: value === '' ? 0 : Number(value)
-    }));
+    console.debug('[DscrIntentionForm] handleNumberFormat:', { name, value, type: typeof value });
+    
+    if (name === 'origination_fee_percentage') {
+      console.debug('[DscrIntentionForm] origination_fee_percentage changing:', {
+        oldValue: form.origination_fee_percentage,
+        oldValueType: typeof form.origination_fee_percentage,
+        newValue: value,
+        newValueType: typeof value
+      });
+      
+      // Para origination_fee_percentage, mantener como string
+      setForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    } else {
+      // Para otros campos numéricos, convertir a número
+      setForm(prev => ({
+        ...prev,
+        [name]: value === '' ? 0 : Number(value)
+      }));
+    }
   };
 
   // Recalcular monto de Origination Fee cuando cambia el porcentaje o el loan_amount
@@ -191,12 +214,28 @@ const DscrIntentionForm = ({
     const pct = Number(form.origination_fee_percentage || 0);
     const amount = Number(form.loan_amount || 0);
     const computed = (amount * pct) / 100;
-    if (Number(form.origination_fee) !== computed) {
+    
+    // Solo recalcular si el usuario no ha editado manualmente el origination_fee
+    // y si el valor calculado es diferente al actual
+    if (computed > 0 && Number(form.origination_fee) !== computed) {
+      console.debug('[DscrIntentionForm] Recalculando origination_fee:', {
+        percentage: pct,
+        loanAmount: amount,
+        computed: computed,
+        current: form.origination_fee
+      });
       setForm(prev => ({ ...prev, origination_fee: computed }));
     }
   }, [form.origination_fee_percentage, form.loan_amount]);
 
-  const buildDataToSend = () => ({
+  const buildDataToSend = () => {
+    console.debug('[DscrIntentionForm] buildDataToSend - origination_fee_percentage:', {
+      formValue: form.origination_fee_percentage,
+      type: typeof form.origination_fee_percentage,
+      isInForm: 'origination_fee_percentage' in form
+    });
+
+    const payload = {
     // BORROWER INFORMATION
     borrower_name: form.borrower_name || "",
     legal_status: form.legal_status || "",
@@ -280,7 +319,7 @@ const DscrIntentionForm = ({
     radicado: form.radicado || "",
     dscr_ratio: Number(form.dscr_ratio || 0),
     // dscr_required: Boolean(form.dscr_required),
-    origination_fee_percentage: Number(form.origination_fee_percentage || 0),
+          origination_fee_percentage: Number(form.origination_fee_percentage || 2.0),
     
     // Campos adicionales del formulario
     property_city: form.property_city || "",
@@ -291,9 +330,18 @@ const DscrIntentionForm = ({
     type_of_transaction: form.type_of_transaction || "",
     primary_own_or_rent: form.primary_own_or_rent || "",
     mortgage_late_payments: form.mortgage_late_payments || "",
-    guarantor_name: form.guarantor_name || "",
-    entity_name: form.entity_name || ""
-  });
+          guarantor_name: form.guarantor_name || "",
+      entity_name: form.entity_name || ""
+    };
+
+    console.debug('[DscrIntentionForm] buildDataToSend - payload origination_fee_percentage:', {
+      payloadValue: payload.origination_fee_percentage,
+      payloadType: typeof payload.origination_fee_percentage,
+      isInPayload: 'origination_fee_percentage' in payload
+    });
+
+    return payload;
+  };
 
   const handleCreateIntentLetter = async () => {
     if (onSubmit) {
@@ -307,6 +355,12 @@ const DscrIntentionForm = ({
     
     if (onSubmit) {
       const dataToSend = buildDataToSend();
+      
+      console.debug('[DscrIntentionForm] handleSubmit - origination_fee_percentage:', {
+        formValue: form.origination_fee_percentage,
+        payloadValue: dataToSend.origination_fee_percentage,
+        isInPayload: 'origination_fee_percentage' in dataToSend
+      });
 
       onSubmit(dataToSend);
     }
@@ -591,7 +645,7 @@ const DscrIntentionForm = ({
                   <select
                     name="origination_fee_percentage"
                     className={`form-control ${styles.input}`}
-                    value={String(form.origination_fee_percentage)}
+                    value={form.origination_fee_percentage}
                     onChange={(e) => handleNumberFormat('origination_fee_percentage', e.target.value)}
                     disabled={!editable}
                   >
@@ -600,6 +654,12 @@ const DscrIntentionForm = ({
                     <option value="1.5">Origination Fee 1,5%</option>
                     <option value="1.0">Origination Fee 1,0%</option>
                   </select>
+                  {console.debug('[DscrIntentionForm] Select origination_fee_percentage:', {
+                    formValue: form.origination_fee_percentage,
+                    formValueType: typeof form.origination_fee_percentage,
+                    options: ["2.5", "2.0", "1.5", "1.0"],
+                    matches: ["2.5", "2.0", "1.5", "1.0"].includes(form.origination_fee_percentage)
+                  })}
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Discount Points</label>

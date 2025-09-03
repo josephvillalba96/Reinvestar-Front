@@ -14,7 +14,7 @@ const initialState = {
   legal_status: "",
   issued_date: "",
   property_address: "",
-  estimated_fico_score: "",
+  fico: "",
   subject_prop_under_llc: "",
   
   // Loan Summary
@@ -28,7 +28,6 @@ const initialState = {
   pay_off_amount: "",
   
   // Campos adicionales requeridos por el payload
-  fico: 0,
   loan_type: "",
   property_type: "",
   closing_date: "",
@@ -132,7 +131,7 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
         legal_status: solicitud.legal_status || "",
         issued_date: formatDateForInput(solicitud.issued_date),
         property_address: solicitud.property_address || "",
-        estimated_fico_score: solicitud.estimated_fico_score || solicitud.fico || "",
+        fico: solicitud.fico || solicitud.estimated_fico_score || "",
         subject_prop_under_llc: solicitud.subject_prop_under_llc || "",
         
         // Loan Summary
@@ -146,7 +145,6 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
         pay_off_amount: solicitud.pay_off_amount || "",
         
         // Campos adicionales
-        fico: solicitud.fico || 0,
         loan_type: solicitud.loan_type || "",
         property_type: solicitud.property_type || "",
         closing_date: formatDateForInput(solicitud.closing_date),
@@ -256,7 +254,7 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
   // Maneja cambios de campos numéricos con máscara
   const handleNumberFormat = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
-    if (name === "estimated_fico_score") {
+    if (name === "fico") {
       if (value && (Number(value) < 300 || Number(value) > 850)) {
         setFicoError("El valor de FICO debe estar entre 300 y 850");
       } else {
@@ -302,8 +300,10 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
 
       const dataToSend = {
         ...cleanFormData,
-        user_id: user_id
+        user_id: user_id,
+        fico: Number(cleanFormData.fico) || 0
       };
+      delete dataToSend.estimated_fico_score;
 
       console.log("Datos a enviar (update):", dataToSend);
       await updateDscr(solicitud.id, dataToSend);
@@ -319,7 +319,7 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
   // Guardar nuevo (create, solo si no hay solicitud)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.estimated_fico_score && (Number(form.estimated_fico_score) < 300 || Number(form.estimated_fico_score) > 850)) {
+    if (form.fico && (Number(form.fico) < 300 || Number(form.fico) > 850)) {
       setFicoError("El valor de FICO debe estar entre 300 y 850");
       return;
     }
@@ -346,8 +346,10 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
       const dataToSend = {
         ...cleanFormData,
         client_id: Number(client_id),
-        user_id: user_id
+        user_id: user_id,
+        fico: Number(cleanFormData.fico) || 0
       };
+      delete dataToSend.estimated_fico_score;
 
       console.log("Datos a enviar (create):", dataToSend);
       const response = await createDscr(dataToSend);
@@ -414,6 +416,7 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
     <form className="container-fluid" onSubmit={solicitud ? handleUpdate : handleSubmit}>
         {/* Datos del cliente */}
         {cliente && (
+        <>
         <div className="mb-4">
           <div className="row gy-2 align-items-end">
             <div className="col-md-3">
@@ -430,6 +433,8 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
             </div>
           </div>
         </div>
+        <hr/>
+        </>
         )}
 
       {cliente && (
@@ -536,18 +541,18 @@ const DscrForm = ({ client_id, goToDocumentsTab, solicitud, cliente, editable = 
           <label className="form-label my_title_color">ESTIMATED FICO SCORE</label>
           <NumericFormat 
             className={`form-control ${styles.input}`}
-            name="estimated_fico_score" 
-            value={form.estimated_fico_score} 
-            onValueChange={({ value }) => handleNumberFormat("estimated_fico_score", value)} 
+            name="fico" 
+            value={form.fico} 
+            onValueChange={({ value }) => handleNumberFormat("fico", value)} 
             allowNegative={false} 
             decimalScale={0} 
             inputMode="numeric" 
             disabled={!editable && !isEditMode}
           />
               {ficoError && (<span style={{ color: 'red', fontSize: 13 }}>{ficoError}</span>)}
-          {!ficoError && getFicoCategory(form.estimated_fico_score) && (
+          {!ficoError && getFicoCategory(form.fico) && (
             <span style={{ color: '#2c3e50', fontSize: 13, fontWeight: 500 }}>
-              {getFicoCategory(form.estimated_fico_score)}
+              {getFicoCategory(form.fico)}
             </span>
           )}
         </div>

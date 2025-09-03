@@ -97,7 +97,7 @@ const System = () => {
           {/* <button className="btn d-flex align-items-center">
             <img src={FilterIcon} alt="filter" width={18} />
           </button> */}
-          <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange}>
+          <select className="form-select my_title_color" name="Estado" value={estado} onChange={handleEstadoChange} style={{ padding: "0 2rem" }}>
             <option value="">Estado</option>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
@@ -146,12 +146,12 @@ const System = () => {
                     </span>
                   </td>
                   <td>
-                    <button
+                    {/* <button
                       className="btn btn-sm me-1"
                       style={{ backgroundColor: "#000" }}
                     >
                       <img src={BookCheck} alt="check-data" width={15} />
-                    </button>
+                    </button> */}
                     <button
                       className="btn btn-sm"
                       style={{ backgroundColor: "#000" }}

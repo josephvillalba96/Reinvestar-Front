@@ -14,7 +14,7 @@ const initialState = {
   borrower_name: "",
   legal_status: "",
   property_address: "",
-  fico_score: "",
+  estimated_fico_score: "",
   property_type: "",
   land_acquisition_cost: "",
   construction_rehab_budget: "",
@@ -170,7 +170,7 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
         legal_status: form.legal_status || "",
         date: toISOOrNull(form.date),
         property_address: form.property_address || "",
-        fico_score: form.fico_score ? Number(form.fico_score) : 0,
+        estimated_fico_score: form.estimated_fico_score ? Number(form.estimated_fico_score) : 0,
         loan_type: form.loan_type || "",
         property_type: form.property_type || "",
         closing_date: toISOOrNull(form.closing_date),
@@ -328,9 +328,9 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
           <label className="form-label my_title_color">ESTIMATED FICO SCORE</label>
           <NumericFormat 
             className={`form-control ${styles.input}`}
-            name="fico_score" 
-            value={form.fico_score} 
-            onValueChange={({ value }) => handleNumberFormat("fico_score", value)} 
+            name="estimated_fico_score" 
+            value={form.estimated_fico_score} 
+            onValueChange={({ value }) => handleNumberFormat("estimated_fico_score", value)} 
             allowNegative={false} 
             decimalScale={0} 
             inputMode="numeric" 

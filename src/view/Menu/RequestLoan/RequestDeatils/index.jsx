@@ -167,7 +167,7 @@ const DetalleSolicitud = () => {
                 aria-selected={activeTab === "contact"}
                 onClick={() => setActiveTab("contact")}
               >
-                Pipeline
+                Actividad
               </button>
             </li>
             {solicitud?.status && ["PRICING", "ACCEPTED", "REJECTED", "CANCELLED", "CLOSED"].includes(solicitud.status.toUpperCase()) && (
@@ -214,7 +214,7 @@ const DetalleSolicitud = () => {
               aria-labelledby="home-tab"
             >
               
-              <div className={`d-flex justify-content-center aling-items-center ${styles.container_section_request}`}>
+              <div className={`d-flex justify-content-center aling-items-center ${styles.container_section_request} mt-5`}>
                 {loading ? (
                   <div>Cargando...</div>
                 ) : solicitud && type === "dscr" ? (

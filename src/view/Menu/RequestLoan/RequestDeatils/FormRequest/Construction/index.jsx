@@ -81,7 +81,7 @@ const ConstructionForm = ({ client_id, goToDocumentsTab, solicitud, cliente, edi
         borrower_name: solicitud.borrower_name || "",
         legal_status: solicitud.legal_status || "",
         property_address: solicitud.property_address || "",
-        fico_score: solicitud.fico_score ?? "",
+        fico_score: solicitud.fico_score ?? solicitud.estimated_fico_score ?? "",
         property_type: solicitud.property_type || "",
         land_acquisition_cost: solicitud.land_acquisition_cost ?? "",
         construction_rehab_budget: solicitud.construction_rehab_budget ?? "",

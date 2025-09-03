@@ -29,7 +29,6 @@ const initialState = {
   pay_off_amount: "",
   
   // Campos adicionales requeridos por el payload
-  fico: 0,
   loan_type: "",
   property_type: "",
   closing_date: "",
@@ -220,7 +219,6 @@ const DscrForm = ({ client_id, goToDocumentsTab }) => {
         pay_off_amount: form.pay_off_amount ? Number(form.pay_off_amount) : 0,
         
         // Campos adicionales requeridos
-        fico: form.estimated_fico_score ? Number(form.estimated_fico_score) : 0,
         loan_type: form.loan_type || "",
         property_type: form.property_type || "",
         closing_date: toISOOrNull(form.closing_date),
