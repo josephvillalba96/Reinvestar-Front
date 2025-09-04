@@ -99,8 +99,8 @@ const DetailSeller = () => {
       return;
     }
 
-    // Validación de contraseña si se está cambiando
-    if (formData.password) {
+    // Validación de contraseña si se está cambiando (solo si se ingresa algo)
+    if (formData.password && formData.password.trim() !== "") {
       if (formData.password.length < 8) {
         setFeedback("La contraseña debe tener al menos 8 caracteres");
         setLoading(false);
@@ -124,12 +124,9 @@ const DetailSeller = () => {
       company_id: Number(formData.company_id),
       url_profile_photo: formData.url_profile_photo,
       role: formData.role,
-      is_active: formData.is_active
+      is_active: formData.is_active,
+      password: formData.password || "" // Siempre enviar password (cadena vacía si no se llena)
     };
-    
-    if (formData.password) {
-      payload.password = formData.password;
-    }
     
     if (!payload.role) {
       setRoleError("El campo rol es obligatorio");
@@ -318,7 +315,7 @@ const DetailSeller = () => {
                     disabled={!editMode}
                     minLength={8}
                   />
-                  {formData.password && formData.password.length < 8 && (
+                  {formData.password && formData.password.trim() !== "" && formData.password.length < 8 && (
                     <small className="text-warning">
                       La contraseña debe tener al menos 8 caracteres
                     </small>
@@ -335,7 +332,7 @@ const DetailSeller = () => {
                     onChange={handleInputChange}
                     disabled={!editMode}
                   />
-                  {formData.confirmarContrasena && formData.password !== formData.confirmarContrasena && (
+                  {formData.confirmarContrasena && formData.password.trim() !== "" && formData.password !== formData.confirmarContrasena && (
                     <small className="text-danger">
                       Las contraseñas no coinciden
                     </small>

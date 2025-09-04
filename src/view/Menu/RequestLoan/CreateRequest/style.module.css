@@ -19,3 +19,15 @@
     z-index: 4;
     padding: 0.15rem 0;
 }
+
+/* Estilos para pestañas deshabilitadas */
+.nav-link.disabled {
+    color: #6c757d !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+
+.nav-link.disabled:hover {
+    color: #6c757d !important;
+    background-color: transparent !important;
+}

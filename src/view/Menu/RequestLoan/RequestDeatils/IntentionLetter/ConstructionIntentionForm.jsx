@@ -50,13 +50,13 @@ const ConstructionIntentionForm = ({
     legal_fee: 0,
     appraisal_fee: 0,
     budget_review_fee: 0,
-
+    
     //OTHER EXPENSES (Estimated)
     broker_fee: 0,
     broker_fee_percentage: 0,
     transaction_management_fee: 0,
-
-    //LOAN SUMMRY
+    
+    //LOAN SUMMARY
     total_loan_amount: 0,
     loan_amount: 0,
     annual_interest_rate: 0,
@@ -89,7 +89,7 @@ const ConstructionIntentionForm = ({
     construction_budget_delta: 0,
     down_payment: 0,
     total_liquidity: 0,
-
+    
     // Campos del Sistema
     client_id: 0,
     user_id: 0,
@@ -105,9 +105,9 @@ const ConstructionIntentionForm = ({
   useEffect(() => {
     const load = async () => {
       // Siempre poblamos con initialData que viene de la solicitud principal
-      if (initialData && Object.keys(initialData).length > 0) {
+    if (initialData && Object.keys(initialData).length > 0) {
         console.log('[Construction] Loading initialData:', initialData);
-        const mapped = { ...initialData };
+      const mapped = { ...initialData };
         if (mapped.service_fee != null) mapped.servicing_fee = mapped.service_fee;
         if (mapped.total_closing_cost_estimated != null) mapped.estimated_closing_costs = mapped.total_closing_cost_estimated;
         if (mapped.interest_rate != null) mapped.annual_interest_rate = mapped.interest_rate;
@@ -116,6 +116,9 @@ const ConstructionIntentionForm = ({
           ...prev,
           ...mapped,
           estimated_fico_score: mapped.estimated_fico_score ?? mapped.fico_score ?? prev.estimated_fico_score,
+          // Preservar los valores que el usuario pueda haber ingresado
+          requested_leverage: prev.requested_leverage || mapped.requested_leverage || 0,
+          monthly_interest_payment: prev.monthly_interest_payment || mapped.monthly_interest_payment || 0,
         }));
       }
 
@@ -143,6 +146,9 @@ const ConstructionIntentionForm = ({
               user_id: prev.user_id || mapped.user_id || (getUserIdFromToken ? Number(getUserIdFromToken()) : prev.user_id),
               estimated_fico_score: mapped.estimated_fico_score ?? mapped.fico_score ?? prev.estimated_fico_score,
               closing_date: mapped.closing_date || mapped.estimated_closing_date || prev.closing_date,
+              // Preservar los valores que el usuario pueda haber ingresado
+              requested_leverage: prev.requested_leverage || mapped.requested_leverage || 0,
+              monthly_interest_payment: prev.monthly_interest_payment || mapped.monthly_interest_payment || 0,
             }));
             setShowCreateForm(false); // Hay carta, no mostramos el botón de crear
           } else {
@@ -154,9 +160,9 @@ const ConstructionIntentionForm = ({
         } finally {
           setLoadingData(false);
         }
-      }
-    };
-    load();
+        }
+      };
+      load();
   }, [initialData, requestId]);
 
   useEffect(() => {
@@ -185,22 +191,22 @@ const ConstructionIntentionForm = ({
 
   const buildDataToSend = () => {
     const payload = {
-      client_id: Number(form.client_id || 0),
-      user_id: Number(form.user_id || getUserIdFromToken?.() || 0),
-      borrower_name: form.borrower_name || "",
-      legal_status: form.legal_status || "",
-      property_address: form.property_address || "",
+    client_id: Number(form.client_id || 0),
+    user_id: Number(form.user_id || getUserIdFromToken?.() || 0),
+    borrower_name: form.borrower_name || "",
+    legal_status: form.legal_status || "",
+    property_address: form.property_address || "",
       estimated_fico_score: Number(form.estimated_fico_score || 0),
-      loan_type: form.loan_type || "",
-      property_type: form.property_type || "",
-      interest_rate_structure: form.interest_rate_structure || "",
+    loan_type: form.loan_type || "",
+    property_type: form.property_type || "",
+    interest_rate_structure: form.interest_rate_structure || "",
       loan_term: (() => {
         const value = form.loan_term;
         if (value === null || value === undefined || value === "") return 0;
         const numValue = Number(value);
         return Number.isNaN(numValue) ? 0 : Math.round(numValue);
       })(),
-      prepayment_penalty: Number(form.prepayment_penalty || 0),
+    prepayment_penalty: Number(form.prepayment_penalty || 0),
       max_ltv: Number(form.max_ltv || 0),
       max_ltc: Number(form.max_ltc || 0),
       as_is_value: Number(form.as_is_value || 0),
@@ -209,40 +215,40 @@ const ConstructionIntentionForm = ({
       construction_rehab_budget: Number(form.construction_rehab_budget || 0),
       total_cost: Number(form.total_cost || 0),
       estimated_after_completion_value: Number(form.estimated_after_completion_value || 0),
-      origination_fee: Number(form.origination_fee || 0),
-      underwriting_fee: Number(form.underwriting_fee || 0),
-      processing_fee: Number(form.processing_fee || 0),
+    origination_fee: Number(form.origination_fee || 0),
+    underwriting_fee: Number(form.underwriting_fee || 0),
+    processing_fee: Number(form.processing_fee || 0),
       servicing_fee: Number(form.servicing_fee || 0),
-      legal_fee: Number(form.legal_fee || 0),
-      appraisal_fee: Number(form.appraisal_fee || 0),
+    legal_fee: Number(form.legal_fee || 0),
+    appraisal_fee: Number(form.appraisal_fee || 0),
       budget_review_fee: Number(form.budget_review_fee || 0),
-      broker_fee: Number(form.broker_fee || 0),
+    broker_fee: Number(form.broker_fee || 0),
       broker_fee_percentage: Number(form.broker_fee_percentage || 0),
-      transaction_management_fee: Number(form.transaction_management_fee || 0),
-      total_loan_amount: Number(form.total_loan_amount || 0),
-      loan_amount: Number(form.loan_amount || 0),
+    transaction_management_fee: Number(form.transaction_management_fee || 0),
+    total_loan_amount: Number(form.total_loan_amount || 0),
+    loan_amount: Number(form.loan_amount || 0),
       annual_interest_rate: Number(form.annual_interest_rate || 0),
-      requested_leverage: Number(form.requested_leverage || 0),
-      monthly_interest_payment: Number(form.monthly_interest_payment || 0),
-      construction_holdback: Number(form.construction_holdback || 0),
-      initial_funding: Number(form.initial_funding || 0),
-      day1_monthly_interest_payment: Number(form.day1_monthly_interest_payment || 0),
-      interest_reserves: Number(form.interest_reserves || 0),
-      loan_to_as_is_value: Number(form.loan_to_as_is_value || 0),
-      loan_to_as_is_value_ltv: Number(form.loan_to_as_is_value_ltv || 0),
-      loan_to_cost_ltc: Number(form.loan_to_cost_ltc || 0),
-      loan_to_arv: Number(form.loan_to_arv || 0),
-      rehab_category: form.rehab_category || "",
-      min_credit_score: Number(form.min_credit_score || 0),
-      refundable_commitment_deposit: Number(form.refundable_commitment_deposit || 0),
-      estimated_closing_costs: Number(form.estimated_closing_costs || 0),
-      construction_budget_10_percent: Number(form.construction_budget_10_percent || 0),
-      six_months_payment_reserves: Number(form.six_months_payment_reserves || 0),
-      construction_budget_delta: Number(form.construction_budget_delta || 0),
-      down_payment: Number(form.down_payment || 0),
-      total_liquidity: Number(form.total_liquidity || 0),
-      client_submitted: Boolean(form.client_submitted),
-      client_form_completed: Boolean(form.client_form_completed),
+    requested_leverage: Number(form.requested_leverage || 0),
+    monthly_interest_payment: Number(form.monthly_interest_payment || 0),
+    construction_holdback: Number(form.construction_holdback || 0),
+    initial_funding: Number(form.initial_funding || 0),
+    day1_monthly_interest_payment: Number(form.day1_monthly_interest_payment || 0),
+    interest_reserves: Number(form.interest_reserves || 0),
+    loan_to_as_is_value: Number(form.loan_to_as_is_value || 0),
+    loan_to_as_is_value_ltv: Number(form.loan_to_as_is_value_ltv || 0),
+    loan_to_cost_ltc: Number(form.loan_to_cost_ltc || 0),
+    loan_to_arv: Number(form.loan_to_arv || 0),
+    rehab_category: form.rehab_category || "",
+    min_credit_score: Number(form.min_credit_score || 0),
+    refundable_commitment_deposit: Number(form.refundable_commitment_deposit || 0),
+    estimated_closing_costs: Number(form.estimated_closing_costs || 0),
+    construction_budget_10_percent: Number(form.construction_budget_10_percent || 0),
+    six_months_payment_reserves: Number(form.six_months_payment_reserves || 0),
+    construction_budget_delta: Number(form.construction_budget_delta || 0),
+    down_payment: Number(form.down_payment || 0),
+    total_liquidity: Number(form.total_liquidity || 0),
+    client_submitted: Boolean(form.client_submitted),
+    client_form_completed: Boolean(form.client_form_completed),
       borrower_signed: Boolean(form.borrower_signed),
       guarantor_signed: Boolean(form.guarantor_signed),
       is_signed: Boolean(form.is_signed),
@@ -484,9 +490,9 @@ const ConstructionIntentionForm = ({
           </div>
         </div>
 
-        {/* 6. LOAN SUMMRY */}
+        {/* 6. LOAN SUMMARY */}
         <div className="row mb-4">
-          <div className="col-12"><h5 className="fw-bold text-primary mb-3">6. LOAN SUMMRY</h5></div>
+          <div className="col-12"><h5 className="fw-bold text-primary mb-3">6. LOAN SUMMARY</h5></div>
           <div className="col-12">
             <div className="row g-3">
               <div className="col-md-6">

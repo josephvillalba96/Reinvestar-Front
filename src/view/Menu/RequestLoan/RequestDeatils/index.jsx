@@ -23,26 +23,26 @@ const DetalleSolicitud = () => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        let data = null;
-        if (type === "dscr") {
-          data = await getDscrById(id);
-        } else if (type === "fixflip") {
-          data = await getFixflipById(id);
-        } else if (type === "construction") {
-          data = await getConstructionById(id);
-        }
-        setSolicitud(data);
-      } catch (e) {
-        console.error('Error fetching data:', e);
-        setSolicitud(null);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      let data = null;
+      if (type === "dscr") {
+        data = await getDscrById(id);
+      } else if (type === "fixflip") {
+        data = await getFixflipById(id);
+      } else if (type === "construction") {
+        data = await getConstructionById(id);
       }
-      setLoading(false);
-    };
-    
+      setSolicitud(data);
+    } catch (e) {
+      console.error('Error fetching data:', e);
+      setSolicitud(null);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     if (id && type) {
       fetchData();
     }
@@ -85,25 +85,35 @@ const DetalleSolicitud = () => {
   return (
     <>
       <div className={`${styles.scroll_section} internal_layout`}>
-        <div className={`d-flex align-items-center justify-content-between px-4 py-2 ${styles.header}`}>
-          <button className="btn border-none" onClick={handleback}>
-            <img src={Back} alt="back" width={35} />
-          </button>
-          <div className="d-flex flex-column">
+        <div className={`d-flex align-items-center justify-content-between px-4 py-3 ${styles.header}`}>
+          <div className="d-flex align-items-center gap-3">
+            <button className="btn border-none p-0" onClick={handleback}>
+              <img src={Back} alt="back" width={35} />
+            </button>
             <h2 className={`${styles.title} fw-bolder my_title_color mb-0`}>
-              Detalle de solicitud
+              Detalle de Solicitud
             </h2>
-            {solicitud && (
-              <div className="d-flex align-items-center gap-3 mt-2">
-                <span className="badge bg-primary fs-6">
-                  <strong>ID: {solicitud.id}</strong>
-                </span>
-                <span className="badge bg-secondary fs-6">
-                  <strong>Tipo: {type?.toUpperCase()}</strong>
-                </span>
-              </div>
-            )}
           </div>
+          
+          {solicitud && (
+            <div className={styles.requestInfo}>
+              <span>ID: <strong>{solicitud.id}</strong></span>
+              {solicitud.radicado && (
+                <>
+                  <span className={styles.separator}>|</span>
+                  <span>Radicado: <strong>{solicitud.radicado}</strong></span>
+                </>
+              )}
+              <span className={styles.separator}>|</span>
+              <span>Tipo: <strong>{type?.toUpperCase()}</strong></span>
+              {solicitud.status && (
+                <>
+                  <span className={styles.separator}>|</span>
+                  <span>Estado: <strong>{solicitud.status}</strong></span>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <div className="d-flex flex-column justify-content-center mx-4">
           <div className={styles.stickyTabs}>
@@ -243,7 +253,12 @@ const DetalleSolicitud = () => {
                 role="tabpanel"
                 aria-labelledby="processor-tab"
               >
-                <ProcessorForm key={`${type}-${id}`} requestId={id} requestType={type} />
+                <ProcessorForm 
+                  key={`${type}-${id}`} 
+                  requestId={id} 
+                  requestType={type}
+                  onDataNeedsRefresh={fetchData}
+                />
               </div>
             )}
             <div
@@ -279,12 +294,7 @@ const DetalleSolicitud = () => {
                   requestId={id} 
                   requestType={type} 
                   currentStatus={solicitud?.status || "PENDING"}
-                  onStatusChange={(newStatus) => {
-                    setSolicitud(prev => ({
-                      ...prev,
-                      status: newStatus
-                    }));
-                  }}
+                  onDataNeedsRefresh={fetchData}
                 />
               </div>
             )}

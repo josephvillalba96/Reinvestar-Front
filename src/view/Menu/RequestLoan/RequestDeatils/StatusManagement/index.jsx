@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styles from './style.module.css';
 import { changeRequestStatus, StatusEnum, StatusLabels, StatusColors } from '../../../../../Api/requestStatus';
 
-const StatusManagement = ({ requestId, requestType, currentStatus, onStatusChange }) => {
+const StatusManagement = ({ requestId, requestType, currentStatus, onDataNeedsRefresh }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -31,8 +31,11 @@ const StatusManagement = ({ requestId, requestType, currentStatus, onStatusChang
         new_status: selectedStatus
       });
       
-      // Actualizar el estado local
-      onStatusChange(selectedStatus);
+      // Llamar a la función de refresco del padre
+      if (onDataNeedsRefresh) {
+        onDataNeedsRefresh();
+      }
+      
       setFeedback("Estado actualizado exitosamente");
       
       // Limpiar el error si existía

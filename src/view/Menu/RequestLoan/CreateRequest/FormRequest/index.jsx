@@ -16,7 +16,7 @@ const initialClient = {
   fechaRegistro: "",
 };
 
-const FormRequest = () => {
+const FormRequest = ({ goToDocumentsTab }) => {
   const [form, setForm] = useState(initialClient);
   const [clientId, setClientId] = useState("");
   const [clienteEncontrado, setClienteEncontrado] = useState(false);
@@ -375,9 +375,9 @@ const FormRequest = () => {
       {/* Formulario de producto solo si hay cliente y tipo de producto */}
       {form.tipoProducto && (
         <div className="mt-4">
-          {form.tipoProducto === "fixflip" && <FixflipForm client_id={clientId} />}
-          {form.tipoProducto === "construction" && <ConstructionForm client_id={clientId} />}
-          {form.tipoProducto === "dscr" && <DscrForm client_id={clientId} />}
+          {form.tipoProducto === "fixflip" && <FixflipForm client_id={clientId} goToDocumentsTab={goToDocumentsTab} />}
+          {form.tipoProducto === "construction" && <ConstructionForm client_id={clientId} goToDocumentsTab={goToDocumentsTab} />}
+          {form.tipoProducto === "dscr" && <DscrForm client_id={clientId} goToDocumentsTab={goToDocumentsTab} />}
         </div>
       )}
       </div>

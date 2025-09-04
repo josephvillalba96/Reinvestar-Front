@@ -443,7 +443,7 @@ const DscrForm = ({ client_id, goToDocumentsTab }) => {
           ============================== */}
       <div className="row mb-4 mt-5">
         <div className="col-12">
-          <h6 className="my_title_color fw-bold mb-3">2. LOAN SUMMARY</h6>
+          <h6 className="my_title_color fw-bold mb-3">2. LOAN SUMARY</h6>
         </div>
       </div>
 

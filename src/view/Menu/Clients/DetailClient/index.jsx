@@ -234,7 +234,7 @@ const DetailClient = () => {
                    {editform && (
                      <button
                        type="button"
-                       className="btn btn-warning fw-semibold px-3 py-2 rounded-pill me-3 mb-3"
+                       className="btn btn-warning fw-semibold px-3 py-2 rounded-pill me-3 mb-3 mt-5"
                        style={{ minWidth: "180px" }}
                        onClick={handleEnableForm}
                      >

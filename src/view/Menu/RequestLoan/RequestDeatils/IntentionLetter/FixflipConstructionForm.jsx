@@ -1097,7 +1097,7 @@ const FixflipConstructionForm = ({
 
         {/* 6. LOAN SUMMRY */}
         <div className="row mb-4">
-          <div className="col-12"><h5 className="fw-bold text-primary mb-3">6. LOAN SUMMRY</h5></div>
+          <div className="col-12"><h5 className="fw-bold text-primary mb-3">6. LOAN SUMARY</h5></div>
           <div className="col-12">
             <div className="row g-3">
               <div className="col-md-6">
@@ -1319,8 +1319,8 @@ const FixflipConstructionForm = ({
                 })}
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-bold">Total Liquidity (auto)</label>
-                <NumericFormat name="total_liquidity" className="form-control" value={form.total_liquidity || 0} thousandSeparator="," prefix="$" disabled />
+                <label className="form-label fw-bold">Total Liquidity</label>
+                <NumericFormat name="total_liquidity" className="form-control" value={form.total_liquidity || 0} onValueChange={({ value }) => setForm(prev => ({ ...prev, total_liquidity: Number(value || 0) }))} thousandSeparator="," prefix="$" disabled={!editable} />
               </div>
             </div>
           </div>

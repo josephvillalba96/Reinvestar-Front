@@ -40,6 +40,7 @@
 
 .button:hover {
   background: #16205a;
+  color: #fff !important;
 } 
 
 

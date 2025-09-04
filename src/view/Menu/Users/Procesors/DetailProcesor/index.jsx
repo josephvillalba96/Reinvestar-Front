@@ -91,10 +91,10 @@ const DetailProcesor = () => {
   const handleback = () => {
     if (editMode) {
       if (window.confirm('¿Estás seguro de que deseas salir? Los cambios no guardados se perderán.')) {
-        navegate('/process');
+        navegate('/processors');
       }
     } else {
-      navegate('/process');
+      navegate('/processors');
     }
   };
 
@@ -168,7 +168,7 @@ const DetailProcesor = () => {
       await loadProcessorData();
       
       setTimeout(() => {
-        navegate('/process');
+        navegate('/processors');
       }, 1500);
     } catch (error) {
       console.error('Error al actualizar procesador:', error);

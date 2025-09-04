@@ -623,7 +623,7 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
             requestType === 'dscr' ? (
               <DscrIntentionForm 
                 requestId={Number(requestId)}
-                initialData={intentLetter || {}}
+                initialData={intentLetter || solicitud || {}}
                 onSubmit={handleSubmit}
                 loading={loading}
                 editable={!intentLetter || intentLetter.status !== 'APPROVED'}
@@ -632,7 +632,7 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
               requestType === 'construction' ? (
                 <ConstructionIntentionForm
                   requestId={Number(requestId)}
-                  initialData={intentLetter || {}}
+                  initialData={intentLetter || solicitud || {}}
                   onFormChange={() => {}}
                   onSubmit={handleSubmit}
                   loading={loading}
@@ -641,7 +641,7 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
               ) : (
                 <FixflipConstructionForm
                   requestId={Number(requestId)}
-                  initialData={intentLetter || {}}
+                  initialData={intentLetter || solicitud || {}}
                   onFormChange={() => {}}
                   onSubmit={handleSubmit}
                   loading={loading}

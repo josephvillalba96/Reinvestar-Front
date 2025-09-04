@@ -8,7 +8,7 @@ import {
   getProcessorWorkload 
 } from "../../../../../Api/procesor";
 
-const ProcessorForm = ({ requestId, requestType }) => {
+const ProcessorForm = ({ requestId, requestType, onDataNeedsRefresh }) => {
   const [processors, setProcessors] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [selectedProcessor, setSelectedProcessor] = useState("");
@@ -181,6 +181,11 @@ const ProcessorForm = ({ requestId, requestType }) => {
       setShowAssignForm(false);
       loadAssignments();
       
+      // Llamar a la función de refresco del padre
+      if (onDataNeedsRefresh) {
+        onDataNeedsRefresh();
+      }
+      
       // Cargar información de carga de trabajo del procesador seleccionado
       try {
         const workload = await getProcessorWorkload();
@@ -229,6 +234,11 @@ const ProcessorForm = ({ requestId, requestType }) => {
       setFeedback("Procesador desasignado exitosamente");
       loadAssignments();
       setWorkloadData(null);
+
+      // Llamar a la función de refresco del padre
+      if (onDataNeedsRefresh) {
+        onDataNeedsRefresh();
+      }
     } catch (error) {
       console.error('Error desasignando procesador:', error);
       setFeedback(error.response?.data?.detail || error.message || "Error al desasignar el procesador");
