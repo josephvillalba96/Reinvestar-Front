@@ -94,4 +94,10 @@ export const deactivateProcessorAssignment = async (params) => {
 export const getProcessorsByRequest = async (params = {}) => {
   const response = await api.get("/api/v1/processors/assignments", { params });
   return response.data;
+};
+
+// Obtener detalles completos de un procesador (workload y asignaciones activas)
+export const getProcessorDetails = async (processor_id) => {
+  const response = await api.get(`/api/v1/processors/${processor_id}/details`);
+  return response.data;
 }; 

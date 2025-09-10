@@ -5,7 +5,7 @@ import {
   getProcessorsByRequest,
   assignProcessor, 
   deactivateProcessorAssignment,
-  getProcessorWorkload 
+  getProcessorWorkload
 } from "../../../../../Api/procesor";
 
 const ProcessorForm = ({ requestId, requestType, onDataNeedsRefresh }) => {
@@ -147,6 +147,7 @@ const ProcessorForm = ({ requestId, requestType, onDataNeedsRefresh }) => {
     }
   };
 
+
   const handleAssignProcessor = async () => {
     if (!selectedProcessor) {
       setFeedback("Debes seleccionar un procesador");
@@ -267,8 +268,7 @@ const ProcessorForm = ({ requestId, requestType, onDataNeedsRefresh }) => {
                   <th>Teléfono</th>
                   <th>Fecha de Asignación</th>
                   <th>Estado</th>
-                  <th>Cliente</th>
-                  <th>Asignado Por</th>
+                
                   <th className="text-end">Acciones</th>
                 </tr>
               </thead>
@@ -288,20 +288,7 @@ const ProcessorForm = ({ requestId, requestType, onDataNeedsRefresh }) => {
                           <span className="badge bg-primary ms-1">Activo</span>
                         )}
                       </td>
-                      <td>
-                        <small className="text-muted">
-                          {assignment.request?.client_name || assignment.client_name || 'N/A'}
-                          <br />
-                          <span className="badge bg-light text-dark">
-                            ID: {assignment.request?.client_id || assignment.client_id || 'N/A'}
-                          </span>
-                        </small>
-                      </td>
-                      <td>
-                        <small className="text-muted">
-                          {assignment.assigner_name || 'N/A'}
-                        </small>
-                      </td>
+                   
                       <td className="text-end">
                         {assignment.status === "ASSIGNED" && assignment.is_active && (
                           <>
@@ -373,6 +360,7 @@ const ProcessorForm = ({ requestId, requestType, onDataNeedsRefresh }) => {
           </div>
         </div>
       )}
+
 
       {/* Formulario de asignación */}
       {showAssignForm && (
@@ -451,35 +439,6 @@ const ProcessorForm = ({ requestId, requestType, onDataNeedsRefresh }) => {
         </div>
       )}
 
-      {/* Información de carga de trabajo */}
-      {workloadData && (
-        <div className="row">
-          <div className="col-12">
-            <h5 className="mb-3">Carga de Trabajo del Procesador</h5>
-            <div className="row g-3">
-              <div className="col-md-6">
-                <div className="card">
-                  <div className="card-body">
-                    <h6 className="card-title">Información General</h6>
-                    <p className="mb-1"><strong>Asignaciones Activas:</strong> {workloadData.active_assignments_count || 0}</p>
-                    <p className="mb-0"><strong>Total de Solicitudes:</strong> {workloadData.total_requests || 0}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-6">
-                <div className="card">
-                  <div className="card-body">
-                    <h6 className="card-title">Estado de Solicitudes</h6>
-                    <p className="mb-1"><strong>Pendientes:</strong> {workloadData.pending_requests || 0}</p>
-                    <p className="mb-1"><strong>En Progreso:</strong> {workloadData.in_progress_requests || 0}</p>
-                    <p className="mb-0"><strong>Completadas:</strong> {workloadData.completed_requests || 0}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Mensajes de feedback */}
       {feedback && (

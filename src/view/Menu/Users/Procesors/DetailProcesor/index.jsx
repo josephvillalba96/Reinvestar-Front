@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Back from "../../../../../assets/back.svg"; 
 import { useNavigate, useParams } from "react-router-dom";
 import styles from "./style.module.css";
-import { getProcessorById, updateProcessor } from "../../../../../Api/procesor";
+import { getProcessorById, updateProcessor, getProcessorDetails } from "../../../../../Api/procesor";
 import { getCompanies } from "../../../../../Api/admin";
 
 const DetailProcesor = () => {
@@ -71,20 +71,56 @@ const DetailProcesor = () => {
       setFormData(processorData);
       setOriginalData(processorData);
       
-      // Por ahora, establecer datos placeholder para workload y assignments
-      // En el futuro, estos se obtendrían de endpoints específicos
-      setWorkload({
-        active_assignments_count: 0,
-        pending_requests: 0,
-        in_progress_requests: 0,
-        completed_requests: 0
-      });
-      setActiveAssignments([]);
+      // Cargar detalles del procesador (workload y asignaciones activas)
+      await loadProcessorDetails(id);
     } catch (error) {
       console.error('Error al cargar procesador:', error);
       setFeedback("Error al cargar el procesador");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadProcessorDetails = async (processorId) => {
+    try {
+      console.log('Cargando detalles del procesador:', processorId);
+      const processorDetails = await getProcessorDetails(processorId);
+      console.log('Detalles del procesador recibidos:', processorDetails);
+      
+      if (processorDetails) {
+        // Establecer datos de workload
+        setWorkload({
+          active_assignments_count: processorDetails.active_assignments?.length || 0,
+          pending_requests: processorDetails.workload?.assigned || 0,
+          in_progress_requests: processorDetails.workload?.in_progress || 0,
+          completed_requests: processorDetails.workload?.completed || 0,
+          total_assignments: processorDetails.workload?.total_assignments || 0
+        });
+        
+        // Establecer asignaciones activas
+        setActiveAssignments(processorDetails.active_assignments || []);
+        
+        console.log('Datos de workload establecidos:', {
+          active_assignments_count: processorDetails.active_assignments?.length || 0,
+          pending_requests: processorDetails.workload?.assigned || 0,
+          in_progress_requests: processorDetails.workload?.in_progress || 0,
+          completed_requests: processorDetails.workload?.completed || 0,
+          total_assignments: processorDetails.workload?.total_assignments || 0
+        });
+        
+        console.log('Asignaciones activas establecidas:', processorDetails.active_assignments || []);
+      }
+    } catch (error) {
+      console.error('Error cargando detalles del procesador:', error);
+      // En caso de error, establecer valores por defecto
+      setWorkload({
+        active_assignments_count: 0,
+        pending_requests: 0,
+        in_progress_requests: 0,
+        completed_requests: 0,
+        total_assignments: 0
+      });
+      setActiveAssignments([]);
     }
   };
 
@@ -491,34 +527,40 @@ const DetailProcesor = () => {
         <div className="row mt-5">
           <div className="col-12">
             <h3 className="fw-bold mb-4" style={{color: "#000"}}>Carga de Trabajo</h3>
-            <div className="alert alert-info mb-4">
-              <i className="bi bi-info-circle me-2"></i>
-              <strong>Nota:</strong> Los datos de carga de trabajo se cargarán próximamente desde el backend.
+            <div className="alert alert-success mb-4">
+              <i className="bi bi-check-circle me-2"></i>
+              <strong>Datos en tiempo real:</strong> La información de carga de trabajo se actualiza automáticamente desde el backend.
             </div>
             
             <div className="row g-3 mb-4">
-              <div className="col-md-3">
+              <div className="col-md-2">
                 <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
-                  <div className="small my_title_color">Asignaciones Activas</div>
-                  <div className="h3 mb-0 my_title_color">{workload?.active_assignments_count || 0}</div>
+                  <div className="small my_title_color">Total Asignaciones</div>
+                  <div className="h3 mb-0 my_title_color">{workload?.total_assignments || 0}</div>
                 </div>
               </div>
-              <div className="col-md-3">
-                <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
-                  <div className="small my_title_color">Pendientes</div>
+              <div className="col-md-2">
+                <div className="p-3 border rounded" style={{ backgroundColor: '#e3f2fd' }}>
+                  <div className="small my_title_color">Asignadas</div>
                   <div className="h3 mb-0 my_title_color">{workload?.pending_requests || 0}</div>
                 </div>
               </div>
-              <div className="col-md-3">
-                <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
+              <div className="col-md-2">
+                <div className="p-3 border rounded" style={{ backgroundColor: '#fff3e0' }}>
                   <div className="small my_title_color">En Progreso</div>
                   <div className="h3 mb-0 my_title_color">{workload?.in_progress_requests || 0}</div>
                 </div>
               </div>
-              <div className="col-md-3">
-                <div className="p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
+              <div className="col-md-2">
+                <div className="p-3 border rounded" style={{ backgroundColor: '#e8f5e8' }}>
                   <div className="small my_title_color">Completadas</div>
                   <div className="h3 mb-0 my_title_color">{workload?.completed_requests || 0}</div>
+                </div>
+              </div>
+              <div className="col-md-2">
+                <div className="p-3 border rounded" style={{ backgroundColor: '#fce4ec' }}>
+                  <div className="small my_title_color">Activas</div>
+                  <div className="h3 mb-0 my_title_color">{workload?.active_assignments_count || 0}</div>
                 </div>
               </div>
             </div>
@@ -534,8 +576,10 @@ const DetailProcesor = () => {
                 <table className="table table-hover mb-0">
                   <thead>
                     <tr>
+                      <th className="my_title_color">ID</th>
                       <th className="my_title_color">Tipo</th>
                       <th className="my_title_color">Cliente</th>
+                      <th className="my_title_color">Dirección</th>
                       <th className="my_title_color">Estado</th>
                       <th className="my_title_color">Fecha</th>
                     </tr>
@@ -543,21 +587,27 @@ const DetailProcesor = () => {
                   <tbody>
                     {activeAssignments.map(assignment => (
                       <tr key={assignment.id}>
+                        <td className="my_title_color">{assignment.id}</td>
                         <td>
-                          <span className="badge" style={{ backgroundColor: '#000', color: 'white' }}>
-                            {assignment.request_type}
+                          <span className="badge bg-info">
+                            {assignment.request_type?.toUpperCase()}
                           </span>
                         </td>
-                        <td className="my_title_color">{assignment.client_name}</td>
+                        <td className="my_title_color">
+                          {assignment.request_details?.client_name || 'N/A'}
+                        </td>
+                        <td className="my_title_color">
+                          {assignment.request_details?.property_address || 'N/A'}
+                        </td>
                         <td>
-                          <span 
-                            className="badge" 
-                            style={{ 
-                              backgroundColor: assignment.request_status === 'PENDING' ? '#f8f9fa' : '#e3f2fd',
-                              color: '#000'
-                            }}
-                          >
-                            {assignment.request_status}
+                          <span className={`badge ${
+                            assignment.request_details?.status === 'PRICING' ? 'bg-warning' :
+                            assignment.request_details?.status === 'IN_REVIEW' ? 'bg-info' :
+                            assignment.request_details?.status === 'ACCEPTED' ? 'bg-success' :
+                            assignment.request_details?.status === 'PENDING' ? 'bg-secondary' :
+                            'bg-secondary'
+                          }`}>
+                            {assignment.request_details?.status || 'N/A'}
                           </span>
                         </td>
                         <td>
@@ -577,7 +627,7 @@ const DetailProcesor = () => {
                   <strong>No hay asignaciones activas</strong>
                   <br />
                   <small className="text-muted">
-                    Los datos de asignaciones se cargarán próximamente desde el backend.
+                    Este procesador no tiene asignaciones activas en este momento.
                   </small>
                 </div>
               </div>
