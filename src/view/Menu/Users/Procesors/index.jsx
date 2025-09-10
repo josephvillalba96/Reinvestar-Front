@@ -6,7 +6,7 @@ import styles from "./style.module.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../../../components/Pagination";
-import { getProcessors } from "../../../../Api/procesor";
+import { getProcessors, getProcessorDetails } from "../../../../Api/procesor";
 import { getCompanies } from "../../../../Api/admin";
 
 const Procesors = () => {
@@ -20,6 +20,8 @@ const Procesors = () => {
   const [search, setSearch] = useState("");
   const [estado, setEstado] = useState("");
   const [selectedWorkload, setSelectedWorkload] = useState(null);
+  const [workloadLoading, setWorkloadLoading] = useState(false);
+  const [workloadError, setWorkloadError] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [companyMap, setCompanyMap] = useState({});
   const navegate = useNavigate();
@@ -104,17 +106,43 @@ const Procesors = () => {
     setCurrentPage(1);
   };
 
-  const handleShowWorkload = (processor) => {
-    // Por ahora, mostrar información básica del procesador
-    // En el futuro, se podría hacer una llamada API para obtener el workload específico
-    setSelectedWorkload({
-      ...processor,
-      active_assignments_count: 0, // Placeholder - se debería obtener de la API
-      pending_requests: 0,
-      in_progress_requests: 0,
-      completed_requests: 0,
-      active_assignments: []
-    });
+  const handleShowWorkload = async (processor) => {
+    setWorkloadLoading(true);
+    setWorkloadError(null);
+    setSelectedWorkload(null);
+    
+    try {
+      console.log('Cargando detalles para procesador ID:', processor.id);
+      const workloadData = await getProcessorDetails(processor.id);
+      console.log('Datos recibidos del API:', workloadData);
+      
+      // Mapear los datos según la estructura real del API
+      const finalData = {
+        ...processor,
+        active_assignments_count: workloadData.active_assignments?.length || 0,
+        pending_requests: workloadData.workload?.assigned || 0,
+        in_progress_requests: workloadData.workload?.in_progress || 0,
+        completed_requests: workloadData.workload?.completed || 0,
+        total_assignments: workloadData.workload?.total_assignments || 0,
+        active_assignments: workloadData.active_assignments || []
+      };
+      console.log('Datos finales para el modal:', finalData);
+      setSelectedWorkload(finalData);
+    } catch (err) {
+      console.error('Error al cargar detalles del procesador:', err);
+      setWorkloadError('Error al cargar la información de carga de trabajo');
+      // En caso de error, mostrar al menos la información básica del procesador
+      setSelectedWorkload({
+        ...processor,
+        active_assignments_count: 0,
+        pending_requests: 0,
+        in_progress_requests: 0,
+        completed_requests: 0,
+        active_assignments: []
+      });
+    } finally {
+      setWorkloadLoading(false);
+    }
   };
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -250,7 +278,19 @@ const Procesors = () => {
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div className="modal-body">
-              {selectedWorkload && (
+              {workloadLoading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Cargando...</span>
+                  </div>
+                  <p className="mt-2 text-muted">Cargando información de carga de trabajo...</p>
+                </div>
+              ) : workloadError ? (
+                <div className="alert alert-warning">
+                  <i className="bi bi-exclamation-triangle me-2"></i>
+                  <strong>Advertencia:</strong> {workloadError}
+                </div>
+              ) : selectedWorkload ? (
                 <div>
                   <div className="mb-4">
                     <h6 className="text-muted mb-3">Información del Procesador</h6>
@@ -272,11 +312,6 @@ const Procesors = () => {
                     )}
                   </div>
                   
-                  <div className="alert alert-info">
-                    <i className="bi bi-info-circle me-2"></i>
-                    <strong>Nota:</strong> Los datos de carga de trabajo se cargarán próximamente desde el backend.
-                  </div>
-                  
                   <h6 className="text-muted mb-3">Métricas de Trabajo</h6>
                   <div className="row g-3">
                     <div className="col-6">
@@ -287,7 +322,13 @@ const Procesors = () => {
                     </div>
                     <div className="col-6">
                       <div className="p-3 border rounded bg-light">
-                        <div className="small text-muted">Solicitudes Pendientes</div>
+                        <div className="small text-muted">Total Asignaciones</div>
+                        <div className="h3 mb-0 text-secondary">{selectedWorkload.total_assignments || 0}</div>
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <div className="p-3 border rounded bg-light">
+                        <div className="small text-muted">Asignadas</div>
                         <div className="h3 mb-0 text-warning">{selectedWorkload.pending_requests || 0}</div>
                       </div>
                     </div>
@@ -329,7 +370,7 @@ const Procesors = () => {
                     </div>
                   )}
                 </div>
-              )}
+              ) : null}
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
