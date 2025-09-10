@@ -11,7 +11,7 @@ import * as apiFixflip from "../../../Api/fixflip";
 import * as apiDscr from "../../../Api/dscr";
 import * as apiConstruction from "../../../Api/construction";
 import * as apiSeller from "../../../Api/seller";
-import { getProcessors, assignProcessor } from "../../../Api/procesor";
+import { getProcessors, assignProcessor, getProcessorsByRequest } from "../../../Api/procesor";
 
 const RequestLoan = () => {
   // Estado para la paginación
@@ -28,6 +28,7 @@ const RequestLoan = () => {
   const [assignError, setAssignError] = useState("");
   const [assignRequest, setAssignRequest] = useState({ id: null, type: null });
   const [globalSuccess, setGlobalSuccess] = useState("");
+  const [existingAssignments, setExistingAssignments] = useState([]);
 
   // Nuevos estados para filtros
   const [sellers, setSellers] = useState([]);
@@ -71,6 +72,52 @@ const RequestLoan = () => {
     } catch (error) {
       console.error('Error cargando vendedores:', error);
       setSellers([]);
+    }
+  };
+
+  const loadExistingAssignments = async (requestId, requestType) => {
+    try {
+      const params = {};
+      
+      // Agregar el ID de solicitud correspondiente según el tipo
+      switch (requestType) {
+        case "dscr":
+          params.dscr_request_id = parseInt(requestId);
+          break;
+        case "fixflip":
+          params.fixflip_request_id = parseInt(requestId);
+          break;
+        case "construction":
+          params.construction_request_id = parseInt(requestId);
+          break;
+        default:
+          console.error('Tipo de solicitud no válido:', requestType);
+          return [];
+      }
+      
+      const data = await getProcessorsByRequest(params);
+      
+      // Asegurar que data sea un array
+      let assignmentsData = [];
+      if (Array.isArray(data)) {
+        assignmentsData = data;
+      } else if (data && Array.isArray(data.items)) {
+        assignmentsData = data.items;
+      } else if (data && Array.isArray(data.results)) {
+        assignmentsData = data.results;
+      }
+      
+      // Filtrar solo asignaciones activas
+      const activeAssignments = assignmentsData.filter(assignment => 
+        assignment.status === "ASSIGNED" && assignment.is_active
+      );
+      
+      setExistingAssignments(activeAssignments);
+      return activeAssignments;
+    } catch (error) {
+      console.error('Error cargando asignaciones existentes:', error);
+      setExistingAssignments([]);
+      return [];
     }
   };
 
@@ -123,19 +170,28 @@ const RequestLoan = () => {
     setAssignSuccess("");
     setAssignError("");
     setSelectedProcessor(null);
+    setExistingAssignments([]);
+    
     try {
-      const data = await getProcessors();
+      // Cargar procesadores y asignaciones existentes en paralelo
+      const [processorsData, assignmentsData] = await Promise.all([
+        getProcessors(),
+        loadExistingAssignments(requestId, requestType)
+      ]);
+      
       setProcessors(
-        Array.isArray(data)
-          ? data
-          : data.items
-            ? data.items
-            : data.results
-              ? data.results
+        Array.isArray(processorsData)
+          ? processorsData
+          : processorsData.items
+            ? processorsData.items
+            : processorsData.results
+              ? processorsData.results
               : []
       );
-    } catch {
+    } catch (error) {
+      console.error('Error cargando datos:', error);
       setProcessors([]);
+      setExistingAssignments([]);
     }
   };
 
@@ -144,6 +200,7 @@ const RequestLoan = () => {
     setSelectedProcessor(null);
     setAssignSuccess("");
     setAssignError("");
+    setExistingAssignments([]);
     
     // Elimina manualmente el backdrop de Bootstrap si existe
     const backdrops = document.querySelectorAll('.modal-backdrop');
@@ -159,6 +216,13 @@ const RequestLoan = () => {
 
   const handleAssign = async () => {
     if (!selectedProcessor) return;
+    
+    // Validar si ya hay un procesador asignado
+    if (existingAssignments.length > 0) {
+      setAssignError("Ya hay un procesador asignado a esta solicitud. Debe desasignar el procesador actual antes de asignar otro.");
+      return;
+    }
+    
     setAssigning(true);
     setAssignSuccess("");
     setAssignError("");
@@ -170,6 +234,9 @@ const RequestLoan = () => {
         construction_request_id: assignRequest.type === "construction" ? parseInt(assignRequest.id, 10) : undefined
       });
       setAssignSuccess("¡Procesador asignado exitosamente!");
+      
+      // Recargar las asignaciones después de asignar
+      await loadExistingAssignments(assignRequest.id, assignRequest.type);
       
       // Cerrar modal después de 2 segundos
       setTimeout(() => {
@@ -509,7 +576,7 @@ const RequestLoan = () => {
               <div className="modal-header">
                 <h5 className="modal-title">
                   <i className="bi bi-person-plus me-2"></i>
-                  Asignar Procesador
+                  {existingAssignments.length > 0 ? "Procesador Asignado" : "Asignar Procesador"}
                 </h5>
                 <button
                   type="button"
@@ -537,12 +604,17 @@ const RequestLoan = () => {
 
                 {/* Selector de procesador */}
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Seleccionar Procesador</label>
+                  <label className="form-label fw-bold">
+                    Seleccionar Procesador
+                    {existingAssignments.length > 0 && (
+                      <span className="text-muted ms-2">(Deshabilitado - Ya hay un procesador asignado)</span>
+                    )}
+                  </label>
                   <select 
                     className="form-select" 
                     value={selectedProcessor || ""} 
                     onChange={e => setSelectedProcessor(e.target.value)}
-                    disabled={assigning}
+                    disabled={assigning || existingAssignments.length > 0}
                   >
                     <option value="">Selecciona un procesador</option>
                     {(Array.isArray(processors) ? processors : []).map(proc => (
@@ -582,6 +654,34 @@ const RequestLoan = () => {
                   );
                 })()}
 
+                {/* Información del procesador asignado */}
+                {existingAssignments.length > 0 && (
+                  <div className="alert alert-warning">
+                    <i className="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Procesador ya asignado:</strong>
+                    {existingAssignments.map((assignment, index) => (
+                      <div key={index} className="mt-2">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <strong>{assignment.processor?.full_name || assignment.processor?.name}</strong>
+                            <br />
+                            <small className="text-muted">
+                              Email: {assignment.processor?.email || 'No disponible'}
+                            </small>
+                          </div>
+                          <span className="badge bg-success">Asignado</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="mt-2">
+                      <small className="text-muted">
+                        <i className="bi bi-info-circle me-1"></i>
+                        Para asignar otro procesador, primero debe desasignar el actual.
+                      </small>
+                    </div>
+                  </div>
+                )}
+
                 {/* Información de la solicitud */}
                 <div className="alert alert-info">
                   <i className="bi bi-info-circle me-2"></i>
@@ -602,12 +702,17 @@ const RequestLoan = () => {
                   type="button" 
                   className="btn btn-primary" 
                   onClick={handleAssign} 
-                  disabled={!selectedProcessor || assigning}
+                  disabled={!selectedProcessor || assigning || existingAssignments.length > 0}
                 >
                   {assigning ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                       Asignando...
+                    </>
+                  ) : existingAssignments.length > 0 ? (
+                    <>
+                      <i className="bi bi-exclamation-triangle me-2"></i>
+                      Ya hay procesador asignado
                     </>
                   ) : (
                     <>

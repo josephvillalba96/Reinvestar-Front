@@ -883,7 +883,7 @@ const DscrIntentionForm = ({
             <div className="col-12">
               <div className="row g-3">
                 <div className="col-md-6">
-                  <label className="form-label fw-bold">Appraisal value</label>
+                  <label className="form-label fw-bold">Appraisal value Expected</label>
                   <NumericFormat
                     name="appraisal_value"
                     className={`form-control ${styles.input}`}
