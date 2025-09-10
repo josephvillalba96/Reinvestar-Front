@@ -12,11 +12,14 @@ const FixflipConstructionForm = ({
   onSubmit, 
   loading = false,
   type = 'fixflip', // 'fixflip' o 'construction'
-  editable = true
+  editable = true,
+  onUnsavedChangesChange
 }) => {
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalFormData, setOriginalFormData] = useState(null);
   const [form, setForm] = useState({
 
     // Borrower Information
@@ -179,6 +182,19 @@ const FixflipConstructionForm = ({
           }
         });
         
+        // Establecer los datos originales después de cargar desde initialData
+        setTimeout(() => {
+          setOriginalFormData({ ...updatedForm });
+          console.debug('[FixflipConstruction] Datos originales establecidos desde initialData:', {
+            originalFormDataKeys: Object.keys(updatedForm).length,
+            sampleFields: {
+              borrower_name: updatedForm.borrower_name,
+              loan_amount: updatedForm.loan_amount,
+              land_acquisition_cost: updatedForm.land_acquisition_cost
+            }
+          });
+        }, 200);
+        
         return updatedForm;
       });
       setShowCreateForm(false);
@@ -300,7 +316,8 @@ const FixflipConstructionForm = ({
               }
             });
 
-            setForm(prev => ({
+            setForm(prev => {
+              const newForm = {
               ...prev,
               client_id: mapped.client_id ?? prev.client_id,
               user_id: prev.user_id || mapped.user_id || (getUserIdFromToken ? Number(getUserIdFromToken()) : prev.user_id),
@@ -362,7 +379,23 @@ const FixflipConstructionForm = ({
               guarantor_signed: mapped.guarantor_signed ?? prev.guarantor_signed,
               is_signed: mapped.is_signed ?? prev.is_signed,
               is_approved: mapped.is_approved ?? prev.is_approved
-            }));
+              };
+              
+              // Establecer los datos originales después de cargar los datos de la API
+              setTimeout(() => {
+                setOriginalFormData({ ...newForm });
+                console.debug('[FixflipConstruction] Datos originales establecidos desde API:', {
+                  originalFormDataKeys: Object.keys(newForm).length,
+                  sampleFields: {
+                    borrower_name: newForm.borrower_name,
+                    loan_amount: newForm.loan_amount,
+                    land_acquisition_cost: newForm.land_acquisition_cost
+                  }
+                });
+              }, 200);
+              
+              return newForm;
+            });
           }
           setShowCreateForm(true);
         } catch (err) {
@@ -380,6 +413,116 @@ const FixflipConstructionForm = ({
       onFormChange(form);
     }
   }, [form, onFormChange]);
+
+  // Establecer datos originales cuando se cargan los datos iniciales
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0 && !originalFormData) {
+      // Usar un timeout para asegurar que el form esté completamente actualizado
+      const timer = setTimeout(() => {
+        setOriginalFormData({ ...form });
+        console.debug('[FixflipConstruction] Datos originales establecidos desde initialData (fallback):', {
+          originalFormDataKeys: Object.keys(form).length,
+          sampleFields: {
+            borrower_name: form.borrower_name,
+            loan_amount: form.loan_amount,
+            land_acquisition_cost: form.land_acquisition_cost
+          }
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [initialData, originalFormData]);
+
+  // Establecer datos originales cuando el formulario esté completamente cargado
+  useEffect(() => {
+    if (form && Object.keys(form).length > 0 && !originalFormData && (initialData || requestId)) {
+      const timer = setTimeout(() => {
+        setOriginalFormData({ ...form });
+        console.debug('[FixflipConstruction] Datos originales establecidos desde form (fallback final):', {
+          originalFormDataKeys: Object.keys(form).length,
+          sampleFields: {
+            borrower_name: form.borrower_name,
+            loan_amount: form.loan_amount,
+            land_acquisition_cost: form.land_acquisition_cost
+          }
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [form, originalFormData, initialData, requestId]);
+
+  // Detectar cambios no guardados
+  useEffect(() => {
+    if (originalFormData && Object.keys(originalFormData).length > 0) {
+      // Función para normalizar valores antes de comparar
+      const normalizeValue = (value) => {
+        if (value === null || value === undefined) return '';
+        if (typeof value === 'number') return value;
+        if (typeof value === 'boolean') return value;
+        return String(value).trim();
+      };
+
+      // Comparar campos relevantes uno por uno
+      const changedFields = [];
+      const hasChanges = Object.keys(form).some(key => {
+        const currentValue = normalizeValue(form[key]);
+        const originalValue = normalizeValue(originalFormData[key]);
+        const isChanged = currentValue !== originalValue;
+        
+        if (isChanged) {
+          changedFields.push({
+            field: key,
+            current: currentValue,
+            original: originalValue
+          });
+        }
+        
+        return isChanged;
+      });
+
+      console.debug('[FixflipConstruction] Detección de cambios:', {
+        hasChanges,
+        changedFields: changedFields.slice(0, 5), // Mostrar solo los primeros 5 campos cambiados
+        totalChangedFields: changedFields.length,
+        formKeys: Object.keys(form).length,
+        originalKeys: Object.keys(originalFormData).length
+      });
+
+      setHasUnsavedChanges(hasChanges);
+      
+      // Notificar al componente padre sobre el cambio de estado
+      if (onUnsavedChangesChange) {
+        onUnsavedChangesChange(hasChanges);
+      }
+    }
+  }, [form, originalFormData, onUnsavedChangesChange]);
+
+  // Prevenir salida con cambios no guardados
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    const handlePopState = (e) => {
+      if (hasUnsavedChanges) {
+        const confirmLeave = window.confirm('Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?');
+        if (!confirmLeave) {
+          window.history.pushState(null, '', window.location.href);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasUnsavedChanges]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -650,200 +793,34 @@ const FixflipConstructionForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.loan_amount, form.annual_interest_rate, form.initial_funding, form.estimated_closing_costs, form.construction_budget_10_percent, form.six_months_payment_reserves, form.construction_budget_delta, form.down_payment]);
 
+  const handleDiscardChanges = () => {
+    if (window.confirm('¿Estás seguro de que quieres descartar todos los cambios?')) {
+      setForm(prev => ({ ...prev, ...originalFormData }));
+      setHasUnsavedChanges(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (onSubmit) {
       const payload = buildDataToSend();
       try {
-        // eslint-disable-next-line no-console
-        console.log('[FixflipConstruction] Payload enviado:', payload);
-        console.log('[FixflipConstruction] Form state completo:', form);
-        console.log('[FixflipConstruction] OTHER EXPENSES fields:', {
-          broker_fee: form.broker_fee,
-          broker_fee_percentage: form.broker_fee_percentage,
-          transaction_management_fee: form.transaction_management_fee
-        });
-        console.log('[FixflipConstruction] LAND ACQUISITION COST field:', {
-          formValue: form.land_acquisition_cost,
-          payloadValue: payload.land_acquisition_cost,
-          type: typeof payload.land_acquisition_cost,
-          isInPayload: 'land_acquisition_cost' in payload
-        });
-        console.log('[FixflipConstruction] SERVICING FEE field:', {
-          formValue: form.servicing_fee,
-          payloadValue: payload.servicing_fee,
-          type: typeof payload.servicing_fee,
-          isInPayload: 'servicing_fee' in payload
-        });
-        console.log('[FixflipConstruction] TOTAL LOAN AMOUNT field:', {
-          formValue: form.total_loan_amount,
-          payloadValue: payload.total_loan_amount,
-          type: typeof payload.total_loan_amount,
-          isInPayload: 'total_loan_amount' in payload
-        });
-        console.log('[FixflipConstruction] REQUESTED LEVERAGE field:', {
-          formValue: form.requested_leverage,
-          payloadValue: payload.requested_leverage,
-          type: typeof payload.requested_leverage,
-          isInPayload: 'requested_leverage' in payload
-        });
-        console.log('[FixflipConstruction] Form editable:', editable);
-        console.log('[FixflipConstruction] loan_term field:', {
-          formValue: form.loan_term,
-          payloadValue: payload.loan_term,
-          type: typeof payload.loan_term,
-          isEditable: editable,
-          isDisabled: !editable
-        });
-        console.log('[FixflipConstruction] budget_review_fee field:', {
-          formValue: form.budget_review_fee,
-          payloadValue: payload.budget_review_fee,
-          type: typeof payload.budget_review_fee
-        });
-        console.log('[FixflipConstruction] FIX & FLIP CONSTRUCTION FIELDS:', {
-          land_acquisition_cost: {
-            formValue: form.land_acquisition_cost,
-            payloadValue: payload.land_acquisition_cost,
-            type: typeof payload.land_acquisition_cost,
-            isInPayload: 'land_acquisition_cost' in payload
-          },
-          construction_rehab_budget: {
-            formValue: form.construction_rehab_budget,
-            payloadValue: payload.construction_rehab_budget,
-            type: typeof payload.construction_rehab_budget,
-            isInPayload: 'construction_rehab_budget' in payload
-          },
-          total_cost: {
-            formValue: form.total_cost,
-            payloadValue: payload.total_cost,
-            type: typeof payload.total_cost,
-            isInPayload: 'total_cost' in payload
-          },
-          estimated_after_completion_value: {
-            formValue: form.estimated_after_completion_value,
-            payloadValue: payload.estimated_after_completion_value,
-            type: typeof payload.estimated_after_completion_value,
-            isInPayload: 'estimated_after_completion_value' in payload
-          }
-        });
-        console.log('[FixflipConstruction] FIX & FLIP METRICS FIELDS:', {
-          loan_to_as_is_value_ltv: {
-            formValue: form.loan_to_as_is_value_ltv,
-            payloadValue: payload.loan_to_as_is_value_ltv,
-            type: typeof payload.loan_to_as_is_value_ltv,
-            isInPayload: 'loan_to_as_is_value_ltv' in payload
-          },
-          loan_to_cost_ltc: {
-            formValue: form.loan_to_cost_ltc,
-            payloadValue: payload.loan_to_cost_ltc,
-            type: typeof payload.loan_to_cost_ltc,
-            isInPayload: 'loan_to_cost_ltc' in payload
-          },
-          loan_to_arv: {
-            formValue: form.loan_to_arv,
-            payloadValue: payload.loan_to_arv,
-            type: typeof payload.loan_to_arv,
-            isInPayload: 'loan_to_arv' in payload
-          },
-          rehab_category: {
-            formValue: form.rehab_category,
-            payloadValue: payload.rehab_category,
-            type: typeof payload.rehab_category,
-            isInPayload: 'rehab_category' in payload
-          }
-        });
-        console.log('[FixflipConstruction] LOAN TO AS IS VALUE field:', {
-          formValue: form.loan_to_as_is_value,
-          payloadValue: payload.loan_to_as_is_value,
-          type: typeof payload.loan_to_as_is_value,
-          isInPayload: 'loan_to_as_is_value' in payload
-        });
-        console.log('[FixflipConstruction] CONDITIONS AND ADDITIONAL INFORMATION FIELDS:', {
-          min_credit_score: {
-            formValue: form.min_credit_score,
-            payloadValue: payload.min_credit_score,
-            type: typeof payload.min_credit_score,
-            isInPayload: 'min_credit_score' in payload
-          },
-          refundable_commitment_deposit: {
-            formValue: form.refundable_commitment_deposit,
-            payloadValue: payload.refundable_commitment_deposit,
-            type: typeof payload.refundable_commitment_deposit,
-            isInPayload: 'refundable_commitment_deposit' in payload
-          }
-        });
-        console.log('[FixflipConstruction] MINIMUM BORROWER LIQUIDITY FIELDS:', {
-          estimated_closing_costs: {
-            formValue: form.estimated_closing_costs,
-            payloadValue: payload.estimated_closing_costs,
-            type: typeof payload.estimated_closing_costs,
-            isInPayload: 'estimated_closing_costs' in payload
-          },
-          construction_budget_10_percent: {
-            formValue: form.construction_budget_10_percent,
-            payloadValue: payload.construction_budget_10_percent,
-            type: typeof payload.construction_budget_10_percent,
-            isInPayload: 'construction_budget_10_percent' in payload
-          },
-          six_months_payment_reserves: {
-            formValue: form.six_months_payment_reserves,
-            payloadValue: payload.six_months_payment_reserves,
-            type: typeof payload.six_months_payment_reserves,
-            isInPayload: 'six_months_payment_reserves' in payload
-          },
-          construction_budget_delta: {
-            formValue: form.construction_budget_delta,
-            payloadValue: payload.construction_budget_delta,
-            type: typeof payload.construction_budget_delta,
-            isInPayload: 'construction_budget_delta' in payload
-          },
-          down_payment: {
-            formValue: form.down_payment,
-            payloadValue: payload.down_payment,
-            type: typeof payload.down_payment,
-            isInPayload: 'down_payment' in payload
-          },
-          total_liquidity: {
-            formValue: form.total_liquidity,
-            payloadValue: payload.total_liquidity,
-            type: typeof payload.total_liquidity,
-            isInPayload: 'total_liquidity' in payload
-          }
-        });
+        const response = await onSubmit(payload);
+        console.debug('[FixflipConstruction] Guardado exitoso:', response);
         
-        // Verificar si loan_term está en el payload
-        console.log('[FixflipConstruction] Payload keys:', Object.keys(payload));
-        console.log('[FixflipConstruction] loan_term in payload:', 'loan_term' in payload);
+        // Si el envío fue exitoso, actualizar los datos originales
+        const updatedFormData = { ...form };
+        setOriginalFormData(updatedFormData);
+        setHasUnsavedChanges(false);
         
-        // Verificar específicamente min_credit_score y refundable_commitment_deposit en el payload
-        console.log('[FixflipConstruction] PAYLOAD VERIFICATION - CONDITIONS FIELDS:', {
-          min_credit_score: {
-            inPayload: 'min_credit_score' in payload,
-            payloadValue: payload.min_credit_score,
-            payloadType: typeof payload.min_credit_score,
-            formValue: form.min_credit_score,
-            formType: typeof form.min_credit_score
-          },
-          refundable_commitment_deposit: {
-            inPayload: 'refundable_commitment_deposit' in payload,
-            payloadValue: payload.refundable_commitment_deposit,
-            payloadType: typeof payload.refundable_commitment_deposit,
-            formValue: form.refundable_commitment_deposit,
-            formType: typeof form.refundable_commitment_deposit
-          }
+        console.debug('[FixflipConstruction] Estado actualizado después de guardar:', {
+          hasUnsavedChanges: false,
+          originalFormDataUpdated: true
         });
-        
-        // Debugging específico para verificar el valor exacto
-        console.log('[FixflipConstruction] loan_term exact value:', {
-          formValue: form.loan_term,
-          formValueType: typeof form.loan_term,
-          payloadValue: payload.loan_term,
-          payloadValueType: typeof payload.loan_term,
-          isInPayload: 'loan_term' in payload,
-          payloadKeys: Object.keys(payload).filter(key => key.includes('loan'))
-        });
-      } catch (_) {}
-      onSubmit(payload);
+      } catch (error) {
+        console.error('Error al guardar:', error);
+        // No resetear el estado si hubo error
+      }
     }
   };
 
@@ -851,10 +828,22 @@ const FixflipConstructionForm = ({
     if (onSubmit) {
       const payload = buildDataToSend();
       try {
-        // eslint-disable-next-line no-console
-        console.log('[FixflipConstruction] Payload enviado (create):', payload);
-      } catch (_) {}
-      onSubmit(payload);
+        const response = await onSubmit(payload);
+        console.debug('[FixflipConstruction] Carta creada exitosamente:', response);
+        
+        // Si la creación fue exitosa, establecer los datos originales
+        const updatedFormData = { ...form };
+        setOriginalFormData(updatedFormData);
+        setHasUnsavedChanges(false);
+        
+        console.debug('[FixflipConstruction] Estado actualizado después de crear:', {
+          hasUnsavedChanges: false,
+          originalFormDataUpdated: true
+        });
+      } catch (error) {
+        console.error('Error al crear carta:', error);
+        // No resetear el estado si hubo error
+      }
     }
   };
 
@@ -888,6 +877,24 @@ const FixflipConstructionForm = ({
         </div>
       ) : (
       <form onSubmit={handleSubmit}>
+        {/* Alerta de cambios no guardados */}
+        {hasUnsavedChanges && (
+          <div className="alert alert-warning d-flex align-items-center justify-content-between mb-3" role="alert">
+            <div className="d-flex align-items-center">
+              <i className="fas fa-exclamation-triangle me-2"></i>
+              <span>Tienes cambios sin guardar</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              onClick={handleDiscardChanges}
+            >
+              <i className="fas fa-undo me-1"></i>
+              Descartar Cambios
+            </button>
+          </div>
+        )}
+
         {/* 0. BORROWER INFORMATION */}
         <div className="row mb-4">
           <div className="col-12"><h5 className="fw-bold text-primary mb-3">0. BORROWER INFORMATION</h5></div>
@@ -1393,7 +1400,7 @@ const FixflipConstructionForm = ({
           <div className="col-12 text-center">
             <button
               type="submit"
-              className="btn btn-primary btn-lg px-5"
+              className={`btn btn-lg px-5 ${hasUnsavedChanges ? 'btn-warning' : 'btn-primary'}`}
               disabled={loading}
               style={{ borderRadius: '25px' }}
             >
@@ -1404,8 +1411,11 @@ const FixflipConstructionForm = ({
                 </>
               ) : (
                 <>
-                  <i className="fas fa-save me-2"></i>
-                  Guardar Carta de Intención {type === 'construction' ? 'Construction' : 'Fixflip'}
+                  <i className={`fas me-2 ${hasUnsavedChanges ? 'fa-exclamation-triangle' : 'fa-save'}`}></i>
+                  {hasUnsavedChanges 
+                    ? 'Guardar Cambios' 
+                    : `Guardar Carta de Intención ${type === 'construction' ? 'Construction' : 'Fixflip'}`
+                  }
                 </>
               )}
             </button>

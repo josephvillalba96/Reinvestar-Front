@@ -10,12 +10,15 @@ const DscrIntentionForm = ({
   onFormChange, 
   onSubmit, 
   loading = false,
-  editable = true
+  editable = true,
+  onUnsavedChangesChange
 }) => {
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState("");
   const [intentLetter, setIntentLetter] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalFormData, setOriginalFormData] = useState(null);
 
   const [form, setForm] = useState({
 
@@ -131,12 +134,26 @@ const DscrIntentionForm = ({
     
     if (Object.keys(initialData).length > 0) {
       console.log('Actualizando formulario con datos iniciales');
-      setForm(prev => ({ 
-        ...prev, 
+      const newFormData = { 
         ...initialData,
         // Asegurar que origination_fee_percentage se maneje correctamente
         origination_fee_percentage: initialData.origination_fee_percentage ? String(initialData.origination_fee_percentage) : "2.0"
-      }));
+      };
+      setForm(prev => ({ ...prev, ...newFormData }));
+      
+      // Establecer los datos originales después de que se complete la carga y cálculos
+      setTimeout(() => {
+        setOriginalFormData({ ...newFormData });
+        console.debug('[DscrIntentionForm] Datos originales establecidos desde initialData:', {
+          originalFormDataKeys: Object.keys(newFormData).length,
+          sampleFields: {
+            borrower_name: newFormData.borrower_name,
+            loan_amount: newFormData.loan_amount,
+            origination_fee_percentage: newFormData.origination_fee_percentage
+          }
+        });
+      }, 200);
+      
       setShowCreateForm(false);
       setLoadingData(false);
     } else if (requestId) {
@@ -150,12 +167,25 @@ const DscrIntentionForm = ({
           console.log('Datos DSCR obtenidos:', dscrData);
           
           if (dscrData) {
-            setForm(prev => ({
-              ...prev,
+            const newFormData = {
               ...dscrData,
               // Asegurar que origination_fee_percentage se maneje correctamente
               origination_fee_percentage: dscrData.origination_fee_percentage ? String(dscrData.origination_fee_percentage) : "2.0"
-            }));
+            };
+            setForm(prev => ({ ...prev, ...newFormData }));
+            
+            // Establecer los datos originales después de cargar los datos de la API
+            setTimeout(() => {
+              setOriginalFormData({ ...newFormData });
+              console.debug('[DscrIntentionForm] Datos originales establecidos desde API:', {
+                originalFormDataKeys: Object.keys(newFormData).length,
+                sampleFields: {
+                  borrower_name: newFormData.borrower_name,
+                  loan_amount: newFormData.loan_amount,
+                  origination_fee_percentage: newFormData.origination_fee_percentage
+                }
+              });
+            }, 200);
           }
           setShowCreateForm(true);
         } catch (error) {
@@ -175,6 +205,101 @@ const DscrIntentionForm = ({
       onFormChange(form);
     }
   }, [form, onFormChange]);
+
+  // Establecer originalFormData después de que el formulario se estabilice completamente
+  useEffect(() => {
+    if (form && Object.keys(form).length > 0 && !originalFormData) {
+      // Fallback: establecer datos originales si no se han establecido después de un tiempo
+      setTimeout(() => {
+        if (!originalFormData) {
+          setOriginalFormData({ ...form });
+          console.debug('[DscrIntentionForm] Datos originales establecidos como fallback:', {
+            originalFormDataKeys: Object.keys(form).length,
+            sampleFields: {
+              borrower_name: form.borrower_name,
+              loan_amount: form.loan_amount,
+              origination_fee_percentage: form.origination_fee_percentage
+            }
+          });
+        }
+      }, 500);
+    }
+  }, [form, originalFormData]);
+
+  // Detectar cambios no guardados
+  useEffect(() => {
+    if (originalFormData && Object.keys(originalFormData).length > 0) {
+      // Función para normalizar valores antes de comparar
+      const normalizeValue = (value) => {
+        if (value === null || value === undefined) return '';
+        if (typeof value === 'number') return value;
+        if (typeof value === 'boolean') return value;
+        return String(value).trim();
+      };
+
+      // Comparar campos relevantes uno por uno
+      const changedFields = [];
+      const hasChanges = Object.keys(form).some(key => {
+        const currentValue = normalizeValue(form[key]);
+        const originalValue = normalizeValue(originalFormData[key]);
+        const isChanged = currentValue !== originalValue;
+        
+        if (isChanged) {
+          changedFields.push({
+            field: key,
+            current: currentValue,
+            original: originalValue
+          });
+        }
+        
+        return isChanged;
+      });
+
+      console.debug('[DscrIntentionForm] Detección de cambios:', {
+        hasChanges,
+        changedFields: changedFields.slice(0, 5), // Mostrar solo los primeros 5 campos cambiados
+        totalChangedFields: changedFields.length,
+        formKeys: Object.keys(form).length,
+        originalKeys: Object.keys(originalFormData).length
+      });
+
+      setHasUnsavedChanges(hasChanges);
+      
+      // Notificar al componente padre sobre el cambio de estado
+      if (onUnsavedChangesChange) {
+        onUnsavedChangesChange(hasChanges);
+      }
+    }
+  }, [form, originalFormData, onUnsavedChangesChange]);
+
+  // Prevenir salida con cambios no guardados
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
+        return e.returnValue;
+      }
+    };
+
+    const handlePopState = (e) => {
+      if (hasUnsavedChanges) {
+        const confirmLeave = window.confirm('Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?');
+        if (!confirmLeave) {
+          e.preventDefault();
+          window.history.pushState(null, '', window.location.href);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasUnsavedChanges]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -227,6 +352,77 @@ const DscrIntentionForm = ({
       setForm(prev => ({ ...prev, origination_fee: computed }));
     }
   }, [form.origination_fee_percentage, form.loan_amount]);
+
+  // Recalcular Total Closing Cost cuando cambian los campos de closing costs
+  useEffect(() => {
+    const calculateTotalClosingCost = () => {
+      const fields = [
+        'origination_fee',
+        'discount_points', 
+        'underwriting_fee',
+        'credit_report_fee',
+        'processing_fee',
+        'recording_fee',
+        'legal_fee',
+        'service_fee',
+        'title_fees',
+        'government_fees',
+        'escrow_tax_insurance',
+        'appraisal_fee'
+      ];
+      
+      const total = fields.reduce((sum, field) => {
+        return sum + Number(form[field] || 0);
+      }, 0);
+      
+      return total;
+    };
+    
+    const newTotal = calculateTotalClosingCost();
+    
+    if (Number(form.total_closing_cost) !== newTotal) {
+      console.debug('[DscrIntentionForm] Recalculando total_closing_cost:', {
+        newTotal: newTotal,
+        current: form.total_closing_cost
+      });
+      setForm(prev => ({ ...prev, total_closing_cost: newTotal }));
+    }
+  }, [
+    form.origination_fee,
+    form.discount_points,
+    form.underwriting_fee,
+    form.credit_report_fee,
+    form.processing_fee,
+    form.recording_fee,
+    form.legal_fee,
+    form.service_fee,
+    form.title_fees,
+    form.government_fees,
+    form.escrow_tax_insurance,
+    form.appraisal_fee
+  ]);
+
+  // Recalcular Closing Cost Approx cuando cambian closing_cost_liquidity o loan_amount
+  useEffect(() => {
+    const closingCostLiquidity = Number(form.closing_cost_liquidity || 0);
+    const loanAmount = Number(form.loan_amount || 0);
+    
+    let newClosingCostApprox = 0;
+    if (loanAmount > 0) {
+      // Calcular como porcentaje: (closing_cost_liquidity / loan_amount) * 100
+      newClosingCostApprox = (closingCostLiquidity / loanAmount) * 100;
+    }
+    
+    if (Number(form.closing_cost_approx) !== newClosingCostApprox) {
+      console.debug('[DscrIntentionForm] Recalculando closing_cost_approx:', {
+        closingCostLiquidity: closingCostLiquidity,
+        loanAmount: loanAmount,
+        newClosingCostApprox: newClosingCostApprox,
+        current: form.closing_cost_approx
+      });
+      setForm(prev => ({ ...prev, closing_cost_approx: newClosingCostApprox }));
+    }
+  }, [form.closing_cost_liquidity, form.loan_amount]);
 
   const buildDataToSend = () => {
     console.debug('[DscrIntentionForm] buildDataToSend - origination_fee_percentage:', {
@@ -346,7 +542,23 @@ const DscrIntentionForm = ({
   const handleCreateIntentLetter = async () => {
     if (onSubmit) {
       const dataToSend = buildDataToSend();
-      onSubmit(dataToSend);
+      try {
+        const response = await onSubmit(dataToSend);
+        console.debug('[DscrIntentionForm] Carta creada exitosamente:', response);
+        
+        // Si la creación fue exitosa, establecer los datos originales
+        const updatedFormData = { ...form };
+        setOriginalFormData(updatedFormData);
+        setHasUnsavedChanges(false);
+        
+        console.debug('[DscrIntentionForm] Estado actualizado después de crear:', {
+          hasUnsavedChanges: false,
+          originalFormDataUpdated: true
+        });
+      } catch (error) {
+        console.error('Error al crear carta:', error);
+        // No resetear el estado si hubo error
+      }
     }
   };
 
@@ -362,12 +574,53 @@ const DscrIntentionForm = ({
         isInPayload: 'origination_fee_percentage' in dataToSend
       });
 
-      onSubmit(dataToSend);
+      try {
+        const response = await onSubmit(dataToSend);
+        console.debug('[DscrIntentionForm] Guardado exitoso:', response);
+        
+        // Si el envío fue exitoso, actualizar los datos originales
+        const updatedFormData = { ...form };
+        setOriginalFormData(updatedFormData);
+        setHasUnsavedChanges(false);
+        
+        console.debug('[DscrIntentionForm] Estado actualizado después de guardar:', {
+          hasUnsavedChanges: false,
+          originalFormDataUpdated: true
+        });
+      } catch (error) {
+        console.error('Error al guardar:', error);
+        // No resetear el estado si hubo error
+      }
+    }
+  };
+
+  const handleDiscardChanges = () => {
+    if (window.confirm('¿Estás seguro de que quieres descartar todos los cambios?')) {
+      setForm(prev => ({ ...prev, ...originalFormData }));
+      setHasUnsavedChanges(false);
     }
   };
 
   return (
     <div className="container-fluid">
+      {/* Indicador de cambios no guardados */}
+      {hasUnsavedChanges && (
+        <div className="alert alert-warning d-flex align-items-center justify-content-between mb-3" role="alert">
+          <div className="d-flex align-items-center">
+            <i className="fas fa-exclamation-triangle me-2"></i>
+            <span>Tienes cambios sin guardar</span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm"
+            onClick={handleDiscardChanges}
+          >
+            <i className="fas fa-undo me-1"></i>
+            Descartar Cambios
+          </button>
+        </div>
+      )}
+
       {loadingData ? (
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status">
@@ -660,6 +913,16 @@ const DscrIntentionForm = ({
                     options: ["2.5", "2.0", "1.5", "1.0"],
                     matches: ["2.5", "2.0", "1.5", "1.0"].includes(form.origination_fee_percentage)
                   })}
+                  
+                  {/* Resultado del Origination Fee */}
+                  <div className="mt-1 px-2 d-flex flex-row gap-2">
+                    <small className="text-muted d-block mb-1">
+                      <strong>Origination Fee:</strong>
+                    </small>
+                    <small className="fw-bold">
+                      ${Number(form.origination_fee || 0).toLocaleString()}
+                    </small>
+                  </div>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Discount Points</label>
@@ -797,13 +1060,18 @@ const DscrIntentionForm = ({
                   <label className="form-label fw-bold">Total Closing Cost Estimated</label>
                   <NumericFormat
                     name="total_closing_cost"
-                    className={`form-control ${styles.input}`}
+                    className={`form-control ${styles.input} bg-light`}
                     value={form.total_closing_cost}
                     onValueChange={(values) => handleNumberFormat('total_closing_cost', values.value)}
-                    disabled={!editable}
+                    disabled={true}
                     thousandSeparator={true}
                     prefix="$"
+                    readOnly
                   />
+                  <small className="text-muted">
+                    <i className="fas fa-calculator me-1"></i>
+                    Calculado automáticamente
+                  </small>
                 </div>
               </div>
             </div>
@@ -823,13 +1091,18 @@ const DscrIntentionForm = ({
                   <label className="form-label fw-bold">Closing Cost Approx</label>
                   <NumericFormat
                     name="closing_cost_approx"
-                    className={`form-control ${styles.input}`}
+                    className={`form-control ${styles.input} bg-light`}
                     value={form.closing_cost_approx}
                     onValueChange={(values) => handleNumberFormat('closing_cost_approx', values.value)}
-                    disabled={!editable}
-                    thousandSeparator={true}
-                    prefix="$"
+                    disabled={true}
+                    decimalScale={2}
+                    suffix="%"
+                    readOnly
                   />
+                  <small className="text-muted">
+                    <i className="fas fa-calculator me-1"></i>
+                    Calculado: (Closing Cost Liquidity ÷ Loan Amount) × 100
+                  </small>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">DOWN PAYMENT %</label>
@@ -1109,7 +1382,7 @@ const DscrIntentionForm = ({
             <div className="col-12">
               <h5 className="fw-bold text-primary mb-3">
                 <i className="fas fa-piggy-bank me-2"></i>
-                LIQUIDITY
+                MINIMUM BORROWWER'S LIQUIDITY REQUIREMENTS 
               </h5>
             </div>
             <div className="col-12">
@@ -1183,7 +1456,7 @@ const DscrIntentionForm = ({
             <div className="col-12 text-center">
               <button
                 type="submit"
-                className="btn btn-primary btn-lg px-5"
+                className={`btn btn-lg px-5 ${hasUnsavedChanges ? 'btn-warning' : 'btn-primary'}`}
                 disabled={loading || !editable}
                 style={{ borderRadius: '25px' }}
               >
@@ -1194,8 +1467,8 @@ const DscrIntentionForm = ({
                   </>
                 ) : (
                   <>
-                    <i className="fas fa-save me-2"></i>
-                    {Object.keys(initialData).length ? 'Actualizar' : 'Crear'} Carta de Intención
+                    <i className={`fas ${hasUnsavedChanges ? 'fa-exclamation-triangle' : 'fa-save'} me-2`}></i>
+                    {hasUnsavedChanges ? 'Guardar Cambios' : (Object.keys(initialData).length ? 'Actualizar' : 'Crear')} Carta de Intención
                   </>
                 )}
               </button>

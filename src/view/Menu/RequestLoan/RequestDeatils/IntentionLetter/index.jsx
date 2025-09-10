@@ -441,10 +441,11 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
       } else {
         // Crear nueva carta
         response = await createIntentLetter(payload);
-      setFeedback("Carta de intención generada exitosamente");
+        setFeedback("Carta de intención generada exitosamente");
       }
       
       setIntentLetter(response);
+      return response; // Retornar la respuesta para que el componente hijo pueda manejar el éxito
     } catch (error) {
       console.error('Error con la carta de intención:', error);
       const detail = error?.response?.data?.detail;
@@ -452,6 +453,7 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
         ? detail.map(d => d?.msg || JSON.stringify(d)).join(' | ')
         : (typeof detail === 'string' ? detail : (error.message || 'Error al procesar la carta de intención'));
       setError(message);
+      throw error; // Re-lanzar el error para que el componente hijo pueda manejarlo
     } finally {
       setLoading(false);
     }
@@ -578,14 +580,7 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
                       <i className="fas fa-download me-2"></i>
                       Descargar Carta
                 </button>
-                  <button
-                  className="btn btn-primary"
-                  onClick={handleFocusForm}
-                  disabled={loading}
-                >
-                  <i className="fas fa-edit me-2"></i>
-                  Actualizar Carta
-                  </button>
+                
               </>
             ) : (
                   <button
@@ -627,6 +622,9 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
                 onSubmit={handleSubmit}
                 loading={loading}
                 editable={!intentLetter || intentLetter.status !== 'APPROVED'}
+                onUnsavedChangesChange={(hasChanges) => {
+                  console.log('Cambios no guardados:', hasChanges);
+                }}
               />
             ) : (
               requestType === 'construction' ? (
@@ -637,6 +635,9 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
                   onSubmit={handleSubmit}
                   loading={loading}
                   editable={!intentLetter || intentLetter.status !== 'APPROVED'}
+                  onUnsavedChangesChange={(hasChanges) => {
+                    console.log('Cambios no guardados (Construction):', hasChanges);
+                  }}
                 />
               ) : (
                 <FixflipConstructionForm
@@ -647,6 +648,9 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
                   loading={loading}
                   type={String(requestType)}
                   editable={!intentLetter || intentLetter.status !== 'APPROVED'}
+                  onUnsavedChangesChange={(hasChanges) => {
+                    console.log('Cambios no guardados (Fixflip):', hasChanges);
+                  }}
                 />
               )
             )

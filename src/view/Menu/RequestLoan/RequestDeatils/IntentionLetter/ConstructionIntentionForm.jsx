@@ -9,11 +9,14 @@ const ConstructionIntentionForm = ({
   onFormChange, 
   onSubmit, 
   loading = false,
-  editable = true
+  editable = true,
+  onUnsavedChangesChange
 }) => {
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalFormData, setOriginalFormData] = useState(null);
   const [form, setForm] = useState({
     // Borrower Information
     borrower_name: "",
@@ -112,14 +115,31 @@ const ConstructionIntentionForm = ({
         if (mapped.total_closing_cost_estimated != null) mapped.estimated_closing_costs = mapped.total_closing_cost_estimated;
         if (mapped.interest_rate != null) mapped.annual_interest_rate = mapped.interest_rate;
 
-        setForm(prev => ({
+        setForm(prev => {
+          const newForm = {
           ...prev,
           ...mapped,
           estimated_fico_score: mapped.estimated_fico_score ?? mapped.fico_score ?? prev.estimated_fico_score,
           // Preservar los valores que el usuario pueda haber ingresado
           requested_leverage: prev.requested_leverage || mapped.requested_leverage || 0,
           monthly_interest_payment: prev.monthly_interest_payment || mapped.monthly_interest_payment || 0,
-        }));
+          };
+          
+          // Establecer los datos originales después de cargar desde initialData
+          setTimeout(() => {
+            setOriginalFormData({ ...newForm });
+            console.debug('[Construction] Datos originales establecidos desde initialData:', {
+              originalFormDataKeys: Object.keys(newForm).length,
+              sampleFields: {
+                borrower_name: newForm.borrower_name,
+                loan_amount: newForm.loan_amount,
+                land_acquisition_cost: newForm.land_acquisition_cost
+              }
+            });
+          }, 200);
+          
+          return newForm;
+        });
       }
 
       // Si hay un requestId, intentamos cargar la carta de intención existente
@@ -139,7 +159,8 @@ const ConstructionIntentionForm = ({
             if (mapped.loan_to_value != null) mapped.loan_to_as_is_value = mapped.loan_to_value;
             if (mapped.ltv != null) mapped.loan_to_as_is_value = mapped.ltv;
             
-            setForm(prev => ({
+            setForm(prev => {
+              const newForm = {
               ...prev,
               ...mapped, // Aplicamos todos los datos de la carta
               client_id: mapped.client_id ?? prev.client_id,
@@ -149,7 +170,23 @@ const ConstructionIntentionForm = ({
               // Preservar los valores que el usuario pueda haber ingresado
               requested_leverage: prev.requested_leverage || mapped.requested_leverage || 0,
               monthly_interest_payment: prev.monthly_interest_payment || mapped.monthly_interest_payment || 0,
-            }));
+              };
+              
+              // Establecer los datos originales después de cargar los datos de la API
+              setTimeout(() => {
+                setOriginalFormData({ ...newForm });
+                console.debug('[Construction] Datos originales establecidos desde API:', {
+                  originalFormDataKeys: Object.keys(newForm).length,
+                  sampleFields: {
+                    borrower_name: newForm.borrower_name,
+                    loan_amount: newForm.loan_amount,
+                    land_acquisition_cost: newForm.land_acquisition_cost
+                  }
+                });
+              }, 200);
+              
+              return newForm;
+            });
             setShowCreateForm(false); // Hay carta, no mostramos el botón de crear
           } else {
             setShowCreateForm(true); // No hay carta, mostramos el botón de crear
@@ -170,6 +207,116 @@ const ConstructionIntentionForm = ({
       onFormChange(form);
     }
   }, [form, onFormChange]);
+
+  // Establecer datos originales cuando se cargan los datos iniciales
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0 && !originalFormData) {
+      // Usar un timeout para asegurar que el form esté completamente actualizado
+      const timer = setTimeout(() => {
+        setOriginalFormData({ ...form });
+        console.debug('[Construction] Datos originales establecidos desde initialData (fallback):', {
+          originalFormDataKeys: Object.keys(form).length,
+          sampleFields: {
+            borrower_name: form.borrower_name,
+            loan_amount: form.loan_amount,
+            land_acquisition_cost: form.land_acquisition_cost
+          }
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [initialData, originalFormData]);
+
+  // Establecer datos originales cuando el formulario esté completamente cargado
+  useEffect(() => {
+    if (form && Object.keys(form).length > 0 && !originalFormData && (initialData || requestId)) {
+      const timer = setTimeout(() => {
+        setOriginalFormData({ ...form });
+        console.debug('[Construction] Datos originales establecidos desde form (fallback final):', {
+          originalFormDataKeys: Object.keys(form).length,
+          sampleFields: {
+            borrower_name: form.borrower_name,
+            loan_amount: form.loan_amount,
+            land_acquisition_cost: form.land_acquisition_cost
+          }
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [form, originalFormData, initialData, requestId]);
+
+  // Detectar cambios no guardados
+  useEffect(() => {
+    if (originalFormData && Object.keys(originalFormData).length > 0) {
+      // Función para normalizar valores antes de comparar
+      const normalizeValue = (value) => {
+        if (value === null || value === undefined) return '';
+        if (typeof value === 'number') return value;
+        if (typeof value === 'boolean') return value;
+        return String(value).trim();
+      };
+
+      // Comparar campos relevantes uno por uno
+      const changedFields = [];
+      const hasChanges = Object.keys(form).some(key => {
+        const currentValue = normalizeValue(form[key]);
+        const originalValue = normalizeValue(originalFormData[key]);
+        const isChanged = currentValue !== originalValue;
+        
+        if (isChanged) {
+          changedFields.push({
+            field: key,
+            current: currentValue,
+            original: originalValue
+          });
+        }
+        
+        return isChanged;
+      });
+
+      console.debug('[Construction] Detección de cambios:', {
+        hasChanges,
+        changedFields: changedFields.slice(0, 5), // Mostrar solo los primeros 5 campos cambiados
+        totalChangedFields: changedFields.length,
+        formKeys: Object.keys(form).length,
+        originalKeys: Object.keys(originalFormData).length
+      });
+
+      setHasUnsavedChanges(hasChanges);
+      
+      // Notificar al componente padre sobre el cambio de estado
+      if (onUnsavedChangesChange) {
+        onUnsavedChangesChange(hasChanges);
+      }
+    }
+  }, [form, originalFormData, onUnsavedChangesChange]);
+
+  // Prevenir salida con cambios no guardados
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    const handlePopState = (e) => {
+      if (hasUnsavedChanges) {
+        const confirmLeave = window.confirm('Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?');
+        if (!confirmLeave) {
+          window.history.pushState(null, '', window.location.href);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasUnsavedChanges]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -268,18 +415,57 @@ const ConstructionIntentionForm = ({
     return payload;
   };
 
+  const handleDiscardChanges = () => {
+    if (window.confirm('¿Estás seguro de que quieres descartar todos los cambios?')) {
+      setForm(prev => ({ ...prev, ...originalFormData }));
+      setHasUnsavedChanges(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (onSubmit) {
       const payload = buildDataToSend();
-      onSubmit(payload);
+      try {
+        const response = await onSubmit(payload);
+        console.debug('[Construction] Guardado exitoso:', response);
+        
+        // Si el envío fue exitoso, actualizar los datos originales
+        const updatedFormData = { ...form };
+        setOriginalFormData(updatedFormData);
+        setHasUnsavedChanges(false);
+        
+        console.debug('[Construction] Estado actualizado después de guardar:', {
+          hasUnsavedChanges: false,
+          originalFormDataUpdated: true
+        });
+      } catch (error) {
+        console.error('Error al guardar:', error);
+        // No resetear el estado si hubo error
+      }
     }
   };
 
   const handleCreateIntentLetter = async () => {
     if (onSubmit) {
       const payload = buildDataToSend();
-      onSubmit(payload);
+      try {
+        const response = await onSubmit(payload);
+        console.debug('[Construction] Carta creada exitosamente:', response);
+        
+        // Si la creación fue exitosa, establecer los datos originales
+        const updatedFormData = { ...form };
+        setOriginalFormData(updatedFormData);
+        setHasUnsavedChanges(false);
+        
+        console.debug('[Construction] Estado actualizado después de crear:', {
+          hasUnsavedChanges: false,
+          originalFormDataUpdated: true
+        });
+      } catch (error) {
+        console.error('Error al crear carta:', error);
+        // No resetear el estado si hubo error
+      }
     }
   };
 
@@ -313,6 +499,24 @@ const ConstructionIntentionForm = ({
         </div>
       ) : (
       <form onSubmit={handleSubmit}>
+        {/* Alerta de cambios no guardados */}
+        {hasUnsavedChanges && (
+          <div className="alert alert-warning d-flex align-items-center justify-content-between mb-3" role="alert">
+            <div className="d-flex align-items-center">
+              <i className="fas fa-exclamation-triangle me-2"></i>
+              <span>Tienes cambios sin guardar</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              onClick={handleDiscardChanges}
+            >
+              <i className="fas fa-undo me-1"></i>
+              Descartar Cambios
+            </button>
+          </div>
+        )}
+
         {/* 0. BORROWER INFORMATION */}
         <div className="row mb-4">
           <div className="col-12"><h5 className="fw-bold text-primary mb-3">0. BORROWER INFORMATION</h5></div>
@@ -640,7 +844,7 @@ const ConstructionIntentionForm = ({
           <div className="col-12 text-center">
             <button
               type="submit"
-              className="btn btn-primary btn-lg px-5"
+              className={`btn btn-lg px-5 ${hasUnsavedChanges ? 'btn-warning' : 'btn-primary'}`}
               disabled={loading}
               style={{ borderRadius: '25px' }}
             >
@@ -651,8 +855,11 @@ const ConstructionIntentionForm = ({
                 </>
               ) : (
                 <>
-                  <i className="fas fa-save me-2"></i>
-                  Guardar Carta de Intención de Construcción
+                  <i className={`fas me-2 ${hasUnsavedChanges ? 'fa-exclamation-triangle' : 'fa-save'}`}></i>
+                  {hasUnsavedChanges 
+                    ? 'Guardar Cambios' 
+                    : 'Guardar Carta de Intención de Construcción'
+                  }
                 </>
               )}
             </button>

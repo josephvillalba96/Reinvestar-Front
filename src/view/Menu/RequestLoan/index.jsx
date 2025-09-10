@@ -111,9 +111,25 @@ const RequestLoan = () => {
       const activeAssignments = assignmentsData.filter(assignment => 
         assignment.status === "ASSIGNED" && assignment.is_active
       );
+
+      // Eliminar duplicados basándose en processor_id, manteniendo solo la asignación más reciente
+      const uniqueAssignments = [];
+      const seenProcessorIds = new Set();
       
-      setExistingAssignments(activeAssignments);
-      return activeAssignments;
+      // Ordenar por fecha de asignación (más reciente primero)
+      activeAssignments.sort((a, b) => new Date(b.assigned_at) - new Date(a.assigned_at));
+      
+      activeAssignments.forEach(assignment => {
+        const processorId = assignment.processor_id || assignment.processor?.id;
+        if (processorId && !seenProcessorIds.has(processorId)) {
+          seenProcessorIds.add(processorId);
+          uniqueAssignments.push(assignment);
+        }
+      });
+      
+      console.log('Asignaciones existentes filtradas y sin duplicados:', uniqueAssignments);
+      setExistingAssignments(uniqueAssignments);
+      return uniqueAssignments;
     } catch (error) {
       console.error('Error cargando asignaciones existentes:', error);
       setExistingAssignments([]);
