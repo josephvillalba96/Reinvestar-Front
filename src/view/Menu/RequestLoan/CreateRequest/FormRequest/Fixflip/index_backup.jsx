@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "../style.module.css";
 import { NumericFormat } from "react-number-format";
-import { createConstruction } from "../../../../../../Api/construction";
+import { createFixflip } from "../../../../../../Api/fixflip";
 import { createRequestLink } from "../../../../../../Api/requestLink";
 import { getClientById } from "../../../../../../Api/client";
 import { sendTemplateEmail } from "../../../../../../Api/emailTemplate";
@@ -10,7 +10,7 @@ import { getUserIdFromToken } from "../../../../../../utils/auth";
 const URL_EXTERNAL_FORM = import.meta.env.VITE_URL_EXTERMAL_FORM;
 
 const initialState = {
-  // Basic form fields
+  // Campos básicos del formulario
   borrower_name: "",
   legal_status: "",
   property_address: "",
@@ -27,13 +27,12 @@ const initialState = {
   previous_city: "",
   previous_state: "",
   previous_zip: "",
-  
   land_acquisition_cost: "",
   construction_rehab_budget: "",
   total_cost: "",
   estimated_after_completion_value: "",
   
-  // Additional fields required by payload
+  // Campos adicionales requeridos por el payload
   date: "",
   loan_type: "",
   closing_date: "",
@@ -76,7 +75,7 @@ const initialState = {
   total_liquidity: 0
 };
 
-const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
+const FixflipForm = ({ client_id, goToDocumentsTab }) => {
   const [form, setForm] = useState({ ...initialState });
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -93,12 +92,22 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
   }, [client_id]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
   const handleNumberFormat = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Calcular Total Cost automáticamente
+  const computeTotalCost = () => {
+    const landCost = Number(form.land_acquisition_cost) || 0;
+    const constructionBudget = Number(form.construction_rehab_budget) || 0;
+    return landCost + constructionBudget;
   };
 
   const toISOOrNull = (dateStr) => {
@@ -118,32 +127,32 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
     
     setSending(true);
     try {
-      // Get client data
+      // Obtener datos del cliente
       const clientData = await getClientById(client_id);
       if (!clientData?.email) {
-        setFeedback("Client email not found.");
+        setFeedback("No se encontró el email del cliente.");
         return;
       }
 
-      // Send email using template
+      // Enviar email usando template
       await sendTemplateEmail({
-        template_id: 0, // Request template ID
+        template_id: 0, // ID del template de solicitud
         template_type: "request_link",
         to_email: clientData.email,
-        from_email: "noreply@reinvestar.com", // System email
-        content_type: "text/html", // Ensure it's sent as HTML
+        from_email: "noreply@reinvestar.com", // Email del sistema
+        content_type: "text/html", // Asegurar que se envíe como HTML
         variables: {
           client_name: clientData.full_name,
           request_link: link,
-          request_type: "Construction",
-          request_id: null // We don't have the ID yet in CreateRequest
+          request_type: "Fixflip",
+          request_id: null // No tenemos el ID aún en CreateRequest
         }
       });
       
-      setFeedback("Email sent successfully!");
+      setFeedback("¡Email enviado exitosamente!");
     } catch (error) {
-      console.error('Error sending email:', error);
-      setFeedback("Error sending email. Please try again.");
+      console.error('Error enviando email:', error);
+      setFeedback("Error al enviar el email. Inténtalo de nuevo.");
     } finally {
       setSending(false);
     }
@@ -151,20 +160,23 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!client_id || isNaN(Number(client_id)) || Number(client_id) <= 0) {
-      setFeedback("You must select a valid client before creating the request.");
+    if (!client_id) {
+      setFeedback("Debes seleccionar un cliente válido antes de crear la solicitud.");
       return;
     }
+
     setLoading(true);
     setFeedback("");
+
     try {
-      // Get user_id from token
+      // Obtener user_id del token
       const user_id = getUserIdFromToken();
       if (!user_id) {
-        setFeedback("Error: Could not get user ID.");
+        setFeedback("Error de autenticación. Por favor, inicia sesión nuevamente.");
         return;
       }
 
+      // Preparar datos de la solicitud con el nuevo payload
       const dataToSend = {
         client_id: Number(client_id),
         user_id: user_id,
@@ -173,7 +185,7 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
         date: toISOOrNull(form.date),
         property_address: form.property_address || "",
         estimated_fico_score: form.estimated_fico_score ? Number(form.estimated_fico_score) : 0,
-        
+
         // Address Information
         street_address: form.street_address || "",
         city: form.city || "",
@@ -184,7 +196,6 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
         previous_city: form.previous_city || "",
         previous_state: form.previous_state || "",
         previous_zip: form.previous_zip || "",
-        
         loan_type: form.loan_type || "",
         property_type: form.property_type || "",
         closing_date: toISOOrNull(form.closing_date),
@@ -231,48 +242,60 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
         total_liquidity: form.total_liquidity ? Number(form.total_liquidity) : 0
       };
 
-      // 1. Crear la solicitud usando el servicio de Construction
-      const constructionResponse = await createConstruction(dataToSend);
-      
-      // 2. Crear el enlace automáticamente
-      const linkResponse = await createRequestLink({
-        valid_days: 30,
-        dscr_request_id: 0,
-        construction_request_id: constructionResponse.id,
-        fixflip_request_id: 0
-      });
+      // Crear la solicitud Fixflip
+      const response = await createFixflip(dataToSend);
+      console.log('Respuesta createFixflip:', response);
 
-      // 3. Guardar el enlace generado y enviar email
-      if (linkResponse && linkResponse.link_token) {
-        const fullLink = `${URL_EXTERNAL_FORM}/construction/${linkResponse.link_token}`;
+      // Crear el enlace
+      const linkData = {
+        valid_days: 30,
+        fixflip_request_id: response.id,
+        dscr_request_id: 0,
+        construction_request_id: 0
+      };
+
+      const linkResponse = await createRequestLink(linkData);
+      console.log('Respuesta createRequestLink:', linkResponse);
+
+      if (linkResponse?.link_token) {
+        const fullLink = `${URL_EXTERNAL_FORM}/fixflip/${linkResponse.link_token}`;
         setExternalLink(fullLink);
+        
+        // Enviar email automáticamente
         await handleSendEmail(fullLink);
       }
 
-      setFeedback("Construction created successfully!");
-      if (typeof goToDocumentsTab === 'function') {
-        goToDocumentsTab(constructionResponse.id, 'construction');
-      }
+      // Actualizar UI y limpiar formulario
+      setFeedback("¡Fixflip creado exitosamente!");
       setForm({ ...initialState });
+
+      // Navegar a documentos si es necesario
+      if (typeof goToDocumentsTab === 'function') {
+        goToDocumentsTab(response.id, 'fixflip');
+      }
+
     } catch (error) {
-      console.error('Error:', error);
-      setFeedback("Error creating Construction. Please try again.");
+      console.error('Error completo:', error);
+      
+      // Manejar diferentes tipos de errores
+      if (error.response?.data?.detail) {
+        setFeedback(Array.isArray(error.response.data.detail) 
+          ? error.response.data.detail[0]?.msg 
+          : error.response.data.detail);
+      } else if (error.message) {
+        setFeedback(error.message);
+      } else {
+        setFeedback("Error al crear la solicitud. Por favor, intenta de nuevo.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate Total Cost automatically
-  const computeTotalCost = () => {
-    const landCost = Number(form.land_acquisition_cost) || 0;
-    const constructionBudget = Number(form.construction_rehab_budget) || 0;
-    return landCost + constructionBudget;
-  };
-
   return (
-    <form className={`container-fluid pb-5 mb-5 ${styles.form}`} onSubmit={handleSubmit}>
+    <form className="container-fluid pb-5 mb-5" onSubmit={handleSubmit}>
       <div className="d-flex align-items-center mb-4 gap-3">
-        <h4 className="my_title_color fw-bold mb-0" style={{ letterSpacing: 0.5 }}>Construction - Basic Information</h4>
+        <h4 className="my_title_color fw-bold mb-0" style={{ letterSpacing: 0.5 }}>Fix & Flip - Información Básica</h4>
         {externalLink && (
           <>
             <span className="small text-muted" style={{ wordBreak: 'break-all' }}>{externalLink}</span>
@@ -281,13 +304,13 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
               className="btn btn-outline-secondary btn-sm ms-2"
               onClick={() => {navigator.clipboard.writeText(externalLink); setCopied(true); setTimeout(()=>setCopied(false), 1500);}}
             >
-              {copied ? "Copied!" : "Copy"}
+              {copied ? "¡Copiado!" : "Copiar"}
             </button>
           </>
         )}
       </div>
 
-      {/* Simplified form with only specified fields */}
+      {/* Formulario simplificado con solo los campos especificados */}
       <div className="row g-3">
         <div className="col-md-6">
           <label className="form-label my_title_color">BORROWER'S NAME</label>
@@ -301,12 +324,12 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
         <div className="col-md-6">
           <label className="form-label my_title_color">LEGAL STATUS</label>
           <select 
-            className={`form-control ${styles.input} ${styles.select}`}
+            className={`form-control ${styles.input}`}
             name="legal_status" 
             value={form.legal_status} 
             onChange={handleChange} 
           >
-            <option value="">Select...</option>
+            <option value="">Seleccione...</option>
             <option value="CITIZEN">CITIZEN</option>
             <option value="GREEN CARD">GREEN CARD</option>
             <option value="EMD">EMD</option>
@@ -376,13 +399,13 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
         <div className="col-md-4">
           <label className="form-label my_title_color">State*</label>
           <select 
-            className={`form-control ${styles.input} ${styles.select}`}
+            className={`form-control ${styles.input}`}
             name="state" 
             value={form.state} 
             onChange={handleChange}
             required
           >
-            <option value="">Select...</option>
+            <option value="">Seleccione...</option>
             <option value="AL">Alabama</option>
             <option value="AK">Alaska</option>
             <option value="AZ">Arizona</option>
@@ -451,7 +474,7 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
         <div className="col-md-12">
           <div className="form-check">
             <input 
-              className={`form-check-input ${styles.checkbox}`}
+              className="form-check-input" 
               type="checkbox" 
               name="lived_less_than_2_years"
               checked={form.lived_less_than_2_years}
@@ -504,13 +527,13 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
           <div className="col-md-4">
             <label className="form-label my_title_color">Previous State*</label>
             <select 
-              className={`form-control ${styles.input} ${styles.select}`}
+              className={`form-control ${styles.input}`}
               name="previous_state" 
               value={form.previous_state} 
               onChange={handleChange}
               required
             >
-              <option value="">Select...</option>
+              <option value="">Seleccione...</option>
               <option value="AL">Alabama</option>
               <option value="AK">Alaska</option>
               <option value="AZ">Arizona</option>
@@ -559,8 +582,8 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
               <option value="VA">Virginia</option>
               <option value="WA">Washington</option>
               <option value="WV">West Virginia</option>
-            <option value="WI">Wisconsin</option>
-            <option value="WY">Wyoming</option>
+              <option value="WI">Wisconsin</option>
+              <option value="WY">Wyoming</option>
             </select>
           </div>
           <div className="col-md-4">
@@ -615,11 +638,11 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
             value={form.construction_rehab_budget} 
             onValueChange={({ value }) => handleNumberFormat("construction_rehab_budget", value)} 
             thousandSeparator="," 
-            prefix="$"
-            decimalScale={2}
-            fixedDecimalScale
-            allowNegative={false}
-            inputMode="decimal"
+            prefix="$" 
+            decimalScale={2} 
+            fixedDecimalScale 
+            allowNegative={false} 
+            inputMode="decimal" 
           />
         </div>
 
@@ -627,17 +650,17 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
       {/* Estimated After Completion Value */}
         <div className="col-md-6">
           <label className="form-label my_title_color">Land or Acquisition Cost</label>
-          <NumericFormat
+          <NumericFormat 
             className={`form-control ${styles.input}`}
             name="land_acquisition_cost" 
             value={form.land_acquisition_cost} 
             onValueChange={({ value }) => handleNumberFormat("land_acquisition_cost", value)} 
             thousandSeparator="," 
-            prefix="$"
-            decimalScale={2}
-            fixedDecimalScale
-            allowNegative={false}
-            inputMode="decimal"
+            prefix="$" 
+            decimalScale={2} 
+            fixedDecimalScale 
+            allowNegative={false} 
+            inputMode="decimal" 
           />
         </div>
    
@@ -656,15 +679,15 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
       </div>
 
       {feedback && (
-        <div className={`alert ${feedback.includes("successfully") ? "alert-success" : "alert-danger"} py-2 mb-3`}>
+        <div className={`alert ${feedback.includes("exitosamente") ? "alert-success" : "alert-danger"} py-2 mb-3`}>
           {feedback}
         </div>
       )}
 
       <div className="row">
         <div className="col-12 mt-4">
-          <button type="submit" className={`btn ${styles.button}`} style={{ minWidth: "200px" }} disabled={loading}>
-            {loading ? "CREATING..." : "Save"}
+          <button type="submit" className="btn btn-primary px-4 py-2" style={{ minWidth: "200px" }} disabled={loading}>
+            {loading ? "CREANDO..." : "Guardar"}
           </button>
         </div>
       </div>
@@ -672,4 +695,4 @@ const ConstructionForm = ({ client_id, goToDocumentsTab }) => {
   );
 };
 
-export default ConstructionForm; 
+export default FixflipForm;

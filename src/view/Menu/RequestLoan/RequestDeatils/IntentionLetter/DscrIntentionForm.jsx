@@ -19,6 +19,7 @@ const DscrIntentionForm = ({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalFormData, setOriginalFormData] = useState(null);
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
 
   const [form, setForm] = useState({
 
@@ -31,6 +32,17 @@ const DscrIntentionForm = ({
     estimated_fico_score: 0,
     residency_status: "",
     subject_prop_under_llc: "",
+    
+    // Address Information
+    street_address: "",
+    city: "",
+    state: "",
+    zip: "",
+    lived_less_than_2_years: false,
+    previous_street_address: "",
+    previous_city: "",
+    previous_state: "",
+    previous_zip: "",
     
     // -----LOAN DETAILS ------
     loan_type: "",
@@ -137,22 +149,31 @@ const DscrIntentionForm = ({
       const newFormData = { 
         ...initialData,
         // Asegurar que origination_fee_percentage se maneje correctamente
-        origination_fee_percentage: initialData.origination_fee_percentage ? String(initialData.origination_fee_percentage) : "2.0"
+        origination_fee_percentage: initialData.origination_fee_percentage ? String(initialData.origination_fee_percentage) : "2.0",
+        // Address Information - Asegurar que se carguen correctamente
+        street_address: initialData.street_address || "",
+        city: initialData.city || "",
+        state: initialData.state || "",
+        zip: initialData.zip || "",
+        lived_less_than_2_years: Boolean(initialData.lived_less_than_2_years),
+        previous_street_address: initialData.previous_street_address || "",
+        previous_city: initialData.previous_city || "",
+        previous_state: initialData.previous_state || "",
+        previous_zip: initialData.previous_zip || ""
       };
       setForm(prev => ({ ...prev, ...newFormData }));
       
-      // Establecer los datos originales después de que se complete la carga y cálculos
-      setTimeout(() => {
-        setOriginalFormData({ ...newFormData });
-        console.debug('[DscrIntentionForm] Datos originales establecidos desde initialData:', {
-          originalFormDataKeys: Object.keys(newFormData).length,
-          sampleFields: {
-            borrower_name: newFormData.borrower_name,
-            loan_amount: newFormData.loan_amount,
-            origination_fee_percentage: newFormData.origination_fee_percentage
-          }
-        });
-      }, 200);
+      // Establecer los datos originales inmediatamente después de cargar
+      setOriginalFormData({ ...newFormData });
+      setIsFormInitialized(true);
+      console.debug('[DscrIntentionForm] Datos originales establecidos desde initialData:', {
+        originalFormDataKeys: Object.keys(newFormData).length,
+        sampleFields: {
+          borrower_name: newFormData.borrower_name,
+          loan_amount: newFormData.loan_amount,
+          origination_fee_percentage: newFormData.origination_fee_percentage
+        }
+      });
       
       setShowCreateForm(false);
       setLoadingData(false);
@@ -170,22 +191,31 @@ const DscrIntentionForm = ({
             const newFormData = {
               ...dscrData,
               // Asegurar que origination_fee_percentage se maneje correctamente
-              origination_fee_percentage: dscrData.origination_fee_percentage ? String(dscrData.origination_fee_percentage) : "2.0"
+              origination_fee_percentage: dscrData.origination_fee_percentage ? String(dscrData.origination_fee_percentage) : "2.0",
+              // Address Information - Asegurar que se carguen correctamente
+              street_address: dscrData.street_address || "",
+              city: dscrData.city || "",
+              state: dscrData.state || "",
+              zip: dscrData.zip || "",
+              lived_less_than_2_years: Boolean(dscrData.lived_less_than_2_years),
+              previous_street_address: dscrData.previous_street_address || "",
+              previous_city: dscrData.previous_city || "",
+              previous_state: dscrData.previous_state || "",
+              previous_zip: dscrData.previous_zip || ""
             };
             setForm(prev => ({ ...prev, ...newFormData }));
             
-            // Establecer los datos originales después de cargar los datos de la API
-            setTimeout(() => {
-              setOriginalFormData({ ...newFormData });
-              console.debug('[DscrIntentionForm] Datos originales establecidos desde API:', {
-                originalFormDataKeys: Object.keys(newFormData).length,
-                sampleFields: {
-                  borrower_name: newFormData.borrower_name,
-                  loan_amount: newFormData.loan_amount,
-                  origination_fee_percentage: newFormData.origination_fee_percentage
-                }
-              });
-            }, 200);
+            // Establecer los datos originales inmediatamente después de cargar
+            setOriginalFormData({ ...newFormData });
+            setIsFormInitialized(true);
+            console.debug('[DscrIntentionForm] Datos originales establecidos desde API:', {
+              originalFormDataKeys: Object.keys(newFormData).length,
+              sampleFields: {
+                borrower_name: newFormData.borrower_name,
+                loan_amount: newFormData.loan_amount,
+                origination_fee_percentage: newFormData.origination_fee_percentage
+              }
+            });
           }
           setShowCreateForm(true);
         } catch (error) {
@@ -208,27 +238,30 @@ const DscrIntentionForm = ({
 
   // Establecer originalFormData después de que el formulario se estabilice completamente
   useEffect(() => {
-    if (form && Object.keys(form).length > 0 && !originalFormData) {
-      // Fallback: establecer datos originales si no se han establecido después de un tiempo
-      setTimeout(() => {
-        if (!originalFormData) {
-          setOriginalFormData({ ...form });
-          console.debug('[DscrIntentionForm] Datos originales establecidos como fallback:', {
-            originalFormDataKeys: Object.keys(form).length,
-            sampleFields: {
-              borrower_name: form.borrower_name,
-              loan_amount: form.loan_amount,
-              origination_fee_percentage: form.origination_fee_percentage
-            }
-          });
+    if (form && Object.keys(form).length > 0 && !originalFormData && (initialData || requestId)) {
+      // Fallback: establecer datos originales si no se han establecido
+      setOriginalFormData({ ...form });
+      console.debug('[DscrIntentionForm] Datos originales establecidos como fallback:', {
+        originalFormDataKeys: Object.keys(form).length,
+        sampleFields: {
+          borrower_name: form.borrower_name,
+          loan_amount: form.loan_amount,
+          origination_fee_percentage: form.origination_fee_percentage,
+          calculatedFields: {
+            origination_fee: form.origination_fee,
+            total_closing_cost: form.total_closing_cost,
+            mortgage_payment_piti: form.mortgage_payment_piti,
+            dscr_requirement: form.dscr_requirement
+          }
         }
-      }, 500);
+      });
     }
-  }, [form, originalFormData]);
+  }, [form, originalFormData, initialData, requestId]);
 
   // Detectar cambios no guardados
   useEffect(() => {
-    if (originalFormData && Object.keys(originalFormData).length > 0) {
+    // Solo ejecutar si el formulario está inicializado y tenemos datos originales
+    if (isFormInitialized && originalFormData && Object.keys(originalFormData).length > 0 && form && Object.keys(form).length > 0) {
       // Función para normalizar valores antes de comparar
       const normalizeValue = (value) => {
         if (value === null || value === undefined) return '';
@@ -237,30 +270,71 @@ const DscrIntentionForm = ({
         return String(value).trim();
       };
 
-      // Comparar campos relevantes uno por uno
+      // Campos que se calculan automáticamente y no deben considerarse como cambios del usuario
+      const calculatedFields = [
+        'origination_fee',
+        'total_closing_cost',
+        'closing_cost_approx',
+        'property_taxes_estimated',
+        'property_insurance_estimated',
+        'hoa_estimated',
+        'mortgage_payment_piti',
+        'dscr_requirement'
+      ];
+
+      // Campos de address que SÍ deben considerarse para validación de cambios
+      const addressFields = [
+        'street_address',
+        'city',
+        'state',
+        'zip',
+        'lived_less_than_2_years',
+        'previous_street_address',
+        'previous_city',
+        'previous_state',
+        'previous_zip'
+      ];
+
+      // Comparar solo campos que no son calculados automáticamente
       const changedFields = [];
-      const hasChanges = Object.keys(form).some(key => {
-        const currentValue = normalizeValue(form[key]);
-        const originalValue = normalizeValue(originalFormData[key]);
-        const isChanged = currentValue !== originalValue;
-        
-        if (isChanged) {
-          changedFields.push({
-            field: key,
-            current: currentValue,
-            original: originalValue
-          });
+      let hasChanges = false;
+
+      // Solo comparar campos que existen en ambos objetos
+      const allKeys = new Set([...Object.keys(form), ...Object.keys(originalFormData)]);
+      
+      for (const key of allKeys) {
+        // Saltar campos calculados automáticamente
+        if (calculatedFields.includes(key)) {
+          continue;
         }
-        
-        return isChanged;
-      });
+
+        // Solo comparar si el campo existe en ambos objetos
+        if (key in form && key in originalFormData) {
+          const currentValue = normalizeValue(form[key]);
+          const originalValue = normalizeValue(originalFormData[key]);
+          const isChanged = currentValue !== originalValue;
+          
+          if (isChanged) {
+            changedFields.push({
+              field: key,
+              current: currentValue,
+              original: originalValue,
+              isAddressField: addressFields.includes(key)
+            });
+            hasChanges = true;
+          }
+        }
+      }
 
       console.debug('[DscrIntentionForm] Detección de cambios:', {
         hasChanges,
         changedFields: changedFields.slice(0, 5), // Mostrar solo los primeros 5 campos cambiados
         totalChangedFields: changedFields.length,
+        addressFieldsChanged: changedFields.filter(f => f.isAddressField).length,
         formKeys: Object.keys(form).length,
-        originalKeys: Object.keys(originalFormData).length
+        originalKeys: Object.keys(originalFormData).length,
+        excludedCalculatedFields: calculatedFields,
+        addressFields: addressFields
       });
 
       setHasUnsavedChanges(hasChanges);
@@ -270,7 +344,7 @@ const DscrIntentionForm = ({
         onUnsavedChangesChange(hasChanges);
       }
     }
-  }, [form, originalFormData, onUnsavedChangesChange]);
+  }, [form, originalFormData, onUnsavedChangesChange, isFormInitialized]);
 
   // Prevenir salida con cambios no guardados
   useEffect(() => {
@@ -424,6 +498,116 @@ const DscrIntentionForm = ({
     }
   }, [form.closing_cost_liquidity, form.loan_amount]);
 
+  // Recalcular Property Taxes Estimated cuando cambia Property Taxes
+  useEffect(() => {
+    const propertyTaxes = Number(form.property_taxes || 0);
+    const newPropertyTaxesEstimated = propertyTaxes / 12;
+    
+    if (Number(form.property_taxes_estimated) !== newPropertyTaxesEstimated) {
+      console.debug('[DscrIntentionForm] Recalculando property_taxes_estimated:', {
+        propertyTaxes: propertyTaxes,
+        newPropertyTaxesEstimated: newPropertyTaxesEstimated,
+        current: form.property_taxes_estimated
+      });
+      setForm(prev => ({ ...prev, property_taxes_estimated: newPropertyTaxesEstimated }));
+    }
+  }, [form.property_taxes]);
+
+  // Recalcular Property Insurance Estimated cuando cambia Property Insurance
+  useEffect(() => {
+    const propertyInsurance = Number(form.property_insurance || 0);
+    const newPropertyInsuranceEstimated = propertyInsurance / 12;
+    
+    if (Number(form.property_insurance_estimated) !== newPropertyInsuranceEstimated) {
+      console.debug('[DscrIntentionForm] Recalculando property_insurance_estimated:', {
+        propertyInsurance: propertyInsurance,
+        newPropertyInsuranceEstimated: newPropertyInsuranceEstimated,
+        current: form.property_insurance_estimated
+      });
+      setForm(prev => ({ ...prev, property_insurance_estimated: newPropertyInsuranceEstimated }));
+    }
+  }, [form.property_insurance]);
+
+  // Recalcular HOA Estimated cuando cambia HOA Fees
+  useEffect(() => {
+    const hoaFees = Number(form.hoa_fees || 0);
+    const newHoaEstimated = hoaFees / 12;
+    
+    if (Number(form.hoa_estimated) !== newHoaEstimated) {
+      console.debug('[DscrIntentionForm] Recalculando hoa_estimated:', {
+        hoaFees: hoaFees,
+        newHoaEstimated: newHoaEstimated,
+        current: form.hoa_estimated
+      });
+      setForm(prev => ({ ...prev, hoa_estimated: newHoaEstimated }));
+    }
+  }, [form.hoa_fees]);
+
+  // Recalcular Mortgage Payment PITI cuando cambian los valores de DSCR - PITI
+  useEffect(() => {
+    const calculateMortgagePaymentPiti = () => {
+      const fields = [
+        'principal_interest',
+        'property_taxes_estimated',
+        'property_insurance_estimated',
+        'flood_insurance_estimated',
+        'hoa_estimated'
+      ];
+      
+      const total = fields.reduce((sum, field) => {
+        return sum + Number(form[field] || 0);
+      }, 0);
+      
+      return total;
+    };
+    
+    const newMortgagePaymentPiti = calculateMortgagePaymentPiti();
+    
+    if (Number(form.mortgage_payment_piti) !== newMortgagePaymentPiti) {
+      console.debug('[DscrIntentionForm] Recalculando mortgage_payment_piti:', {
+        newMortgagePaymentPiti: newMortgagePaymentPiti,
+        current: form.mortgage_payment_piti,
+        components: {
+          principal_interest: form.principal_interest,
+          property_taxes_estimated: form.property_taxes_estimated,
+          property_insurance_estimated: form.property_insurance_estimated,
+          flood_insurance_estimated: form.flood_insurance_estimated,
+          hoa_estimated: form.hoa_estimated
+        }
+      });
+      setForm(prev => ({ ...prev, mortgage_payment_piti: newMortgagePaymentPiti }));
+    }
+  }, [
+    form.principal_interest,
+    form.property_taxes_estimated,
+    form.property_insurance_estimated,
+    form.flood_insurance_estimated,
+    form.hoa_estimated
+  ]);
+
+  // Recalcular DSCR Requirement cuando cambian rent_amount o mortgage_payment_piti
+  useEffect(() => {
+    const rentAmount = Number(form.rent_amount || 0);
+    const mortgagePaymentPiti = Number(form.mortgage_payment_piti || 0);
+    
+    let newDscrRequirement = 0;
+    if (mortgagePaymentPiti > 0) {
+      // Calcular DSCR: (Rent Amount / Mortgage Payment PITI) / 100
+      newDscrRequirement = (rentAmount / mortgagePaymentPiti) / 100;
+    }
+    
+    if (Number(form.dscr_requirement) !== newDscrRequirement) {
+      console.debug('[DscrIntentionForm] Recalculando dscr_requirement:', {
+        rentAmount: rentAmount,
+        mortgagePaymentPiti: mortgagePaymentPiti,
+        newDscrRequirement: newDscrRequirement,
+        current: form.dscr_requirement,
+        formula: `(${rentAmount} / ${mortgagePaymentPiti}) / 100 = ${newDscrRequirement}`
+      });
+      setForm(prev => ({ ...prev, dscr_requirement: newDscrRequirement }));
+    }
+  }, [form.rent_amount, form.mortgage_payment_piti]);
+
   const buildDataToSend = () => {
     console.debug('[DscrIntentionForm] buildDataToSend - origination_fee_percentage:', {
       formValue: form.origination_fee_percentage,
@@ -441,6 +625,17 @@ const DscrIntentionForm = ({
     estimated_fico_score: Number(form.estimated_fico_score || 0),
     residency_status: form.residency_status || "",
     subject_prop_under_llc: form.subject_prop_under_llc || "",
+
+    // Address Information
+    street_address: form.street_address || "",
+    city: form.city || "",
+    state: form.state || "",
+    zip: form.zip || "",
+    lived_less_than_2_years: Boolean(form.lived_less_than_2_years),
+    previous_street_address: form.previous_street_address || "",
+    previous_city: form.previous_city || "",
+    previous_state: form.previous_state || "",
+    previous_zip: form.previous_zip || "",
 
     // LOAN DETAILS
     loan_type: form.loan_type || "",
@@ -742,6 +937,254 @@ const DscrIntentionForm = ({
               </div>
             </div>
           </div>
+
+          {/* ADDRESS INFORMATION */}
+          <div className="row mb-4">
+            <div className="col-12">
+              <h5 className="fw-bold text-primary mb-3">
+                <i className="fas fa-map-marker-alt me-2"></i>
+                ADDRESS
+              </h5>
+            </div>
+            <div className="col-12">
+              <div className="row g-3">
+                <div className="col-md-12">
+                  <label className="form-label fw-bold">Street Address*</label>
+                  <input
+                    type="text"
+                    name="street_address"
+                    className={`form-control ${styles.input}`}
+                    value={form.street_address}
+                    onChange={handleChange}
+                    disabled={!editable}
+                    required
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-bold">City*</label>
+                  <input
+                    type="text"
+                    name="city"
+                    className={`form-control ${styles.input}`}
+                    value={form.city}
+                    onChange={handleChange}
+                    disabled={!editable}
+                    required
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-bold">State*</label>
+                  <select
+                    name="state"
+                    className={`form-control ${styles.input}`}
+                    value={form.state}
+                    onChange={handleChange}
+                    disabled={!editable}
+                    required
+                  >
+                    <option value="">Seleccione...</option>
+                    <option value="AL">Alabama</option>
+                    <option value="AK">Alaska</option>
+                    <option value="AZ">Arizona</option>
+                    <option value="AR">Arkansas</option>
+                    <option value="CA">California</option>
+                    <option value="CO">Colorado</option>
+                    <option value="CT">Connecticut</option>
+                    <option value="DE">Delaware</option>
+                    <option value="FL">Florida</option>
+                    <option value="GA">Georgia</option>
+                    <option value="HI">Hawaii</option>
+                    <option value="ID">Idaho</option>
+                    <option value="IL">Illinois</option>
+                    <option value="IN">Indiana</option>
+                    <option value="IA">Iowa</option>
+                    <option value="KS">Kansas</option>
+                    <option value="KY">Kentucky</option>
+                    <option value="LA">Louisiana</option>
+                    <option value="ME">Maine</option>
+                    <option value="MD">Maryland</option>
+                    <option value="MA">Massachusetts</option>
+                    <option value="MI">Michigan</option>
+                    <option value="MN">Minnesota</option>
+                    <option value="MS">Mississippi</option>
+                    <option value="MO">Missouri</option>
+                    <option value="MT">Montana</option>
+                    <option value="NE">Nebraska</option>
+                    <option value="NV">Nevada</option>
+                    <option value="NH">New Hampshire</option>
+                    <option value="NJ">New Jersey</option>
+                    <option value="NM">New Mexico</option>
+                    <option value="NY">New York</option>
+                    <option value="NC">North Carolina</option>
+                    <option value="ND">North Dakota</option>
+                    <option value="OH">Ohio</option>
+                    <option value="OK">Oklahoma</option>
+                    <option value="OR">Oregon</option>
+                    <option value="PA">Pennsylvania</option>
+                    <option value="RI">Rhode Island</option>
+                    <option value="SC">South Carolina</option>
+                    <option value="SD">South Dakota</option>
+                    <option value="TN">Tennessee</option>
+                    <option value="TX">Texas</option>
+                    <option value="UT">Utah</option>
+                    <option value="VT">Vermont</option>
+                    <option value="VA">Virginia</option>
+                    <option value="WA">Washington</option>
+                    <option value="WV">West Virginia</option>
+                    <option value="WI">Wisconsin</option>
+                    <option value="WY">Wyoming</option>
+                  </select>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-bold">Zip*</label>
+                  <input
+                    type="text"
+                    name="zip"
+                    className={`form-control ${styles.input}`}
+                    value={form.zip}
+                    onChange={handleChange}
+                    disabled={!editable}
+                    required
+                  />
+                </div>
+                <div className="col-md-12">
+                  <div className="form-check">
+
+                  <div className="col-12">
+                <h5 className="fw-bold text-primary mb-3">
+                  <i className="fas fa-history me-2"></i>
+                  PREVIOUS ADDRESS
+                </h5>
+              </div>
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      name="lived_less_than_2_years"
+                      checked={form.lived_less_than_2_years}
+                      onChange={handleChange}
+                      disabled={!editable}
+                      id="lived_less_than_2_years"
+                    />
+
+
+                    <label className="form-check-label fw-bold" htmlFor="lived_less_than_2_years">
+                      I have lived at my current address for less than 2 years
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Previous Address Fields - Only show when checkbox is checked */}
+          {form.lived_less_than_2_years && (
+            <div className="row mb-4">
+          
+              <div className="col-12">
+                <div className="row g-3">
+                  <div className="col-md-12">
+                    <label className="form-label fw-bold">Previous Street Address*</label>
+                    <input
+                      type="text"
+                      name="previous_street_address"
+                      className={`form-control ${styles.input}`}
+                      value={form.previous_street_address}
+                      onChange={handleChange}
+                      disabled={!editable}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label fw-bold">Previous City*</label>
+                    <input
+                      type="text"
+                      name="previous_city"
+                      className={`form-control ${styles.input}`}
+                      value={form.previous_city}
+                      onChange={handleChange}
+                      disabled={!editable}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label fw-bold">Previous State*</label>
+                    <select
+                      name="previous_state"
+                      className={`form-control ${styles.input}`}
+                      value={form.previous_state}
+                      onChange={handleChange}
+                      disabled={!editable}
+                      required
+                    >
+                      <option value="">Seleccione...</option>
+                      <option value="AL">Alabama</option>
+                      <option value="AK">Alaska</option>
+                      <option value="AZ">Arizona</option>
+                      <option value="AR">Arkansas</option>
+                      <option value="CA">California</option>
+                      <option value="CO">Colorado</option>
+                      <option value="CT">Connecticut</option>
+                      <option value="DE">Delaware</option>
+                      <option value="FL">Florida</option>
+                      <option value="GA">Georgia</option>
+                      <option value="HI">Hawaii</option>
+                      <option value="ID">Idaho</option>
+                      <option value="IL">Illinois</option>
+                      <option value="IN">Indiana</option>
+                      <option value="IA">Iowa</option>
+                      <option value="KS">Kansas</option>
+                      <option value="KY">Kentucky</option>
+                      <option value="LA">Louisiana</option>
+                      <option value="ME">Maine</option>
+                      <option value="MD">Maryland</option>
+                      <option value="MA">Massachusetts</option>
+                      <option value="MI">Michigan</option>
+                      <option value="MN">Minnesota</option>
+                      <option value="MS">Mississippi</option>
+                      <option value="MO">Missouri</option>
+                      <option value="MT">Montana</option>
+                      <option value="NE">Nebraska</option>
+                      <option value="NV">Nevada</option>
+                      <option value="NH">New Hampshire</option>
+                      <option value="NJ">New Jersey</option>
+                      <option value="NM">New Mexico</option>
+                      <option value="NY">New York</option>
+                      <option value="NC">North Carolina</option>
+                      <option value="ND">North Dakota</option>
+                      <option value="OH">Ohio</option>
+                      <option value="OK">Oklahoma</option>
+                      <option value="OR">Oregon</option>
+                      <option value="PA">Pennsylvania</option>
+                      <option value="RI">Rhode Island</option>
+                      <option value="SC">South Carolina</option>
+                      <option value="SD">South Dakota</option>
+                      <option value="TN">Tennessee</option>
+                      <option value="TX">Texas</option>
+                      <option value="UT">Utah</option>
+                      <option value="VT">Vermont</option>
+                      <option value="VA">Virginia</option>
+                      <option value="WA">Washington</option>
+                      <option value="WV">West Virginia</option>
+                      <option value="WI">Wisconsin</option>
+                      <option value="WY">Wyoming</option>
+                    </select>
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label fw-bold">Previous Zip*</label>
+                    <input
+                      type="text"
+                      name="previous_zip"
+                      className={`form-control ${styles.input}`}
+                      value={form.previous_zip}
+                      onChange={handleChange}
+                      disabled={!editable}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* LOAN DETAILS */}
           <div className="row mb-4">
@@ -1099,10 +1542,7 @@ const DscrIntentionForm = ({
                     suffix="%"
                     readOnly
                   />
-                  <small className="text-muted">
-                    <i className="fas fa-calculator me-1"></i>
-                    Calculado: (Closing Cost Liquidity ÷ Loan Amount) × 100
-                  </small>
+                
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">DOWN PAYMENT %</label>
@@ -1120,12 +1560,13 @@ const DscrIntentionForm = ({
                   <label className="form-label fw-bold">DSCR  MUST BE 1%</label>
                   <NumericFormat
                     name="dscr_requirement"
-                    className={`form-control ${styles.input}`}
+                    className={`form-control ${styles.input} bg-light`}
                     value={form.dscr_requirement}
                     onValueChange={(values) => handleNumberFormat('dscr_requirement', values.value)}
-                    disabled={!editable}
+                    disabled={true}
                     decimalScale={2}
                     suffix="%"
+                    readOnly
                   />
                 </div>
                 <div className="col-md-6">
@@ -1204,7 +1645,7 @@ const DscrIntentionForm = ({
                   />
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label fw-bold">Property Insurance</label>
+                  <label className="form-label fw-bold">Property Insurance (HOI)</label>
                   <NumericFormat
                     name="property_insurance"
                     className={`form-control ${styles.input}`}
@@ -1291,13 +1732,15 @@ const DscrIntentionForm = ({
                   <label className="form-label fw-bold">Mortgage Payment PITI</label>
                   <NumericFormat
                     name="mortgage_payment_piti"
-                    className={`form-control ${styles.input}`}
+                    className={`form-control ${styles.input} bg-light`}
                     value={form.mortgage_payment_piti}
                     onValueChange={(values) => handleNumberFormat('mortgage_payment_piti', values.value)}
-                    disabled={!editable}
+                    disabled={true}
                     thousandSeparator={true}
                     prefix="$"
+                    readOnly
                   />
+                 
                 </div>
               </div>
             </div>
@@ -1329,36 +1772,43 @@ const DscrIntentionForm = ({
                   <label className="form-label fw-bold">Property Taxes Estimated</label>
                   <NumericFormat
                     name="property_taxes_estimated"
-                    className={`form-control ${styles.input}`}
+                    className={`form-control ${styles.input} bg-light`}
                     value={form.property_taxes_estimated}
                     onValueChange={(values) => handleNumberFormat('property_taxes_estimated', values.value)}
-                    disabled={!editable}
+                    disabled={true}
                     thousandSeparator={true}
                     prefix="$"
+                    readOnly
                   />
+                  <small className="text-muted">
+                    <i className="fas fa-calculator me-1"></i>
+                    Calculado: Property Taxes ÷ 12
+                  </small>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Property Insurance</label>
                   <NumericFormat
                     name="property_insurance_estimated"
-                    className={`form-control ${styles.input}`}
+                    className={`form-control ${styles.input} bg-light`}
                     value={form.property_insurance_estimated}
                     onValueChange={(values) => handleNumberFormat('property_insurance_estimated', values.value)}
-                    disabled={!editable}
+                    disabled={true}
                     thousandSeparator={true}
                     prefix="$"
+                    readOnly
                   />
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold">HOA</label>
                   <NumericFormat
                     name="hoa_estimated"
-                    className={`form-control ${styles.input}`}
+                    className={`form-control ${styles.input} bg-light`}
                     value={form.hoa_estimated}
                     onValueChange={(values) => handleNumberFormat('hoa_estimated', values.value)}
-                    disabled={!editable}
+                    disabled={true}
                     thousandSeparator={true}
                     prefix="$"
+                    readOnly
                   />
                 </div>
                 <div className="col-md-6">

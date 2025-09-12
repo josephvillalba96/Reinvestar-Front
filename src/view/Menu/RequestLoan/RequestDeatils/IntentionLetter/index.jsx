@@ -15,6 +15,7 @@ import ConstructionIntentionForm from './ConstructionIntentionForm';
 
 const IntentionLetter = ({ requestId, requestType, solicitud }) => {
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
   const [intentLetter, setIntentLetter] = useState(null);
@@ -116,6 +117,16 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
     property_state: "",
     property_zip: "",
     fico: 0,
+    // Campos de dirección
+    street_address: "",
+    city: "",
+    state: "",
+    zip: "",
+    lived_less_than_2_years: false,
+    previous_street_address: "",
+    previous_city: "",
+    previous_state: "",
+    previous_zip: "",
     rent_amount: 0,
     appraisal_value: 0,
     ltv_request: 0,
@@ -219,6 +230,21 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
     const base = buildEmptyPayload(tipo, requestId, title, content);
     if (!solicitud) return base;
 
+    console.log(`[IntentionLetter] Mapeando datos de solicitud ${tipo} #${requestId}:`, {
+      fico: solicitud.fico,
+      estimated_fico_score: solicitud.estimated_fico_score,
+      fico_score: solicitud.fico_score,
+      street_address: solicitud.street_address,
+      city: solicitud.city,
+      state: solicitud.state,
+      zip: solicitud.zip,
+      lived_less_than_2_years: solicitud.lived_less_than_2_years,
+      previous_street_address: solicitud.previous_street_address,
+      previous_city: solicitud.previous_city,
+      previous_state: solicitud.previous_state,
+      previous_zip: solicitud.previous_zip
+    });
+
     // Comunes (si existen)
     base.property_type = s(solicitud.property_type);
     base.property_address = s(solicitud.property_address);
@@ -226,6 +252,32 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
     base.property_state = s(solicitud.property_state);
     base.property_zip = s(solicitud.property_zip || solicitud.property_zip_code);
     base.property_value = n(solicitud.property_value);
+
+    // Campos de FICO y dirección que deben mapearse para todos los tipos
+    const ficoValue = solicitud.fico || solicitud.estimated_fico_score || solicitud.fico_score;
+    const estimatedFicoValue = solicitud.estimated_fico_score || solicitud.fico || solicitud.fico_score;
+    
+    console.log(`[IntentionLetter] Mapeando FICO para ${tipo}:`, {
+      solicitud_fico: solicitud.fico,
+      solicitud_estimated_fico_score: solicitud.estimated_fico_score,
+      solicitud_fico_score: solicitud.fico_score,
+      ficoValue: ficoValue,
+      estimatedFicoValue: estimatedFicoValue,
+      base_fico: n(ficoValue),
+      base_estimated_fico_score: n(estimatedFicoValue)
+    });
+    
+    base.fico = n(ficoValue);
+    base.estimated_fico_score = n(estimatedFicoValue);
+    base.street_address = s(solicitud.street_address);
+    base.city = s(solicitud.city);
+    base.state = s(solicitud.state);
+    base.zip = s(solicitud.zip);
+    base.lived_less_than_2_years = b(solicitud.lived_less_than_2_years);
+    base.previous_street_address = s(solicitud.previous_street_address);
+    base.previous_city = s(solicitud.previous_city);
+    base.previous_state = s(solicitud.previous_state);
+    base.previous_zip = s(solicitud.previous_zip);
 
     // Tipos
     if (tipo === 'dscr') {
@@ -288,6 +340,32 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
       base.payment_type = s(solicitud.payment_type);
       base.loan_position = s(solicitud.loan_position);
       base.prepayment_terms = s(solicitud.prepayment_terms);
+      
+      // Campos específicos de borrower para Fixflip/Construction
+      base.borrower_name = s(solicitud.borrower_name);
+      base.guarantor_name = s(solicitud.guarantor_name);
+      base.legal_status = s(solicitud.legal_status);
+      base.residency_status = s(solicitud.legal_status);
+      base.entity_name = s(solicitud.entity_name);
+      base.issued_date = toISOOrNull(solicitud.issued_date);
+      base.estimated_closing_date = toISOOrNull(solicitud.estimated_closing_date);
+      
+      // FICO Score específico para Fixflip/Construction
+      const fixflipFicoValue = solicitud.fico || solicitud.estimated_fico_score || solicitud.fico_score;
+      const fixflipEstimatedFicoValue = solicitud.estimated_fico_score || solicitud.fico || solicitud.fico_score;
+      
+      console.log(`[IntentionLetter] Mapeando FICO específico para ${tipo}:`, {
+        solicitud_fico: solicitud.fico,
+        solicitud_estimated_fico_score: solicitud.estimated_fico_score,
+        solicitud_fico_score: solicitud.fico_score,
+        fixflipFicoValue: fixflipFicoValue,
+        fixflipEstimatedFicoValue: fixflipEstimatedFicoValue,
+        base_fico: n(fixflipFicoValue),
+        base_estimated_fico_score: n(fixflipEstimatedFicoValue)
+      });
+      
+      base.fico = n(fixflipFicoValue);
+      base.estimated_fico_score = n(fixflipEstimatedFicoValue);
 
       base.purchase_price = n(solicitud.purchase_price);
       base.renovation_cost = n(solicitud.renovation_cost);
@@ -302,6 +380,81 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
       base.inspection_frequency = s(solicitud.inspection_frequency);
       base.renovation_timeline = s(solicitud.renovation_timeline);
       base.rehab_timeline = s(solicitud.rehab_timeline);
+      
+      // Campos específicos de Fixflip que faltaban
+      base.land_acquisition_cost = n(solicitud.land_acquisition_cost);
+      base.construction_rehab_budget = n(solicitud.construction_rehab_budget);
+      base.total_cost = n(solicitud.total_cost);
+      base.estimated_after_completion_value = n(solicitud.estimated_after_completion_value);
+      base.as_is_value = n(solicitud.as_is_value);
+      base.original_acquisition_price = n(solicitud.original_acquisition_price);
+      base.construction_holdback = n(solicitud.construction_holdback);
+      base.initial_funding = n(solicitud.initial_funding);
+      base.day1_monthly_interest_payment = n(solicitud.day1_monthly_interest_payment);
+      base.interest_reserves = n(solicitud.interest_reserves);
+      base.loan_to_as_is_value = n(solicitud.loan_to_as_is_value);
+      base.loan_to_as_is_value_ltv = n(solicitud.loan_to_as_is_value_ltv);
+      base.loan_to_cost_ltc = n(solicitud.loan_to_cost_ltc);
+      base.loan_to_arv = n(solicitud.loan_to_arv);
+      base.rehab_category = s(solicitud.rehab_category);
+      base.min_credit_score = n(solicitud.min_credit_score);
+      base.refundable_commitment_deposit = n(solicitud.refundable_commitment_deposit);
+      base.estimated_closing_costs = n(solicitud.estimated_closing_costs);
+      base.construction_budget_10_percent = n(solicitud.construction_budget_10_percent);
+      base.six_months_payment_reserves = n(solicitud.six_months_payment_reserves);
+      base.construction_budget_delta = n(solicitud.construction_budget_delta);
+      base.down_payment = n(solicitud.down_payment);
+      base.total_liquidity = n(solicitud.total_liquidity);
+      
+      // Fees específicos de Fixflip
+      base.origination_fee = n(solicitud.origination_fee);
+      base.underwriting_fee = n(solicitud.underwriting_fee);
+      base.processing_fee = n(solicitud.processing_fee);
+      base.servicing_fee = n(solicitud.servicing_fee);
+      base.legal_fee = n(solicitud.legal_fee);
+      base.appraisal_fee = n(solicitud.appraisal_fee);
+      base.budget_review_fee = n(solicitud.budget_review_fee);
+      base.broker_fee = n(solicitud.broker_fee);
+      base.transaction_management_fee = n(solicitud.transaction_management_fee);
+      
+      // Loan details específicos de Fixflip
+      base.total_loan_amount = n(solicitud.total_loan_amount);
+      base.annual_interest_rate = n(solicitud.annual_interest_rate);
+      base.requested_leverage = n(solicitud.requested_leverage);
+      base.monthly_interest_payment = n(solicitud.monthly_interest_payment);
+      base.prepayment_penalty = n(solicitud.prepayment_penalty);
+      base.max_ltv = n(solicitud.max_ltv);
+      base.max_ltc = n(solicitud.max_ltc);
+      
+      // Address Information para Fixflip
+      base.street_address = s(solicitud.street_address);
+      base.city = s(solicitud.city);
+      base.state = s(solicitud.state);
+      base.zip = s(solicitud.zip);
+      base.lived_less_than_2_years = Boolean(solicitud.lived_less_than_2_years);
+      base.previous_street_address = s(solicitud.previous_street_address);
+      base.previous_city = s(solicitud.previous_city);
+      base.previous_state = s(solicitud.previous_state);
+      base.previous_zip = s(solicitud.previous_zip);
+      
+      // Property Information para Fixflip
+      base.property_type = s(solicitud.property_type);
+      base.property_address = s(solicitud.property_address);
+      
+      // Loan Information para Fixflip
+      base.interest_rate_structure = s(solicitud.interest_rate_structure);
+      base.closing_date = toISOOrNull(solicitud.closing_date);
+      
+      console.log(`[IntentionLetter] Mapeando campos específicos de Fixflip:`, {
+        land_acquisition_cost: solicitud.land_acquisition_cost,
+        construction_rehab_budget: solicitud.construction_rehab_budget,
+        total_cost: solicitud.total_cost,
+        estimated_after_completion_value: solicitud.estimated_after_completion_value,
+        as_is_value: solicitud.as_is_value,
+        total_loan_amount: solicitud.total_loan_amount,
+        annual_interest_rate: solicitud.annual_interest_rate,
+        fico_score: solicitud.fico_score
+      });
       base.contractor_info = s(solicitud.contractor_info);
       
       base.monthly_payment = n(solicitud.monthly_payment);
@@ -339,11 +492,65 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
       base.closing_costs = base.total_closing_costs;
 
       if (tipo === 'construction') {
-        // Si existieran en la solicitud
+        // Campos específicos de Construction
         base.construction_timeline = s(solicitud.construction_timeline);
         base.permits_status = s(solicitud.permits_status);
         base.construction_cost = n(solicitud.construction_cost);
         base.land_cost = n(solicitud.land_cost);
+        
+        // Campos adicionales de Construction
+        base.land_acquisition_cost = n(solicitud.land_acquisition_cost);
+        base.construction_rehab_budget = n(solicitud.construction_rehab_budget);
+        base.total_cost = n(solicitud.total_cost);
+        base.estimated_after_completion_value = n(solicitud.estimated_after_completion_value);
+        base.as_is_value = n(solicitud.as_is_value);
+        base.original_acquisition_price = n(solicitud.original_acquisition_price);
+        base.construction_holdback = n(solicitud.construction_holdback);
+        base.initial_funding = n(solicitud.initial_funding);
+        base.day1_monthly_interest_payment = n(solicitud.day1_monthly_interest_payment);
+        base.interest_reserves = n(solicitud.interest_reserves);
+        base.loan_to_as_is_value = n(solicitud.loan_to_as_is_value);
+        base.loan_to_as_is_value_ltv = n(solicitud.loan_to_as_is_value_ltv);
+        base.loan_to_cost_ltc = n(solicitud.loan_to_cost_ltc);
+        base.loan_to_arv = n(solicitud.loan_to_arv);
+        base.rehab_category = s(solicitud.rehab_category);
+        base.min_credit_score = n(solicitud.min_credit_score);
+        base.refundable_commitment_deposit = n(solicitud.refundable_commitment_deposit);
+        base.estimated_closing_costs = n(solicitud.estimated_closing_costs);
+        base.construction_budget_10_percent = n(solicitud.construction_budget_10_percent);
+        base.six_months_payment_reserves = n(solicitud.six_months_payment_reserves);
+        base.construction_budget_delta = n(solicitud.construction_budget_delta);
+        base.total_liquidity = n(solicitud.total_liquidity);
+        
+        // Fees específicos de Construction
+        base.origination_fee = n(solicitud.origination_fee);
+        base.underwriting_fee = n(solicitud.underwriting_fee);
+        base.processing_fee = n(solicitud.processing_fee);
+        base.servicing_fee = n(solicitud.servicing_fee);
+        base.legal_fee = n(solicitud.legal_fee);
+        base.appraisal_fee = n(solicitud.appraisal_fee);
+        base.budget_review_fee = n(solicitud.budget_review_fee);
+        base.broker_fee = n(solicitud.broker_fee);
+        base.transaction_management_fee = n(solicitud.transaction_management_fee);
+        
+        // Loan details específicos de Construction
+        base.total_loan_amount = n(solicitud.total_loan_amount);
+        base.annual_interest_rate = n(solicitud.annual_interest_rate);
+        base.requested_leverage = n(solicitud.requested_leverage);
+        base.monthly_interest_payment = n(solicitud.monthly_interest_payment);
+        base.prepayment_penalty = n(solicitud.prepayment_penalty);
+        base.max_ltv = n(solicitud.max_ltv);
+        base.max_ltc = n(solicitud.max_ltc);
+        
+        console.log(`[IntentionLetter] Mapeando campos específicos de Construction:`, {
+          land_acquisition_cost: solicitud.land_acquisition_cost,
+          construction_rehab_budget: solicitud.construction_rehab_budget,
+          total_cost: solicitud.total_cost,
+          estimated_after_completion_value: solicitud.estimated_after_completion_value,
+          construction_holdback: solicitud.construction_holdback,
+          total_loan_amount: solicitud.total_loan_amount,
+          annual_interest_rate: solicitud.annual_interest_rate
+        });
       }
     }
 
@@ -459,15 +666,43 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
     }
   };
 
-  const handleGenerateLetter = () => {
+  const handleGenerateLetter = async () => {
     if (!window.confirm("¿Estás seguro de generar la carta de intención?")) {
       return;
     }
-    handleFocusForm();
+    
+    setLoading(true);
+    setError("");
+    setFeedback("");
+
+    try {
+      // Crear la carta automáticamente con los datos de la solicitud
+      const payload = buildCreatePayload();
+      console.log('Creando carta de intención automáticamente:', payload);
+      
+      const response = await createIntentLetter(payload);
+      setIntentLetter(response);
+      setFeedback("Carta de intención creada exitosamente");
+      
+      // Hacer scroll al formulario después de crear
+      setTimeout(() => {
+        handleFocusForm();
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error creando carta de intención:', error);
+      const detail = error?.response?.data?.detail;
+      const message = Array.isArray(detail)
+        ? detail.map(d => d?.msg || JSON.stringify(d)).join(' | ')
+        : detail || error?.message || 'Error desconocido';
+      setError(`Error al crear la carta: ${message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDownloadLetter = async () => {
-    setLoading(true);
+    setDownloading(true);
     setError("");
     setFeedback("");
 
@@ -504,7 +739,7 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
         : (typeof detail === 'string' ? detail : (error.message || 'Error al descargar la carta de intención'));
       setError(message);
     } finally {
-      setLoading(false);
+      setDownloading(false);
     }
   };
 
@@ -575,10 +810,10 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
                 <button
                   className="btn btn-secondary"
                   onClick={handleDownloadLetter}
-                  disabled={loading}
+                  disabled={downloading || loading}
                 >
-                      <i className="fas fa-download me-2"></i>
-                      Descargar Carta
+                      <i className={`fas ${downloading ? 'fa-spinner fa-spin' : 'fa-download'} me-2`}></i>
+                      {downloading ? 'Descargando...' : 'Descargar Carta'}
                 </button>
                 
               </>
@@ -586,10 +821,10 @@ const IntentionLetter = ({ requestId, requestType, solicitud }) => {
                   <button
                 className="btn btn-primary"
                 onClick={handleGenerateLetter}
-                disabled={loading}
+                disabled={loading || downloading}
               >
-                <i className="fas fa-file-alt me-2"></i>
-                Crear Carta de Intención
+                <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-file-alt'} me-2`}></i>
+                {loading ? 'Creando...' : 'Crear Carta de Intención'}
                   </button>
                 )}
           </div>

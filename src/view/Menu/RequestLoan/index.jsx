@@ -137,6 +137,7 @@ const RequestLoan = () => {
     }
   };
 
+
   const handleRedired = () => {
     navegate("/requests/new-request");
   };
@@ -181,12 +182,14 @@ const RequestLoan = () => {
   };
 
   const openAssignPopup = async (requestId, requestType) => {
+    // Limpiar todos los estados primero
     setAssignRequest({ id: requestId, type: requestType });
     setShowAssignPopup(true);
     setAssignSuccess("");
     setAssignError("");
     setSelectedProcessor(null);
     setExistingAssignments([]);
+    setProcessors([]); // Limpiar procesadores también
     
     try {
       // Cargar procesadores y asignaciones existentes en paralelo
@@ -194,6 +197,9 @@ const RequestLoan = () => {
         getProcessors(),
         loadExistingAssignments(requestId, requestType)
       ]);
+      
+      console.log(`[DEBUG] Cargando procesadores para solicitud ${requestId} de tipo ${requestType}:`, processorsData);
+      console.log(`[DEBUG] Asignaciones existentes para solicitud ${requestId}:`, assignmentsData);
       
       setProcessors(
         Array.isArray(processorsData)
@@ -217,6 +223,7 @@ const RequestLoan = () => {
     setAssignSuccess("");
     setAssignError("");
     setExistingAssignments([]);
+    setProcessors([]); // Limpiar procesadores al cerrar
     
     // Elimina manualmente el backdrop de Bootstrap si existe
     const backdrops = document.querySelectorAll('.modal-backdrop');

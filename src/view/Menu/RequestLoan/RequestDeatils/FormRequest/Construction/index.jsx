@@ -17,6 +17,17 @@ const initialState = {
   property_address: "",
   fico_score: "",
   property_type: "",
+  
+  // Address Information
+  street_address: "",
+  city: "",
+  state: "",
+  zip: "",
+  lived_less_than_2_years: false,
+  previous_street_address: "",
+  previous_city: "",
+  previous_state: "",
+  previous_zip: "",
   land_acquisition_cost: "",
   construction_rehab_budget: "",
   total_cost: "",
@@ -83,6 +94,18 @@ const ConstructionForm = ({ client_id, goToDocumentsTab, solicitud, cliente, edi
         property_address: solicitud.property_address || "",
         fico_score: solicitud.fico_score ?? solicitud.estimated_fico_score ?? "",
         property_type: solicitud.property_type || "",
+        
+        // Address Information
+        street_address: solicitud.street_address || "",
+        city: solicitud.city || "",
+        state: solicitud.state || "",
+        zip: solicitud.zip || "",
+        lived_less_than_2_years: Boolean(solicitud.lived_less_than_2_years),
+        previous_street_address: solicitud.previous_street_address || "",
+        previous_city: solicitud.previous_city || "",
+        previous_state: solicitud.previous_state || "",
+        previous_zip: solicitud.previous_zip || "",
+        
         land_acquisition_cost: solicitud.land_acquisition_cost ?? "",
         construction_rehab_budget: solicitud.construction_rehab_budget ?? "",
         total_cost: solicitud.total_cost ?? "",
@@ -159,11 +182,14 @@ const ConstructionForm = ({ client_id, goToDocumentsTab, solicitud, cliente, edi
 				isMounted = false;
 			};
 		}
-  }, [solicitud?.id, hideExternalLink]);
+  }, [solicitud]);
 
 	const handleChange = (e) => {
-		const { name, value } = e.target;
-		setForm((prev) => ({ ...prev, [name]: value }));
+		const { name, value, type, checked } = e.target;
+		setForm((prev) => ({ 
+			...prev, 
+			[name]: type === 'checkbox' ? checked : value 
+		}));
 	};
 
 	const handleNumberFormat = (name, value) => {
@@ -192,6 +218,18 @@ const ConstructionForm = ({ client_id, goToDocumentsTab, solicitud, cliente, edi
         date: toISOOrNull(form.date),
 				property_address: form.property_address || "",
         fico_score: form.fico_score ? Number(form.fico_score) : 0,
+        
+        // Address Information
+        street_address: form.street_address || "",
+        city: form.city || "",
+        state: form.state || "",
+        zip: form.zip || "",
+        lived_less_than_2_years: Boolean(form.lived_less_than_2_years),
+        previous_street_address: form.previous_street_address || "",
+        previous_city: form.previous_city || "",
+        previous_state: form.previous_state || "",
+        previous_zip: form.previous_zip || "",
+        
 				loan_type: form.loan_type || "",
         property_type: form.property_type || "",
         closing_date: toISOOrNull(form.closing_date),
@@ -258,6 +296,18 @@ const ConstructionForm = ({ client_id, goToDocumentsTab, solicitud, cliente, edi
         date: toISOOrNull(form.date),
         property_address: form.property_address || "",
         fico_score: form.fico_score ? Number(form.fico_score) : 0,
+        
+        // Address Information
+        street_address: form.street_address || "",
+        city: form.city || "",
+        state: form.state || "",
+        zip: form.zip || "",
+        lived_less_than_2_years: Boolean(form.lived_less_than_2_years),
+        previous_street_address: form.previous_street_address || "",
+        previous_city: form.previous_city || "",
+        previous_state: form.previous_state || "",
+        previous_zip: form.previous_zip || "",
+        
         loan_type: form.loan_type || "",
         property_type: form.property_type || "",
         closing_date: toISOOrNull(form.closing_date),
@@ -504,6 +554,251 @@ const ConstructionForm = ({ client_id, goToDocumentsTab, solicitud, cliente, edi
           />
 				</div>
 			</div>
+
+      {/* ==============================
+          ADDRESS INFORMATION
+          ============================== */}
+      <div className="row mb-4 mt-4">
+        <div className="col-12">
+          <h6 className="my_title_color fw-bold mb-3">ADDRESS</h6>
+        </div>
+      </div>
+
+      <div className="row g-3">
+        <div className="col-md-12">
+          <label className="form-label my_title_color">Street Address*</label>
+          <input 
+            className={`form-control ${styles.input}`}
+            name="street_address" 
+            value={form.street_address} 
+            onChange={handleChange} 
+            disabled={!editable && !isEditMode}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="row g-3">
+        <div className="col-md-4">
+          <label className="form-label my_title_color">City*</label>
+          <input 
+            className={`form-control ${styles.input}`}
+            name="city" 
+            value={form.city} 
+            onChange={handleChange} 
+            disabled={!editable && !isEditMode}
+            required
+          />
+        </div>
+        <div className="col-md-4">
+          <label className="form-label my_title_color">State*</label>
+          <select 
+            className={`form-control ${styles.input}`}
+            name="state" 
+            value={form.state} 
+            onChange={handleChange}
+            disabled={!editable && !isEditMode}
+            required
+          >
+            <option value="">Seleccione...</option>
+            <option value="AL">Alabama</option>
+            <option value="AK">Alaska</option>
+            <option value="AZ">Arizona</option>
+            <option value="AR">Arkansas</option>
+            <option value="CA">California</option>
+            <option value="CO">Colorado</option>
+            <option value="CT">Connecticut</option>
+            <option value="DE">Delaware</option>
+            <option value="FL">Florida</option>
+            <option value="GA">Georgia</option>
+            <option value="HI">Hawaii</option>
+            <option value="ID">Idaho</option>
+            <option value="IL">Illinois</option>
+            <option value="IN">Indiana</option>
+            <option value="IA">Iowa</option>
+            <option value="KS">Kansas</option>
+            <option value="KY">Kentucky</option>
+            <option value="LA">Louisiana</option>
+            <option value="ME">Maine</option>
+            <option value="MD">Maryland</option>
+            <option value="MA">Massachusetts</option>
+            <option value="MI">Michigan</option>
+            <option value="MN">Minnesota</option>
+            <option value="MS">Mississippi</option>
+            <option value="MO">Missouri</option>
+            <option value="MT">Montana</option>
+            <option value="NE">Nebraska</option>
+            <option value="NV">Nevada</option>
+            <option value="NH">New Hampshire</option>
+            <option value="NJ">New Jersey</option>
+            <option value="NM">New Mexico</option>
+            <option value="NY">New York</option>
+            <option value="NC">North Carolina</option>
+            <option value="ND">North Dakota</option>
+            <option value="OH">Ohio</option>
+            <option value="OK">Oklahoma</option>
+            <option value="OR">Oregon</option>
+            <option value="PA">Pennsylvania</option>
+            <option value="RI">Rhode Island</option>
+            <option value="SC">South Carolina</option>
+            <option value="SD">South Dakota</option>
+            <option value="TN">Tennessee</option>
+            <option value="TX">Texas</option>
+            <option value="UT">Utah</option>
+            <option value="VT">Vermont</option>
+            <option value="VA">Virginia</option>
+            <option value="WA">Washington</option>
+            <option value="WV">West Virginia</option>
+            <option value="WI">Wisconsin</option>
+            <option value="WY">Wyoming</option>
+          </select>
+        </div>
+        <div className="col-md-4">
+          <label className="form-label my_title_color">Zip*</label>
+          <input 
+            className={`form-control ${styles.input}`}
+            name="zip" 
+            value={form.zip} 
+            onChange={handleChange} 
+            disabled={!editable && !isEditMode}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="row g-3 mt-2">
+        <div className="col-md-12">
+          <div className="form-check">
+            <input 
+              className="form-check-input" 
+              type="checkbox" 
+              name="lived_less_than_2_years"
+              checked={form.lived_less_than_2_years}
+              onChange={handleChange}
+              disabled={!editable && !isEditMode}
+              id="lived_less_than_2_years"
+            />
+            <label className="form-check-label my_title_color mb-4" htmlFor="lived_less_than_2_years">
+              I have lived at my current address for less than 2 years
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Previous Address Fields - Only show when checkbox is checked */}
+      {form.lived_less_than_2_years && (
+        <div className="row g-3 mt-3">
+          <div className="col-12">
+            <h6 className="my_title_color fw-bold mb-3">PREVIOUS ADDRESS</h6>
+          </div>
+        </div>
+      )}
+
+      {form.lived_less_than_2_years && (
+        <div className="row g-3">
+          <div className="col-md-12">
+            <label className="form-label my_title_color">Previous Street Address*</label>
+            <input 
+              className={`form-control ${styles.input}`}
+              name="previous_street_address" 
+              value={form.previous_street_address} 
+              onChange={handleChange} 
+              disabled={!editable && !isEditMode}
+              required
+            />
+          </div>
+        </div>
+      )}
+
+      {form.lived_less_than_2_years && (
+        <div className="row g-3">
+          <div className="col-md-4">
+            <label className="form-label my_title_color">Previous City*</label>
+            <input 
+              className={`form-control ${styles.input}`}
+              name="previous_city" 
+              value={form.previous_city} 
+              onChange={handleChange} 
+              disabled={!editable && !isEditMode}
+              required
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label my_title_color">Previous State*</label>
+            <select 
+              className={`form-control ${styles.input}`}
+              name="previous_state" 
+              value={form.previous_state} 
+              onChange={handleChange}
+              disabled={!editable && !isEditMode}
+              required
+            >
+              <option value="">Seleccione...</option>
+              <option value="AL">Alabama</option>
+              <option value="AK">Alaska</option>
+              <option value="AZ">Arizona</option>
+              <option value="AR">Arkansas</option>
+              <option value="CA">California</option>
+              <option value="CO">Colorado</option>
+              <option value="CT">Connecticut</option>
+              <option value="DE">Delaware</option>
+              <option value="FL">Florida</option>
+              <option value="GA">Georgia</option>
+              <option value="HI">Hawaii</option>
+              <option value="ID">Idaho</option>
+              <option value="IL">Illinois</option>
+              <option value="IN">Indiana</option>
+              <option value="IA">Iowa</option>
+              <option value="KS">Kansas</option>
+              <option value="KY">Kentucky</option>
+              <option value="LA">Louisiana</option>
+              <option value="ME">Maine</option>
+              <option value="MD">Maryland</option>
+              <option value="MA">Massachusetts</option>
+              <option value="MI">Michigan</option>
+              <option value="MN">Minnesota</option>
+              <option value="MS">Mississippi</option>
+              <option value="MO">Missouri</option>
+              <option value="MT">Montana</option>
+              <option value="NE">Nebraska</option>
+              <option value="NV">Nevada</option>
+              <option value="NH">New Hampshire</option>
+              <option value="NJ">New Jersey</option>
+              <option value="NM">New Mexico</option>
+              <option value="NY">New York</option>
+              <option value="NC">North Carolina</option>
+              <option value="ND">North Dakota</option>
+              <option value="OH">Ohio</option>
+              <option value="OK">Oklahoma</option>
+              <option value="OR">Oregon</option>
+              <option value="PA">Pennsylvania</option>
+              <option value="RI">Rhode Island</option>
+              <option value="SC">South Carolina</option>
+              <option value="SD">South Dakota</option>
+              <option value="TN">Tennessee</option>
+              <option value="TX">Texas</option>
+              <option value="UT">Utah</option>
+              <option value="VT">Vermont</option>
+              <option value="VA">Virginia</option>
+              <option value="WA">Washington</option>
+              <option value="WV">West Virginia</option>
+              <option value="WI">Wisconsin</option>
+              <option value="WY">Wyoming</option>
+            </select>
+          </div>
+          <div className="col-md-4">
+            <label className="form-label my_title_color">Previous Zip*</label>
+            <input 
+              className={`form-control ${styles.input}`}
+              name="previous_zip" 
+              value={form.previous_zip} 
+              onChange={handleChange} 
+              disabled={!editable && !isEditMode}
+              required
+            />
+          </div>
+        </div>
+      )}
 
       <div className="row g-3">
         <div className="col-md-6">

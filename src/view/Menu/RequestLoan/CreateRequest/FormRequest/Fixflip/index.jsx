@@ -14,8 +14,19 @@ const initialState = {
   borrower_name: "",
   legal_status: "",
   property_address: "",
-  estimated_fico_score: "",
+  fico_score: "",
   property_type: "",
+  
+  // Address Information
+  street_address: "",
+  city: "",
+  state: "",
+  zip: "",
+  lived_less_than_2_years: false,
+  previous_street_address: "",
+  previous_city: "",
+  previous_state: "",
+  previous_zip: "",
   land_acquisition_cost: "",
   construction_rehab_budget: "",
   total_cost: "",
@@ -25,8 +36,8 @@ const initialState = {
   date: "",
   loan_type: "",
   closing_date: "",
-  interest_rate_structure: "",
-  loan_term: "",
+	interest_rate_structure: "",
+	loan_term: "",
   prepayment_penalty: 0,
   max_ltv: 0,
   max_ltc: 0,
@@ -53,7 +64,7 @@ const initialState = {
   loan_to_as_is_value_ltv: 0,
   loan_to_cost_ltc: 0,
   loan_to_arv: 0,
-  rehab_category: "",
+	rehab_category: "",
   min_credit_score: 0,
   refundable_commitment_deposit: 0,
   estimated_closing_costs: 0,
@@ -70,30 +81,66 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
   const [feedback, setFeedback] = useState("");
   const [client, setClient] = useState(null);
   const [externalLink, setExternalLink] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [sending, setSending] = useState(false);
 
+  // Load client data
   useEffect(() => {
-    setForm({ ...initialState });
+    const loadClient = async () => {
     if (client_id) {
-      getClientById(client_id).then(setClient).catch(() => setClient(null));
-    }
+        try {
+          const clientData = await getClientById(client_id);
+          setClient(clientData);
+        } catch (error) {
+          console.error("Error loading client:", error);
+        }
+      }
+    };
+    loadClient();
   }, [client_id]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleNumberFormat = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Calcular Total Cost automáticamente
-  const computeTotalCost = () => {
+  // Update total_cost when land_acquisition_cost or construction_rehab_budget changes
+  useEffect(() => {
     const landCost = Number(form.land_acquisition_cost) || 0;
     const constructionBudget = Number(form.construction_rehab_budget) || 0;
-    return landCost + constructionBudget;
+    const totalCost = landCost + constructionBudget;
+    
+    console.log('useEffect total_cost calculation:', { 
+      landCost, 
+      constructionBudget, 
+      totalCost, 
+      land_acquisition_cost: form.land_acquisition_cost, 
+      construction_rehab_budget: form.construction_rehab_budget 
+    });
+    
+    setForm(prev => ({
+      ...prev,
+      total_cost: totalCost
+    }));
+  }, [form.land_acquisition_cost, form.construction_rehab_budget]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm(prev => ({
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
+  };
+
+  const handleNumberFormat = (values, name) => {
+    const { value } = values;
+    setForm(prev => ({
+      ...prev,
+      [name]: name === 'loan_term' ? String(value) : value
+    }));
+  };
+
+  const toISOStringOrNull = (dateStr) => {
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      return date.toISOString();
+    } catch (error) {
+      return null;
+    }
   };
 
   const toISOOrNull = (dateStr) => {
@@ -105,77 +152,50 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
     } catch (_) {
       return null;
     }
-  };
+	};
 
-  // Función para enviar email usando template
-  const handleSendEmail = async (link) => {
-    if (!link || !client_id) return;
-    
-    setSending(true);
-    try {
-      // Obtener datos del cliente
-      const clientData = await getClientById(client_id);
-      if (!clientData?.email) {
-        setFeedback("No se encontró el email del cliente.");
-        return;
-      }
-
-      // Enviar email usando template
-      await sendTemplateEmail({
-        template_id: 0, // ID del template de solicitud
-        template_type: "request_link",
-        to_email: clientData.email,
-        from_email: "noreply@reinvestar.com", // Email del sistema
-        content_type: "text/html", // Asegurar que se envíe como HTML
-        variables: {
-          client_name: clientData.full_name,
-          request_link: link,
-          request_type: "Fixflip",
-          request_id: null // No tenemos el ID aún en CreateRequest
-        }
-      });
-      
-      setFeedback("¡Email enviado exitosamente!");
-    } catch (error) {
-      console.error('Error enviando email:', error);
-      setFeedback("Error al enviar el email. Inténtalo de nuevo.");
-    } finally {
-      setSending(false);
-    }
+  // Calcular Total Cost automáticamente
+  const computeTotalCost = () => {
+    const landCost = Number(form.land_acquisition_cost) || 0;
+    const constructionBudget = Number(form.construction_rehab_budget) || 0;
+    const total = landCost + constructionBudget;
+    console.log('computeTotalCost:', { landCost, constructionBudget, total, form: form.land_acquisition_cost, form2: form.construction_rehab_budget });
+    return total;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!client_id) {
-      setFeedback("Debes seleccionar un cliente válido antes de crear la solicitud.");
-      return;
-    }
-
     setLoading(true);
     setFeedback("");
 
     try {
-      // Obtener user_id del token
-      const user_id = getUserIdFromToken();
-      if (!user_id) {
-        setFeedback("Error de autenticación. Por favor, inicia sesión nuevamente.");
-        return;
-      }
-
-      // Preparar datos de la solicitud con el nuevo payload
+      const userId = getUserIdFromToken();
+      
       const dataToSend = {
-        client_id: Number(client_id),
-        user_id: user_id,
+        client_id: client_id,
+        user_id: userId,
         borrower_name: form.borrower_name || "",
         legal_status: form.legal_status || "",
         date: toISOOrNull(form.date),
-        property_address: form.property_address || "",
-        estimated_fico_score: form.estimated_fico_score ? Number(form.estimated_fico_score) : 0,
+				property_address: form.property_address || "",
+        fico_score: form.fico_score ? Number(form.fico_score) : 0,
+        
+        // Address Information
+        street_address: form.street_address || "",
+        city: form.city || "",
+        state: form.state || "",
+        zip: form.zip || "",
+        lived_less_than_2_years: Boolean(form.lived_less_than_2_years),
+        previous_street_address: form.previous_street_address || "",
+        previous_city: form.previous_city || "",
+        previous_state: form.previous_state || "",
+        previous_zip: form.previous_zip || "",
+        
         loan_type: form.loan_type || "",
         property_type: form.property_type || "",
         closing_date: toISOOrNull(form.closing_date),
-        interest_rate_structure: form.interest_rate_structure || "",
-        loan_term: form.loan_term || "",
+				interest_rate_structure: form.interest_rate_structure || "",
+				loan_term: form.loan_term || "",
         prepayment_penalty: form.prepayment_penalty ? Number(form.prepayment_penalty) : 0,
         max_ltv: form.max_ltv ? Number(form.max_ltv) : 0,
         max_ltc: form.max_ltc ? Number(form.max_ltc) : 0,
@@ -183,7 +203,7 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
         original_acquisition_price: form.original_acquisition_price ? Number(form.original_acquisition_price) : 0,
         land_acquisition_cost: form.land_acquisition_cost ? Number(form.land_acquisition_cost) : 0,
         construction_rehab_budget: form.construction_rehab_budget ? Number(form.construction_rehab_budget) : 0,
-        total_cost: computeTotalCost(),
+        total_cost: form.total_cost || 0,
         estimated_after_completion_value: form.estimated_after_completion_value ? Number(form.estimated_after_completion_value) : 0,
         origination_fee: form.origination_fee ? Number(form.origination_fee) : 0,
         underwriting_fee: form.underwriting_fee ? Number(form.underwriting_fee) : 0,
@@ -206,7 +226,7 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
         loan_to_as_is_value_ltv: form.loan_to_as_is_value_ltv ? Number(form.loan_to_as_is_value_ltv) : 0,
         loan_to_cost_ltc: form.loan_to_cost_ltc ? Number(form.loan_to_cost_ltc) : 0,
         loan_to_arv: form.loan_to_arv ? Number(form.loan_to_arv) : 0,
-        rehab_category: form.rehab_category || "",
+				rehab_category: form.rehab_category || "",
         min_credit_score: form.min_credit_score ? Number(form.min_credit_score) : 0,
         refundable_commitment_deposit: form.refundable_commitment_deposit ? Number(form.refundable_commitment_deposit) : 0,
         estimated_closing_costs: form.estimated_closing_costs ? Number(form.estimated_closing_costs) : 0,
@@ -214,75 +234,77 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
         six_months_payment_reserves: form.six_months_payment_reserves ? Number(form.six_months_payment_reserves) : 0,
         construction_budget_delta: form.construction_budget_delta ? Number(form.construction_budget_delta) : 0,
         down_payment: form.down_payment ? Number(form.down_payment) : 0,
-        total_liquidity: form.total_liquidity ? Number(form.total_liquidity) : 0
+        total_liquidity: form.total_liquidity ? Number(form.total_liquidity) : 0,
+        status: "PENDING"
       };
 
-      // Crear la solicitud Fixflip
-      const response = await createFixflip(dataToSend);
-      console.log('Respuesta createFixflip:', response);
+      console.log("Data to send:", dataToSend);
 
-      // Crear el enlace
+      const response = await createFixflip(dataToSend);
+      console.log("Server response:", response);
+
+      if (response && response.id) {
+        setFeedback("Request created successfully");
+
+        // Create external link
+        try {
       const linkData = {
-        valid_days: 30,
-        fixflip_request_id: response.id,
-        dscr_request_id: 0,
-        construction_request_id: 0
+            valid_days: 30,
+            dscr_request_id: 0,
+            construction_request_id: 0,
+            fixflip_request_id: response.id
       };
 
       const linkResponse = await createRequestLink(linkData);
-      console.log('Respuesta createRequestLink:', linkResponse);
+          console.log("Link created:", linkResponse);
+          
+          if (linkResponse && linkResponse.external_link) {
+            setExternalLink(linkResponse.external_link);
+          }
+        } catch (linkError) {
+          console.error("Error creating link:", linkError);
+        }
 
-      if (linkResponse?.link_token) {
-        const fullLink = `${URL_EXTERNAL_FORM}/fixflip/${linkResponse.link_token}`;
-        setExternalLink(fullLink);
-        
-        // Enviar email automáticamente
-        await handleSendEmail(fullLink);
-      }
+        // Send email if client exists
+        if (client && client.correo) {
+          try {
+            const emailData = {
+              to: client.correo,
+              subject: "Fixflip Loan Request - ReInvestar",
+              template: "fixflip_request_created",
+              data: {
+                client_name: client.nombre,
+                request_id: response.id,
+                external_link: externalLink
+              }
+            };
+            
+            await sendTemplateEmail(emailData);
+            console.log("Email sent successfully");
+          } catch (emailError) {
+            console.error("Error sending email:", emailError);
+          }
+        }
 
-      // Actualizar UI y limpiar formulario
-      setFeedback("¡Fixflip creado exitosamente!");
-      setForm({ ...initialState });
-
-      // Navegar a documentos si es necesario
-      if (typeof goToDocumentsTab === 'function') {
-        goToDocumentsTab(response.id, 'fixflip');
-      }
-
-    } catch (error) {
-      console.error('Error completo:', error);
-      
-      // Manejar diferentes tipos de errores
-      if (error.response?.data?.detail) {
-        setFeedback(Array.isArray(error.response.data.detail) 
-          ? error.response.data.detail[0]?.msg 
-          : error.response.data.detail);
-      } else if (error.message) {
-        setFeedback(error.message);
+        // Go to documents tab
+        if (goToDocumentsTab) {
+          goToDocumentsTab();
+        }
       } else {
-        setFeedback("Error al crear la solicitud. Por favor, intenta de nuevo.");
+        setFeedback("Error creating request");
       }
+    } catch (error) {
+      console.error("Error:", error);
+      setFeedback("Error creating request: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form className="container-fluid pb-5 mb-5" onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="container-fluid" noValidate>
       <div className="d-flex align-items-center mb-4 gap-3">
         <h4 className="my_title_color fw-bold mb-0" style={{ letterSpacing: 0.5 }}>Fix & Flip - Información Básica</h4>
-        {externalLink && (
-          <>
-            <span className="small text-muted" style={{ wordBreak: 'break-all' }}>{externalLink}</span>
-            <button
-              type="button"
-              className="btn btn-outline-secondary btn-sm ms-2"
-              onClick={() => {navigator.clipboard.writeText(externalLink); setCopied(true); setTimeout(()=>setCopied(false), 1500);}}
-            >
-              {copied ? "¡Copiado!" : "Copiar"}
-            </button>
-          </>
-        )}
       </div>
 
       {/* Formulario simplificado con solo los campos especificados */}
@@ -328,15 +350,251 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
           <label className="form-label my_title_color">ESTIMATED FICO SCORE</label>
           <NumericFormat 
             className={`form-control ${styles.input}`}
-            name="estimated_fico_score" 
-            value={form.estimated_fico_score} 
-            onValueChange={({ value }) => handleNumberFormat("estimated_fico_score", value)} 
-            allowNegative={false} 
+            name="fico_score" 
+            value={form.fico_score} 
+            onValueChange={({ value }) => handleNumberFormat("fico_score", value)} 
+						allowNegative={false} 
             decimalScale={0} 
             inputMode="numeric" 
           />
+      </div>
+      </div>
+
+      {/* ==============================
+          ADDRESS INFORMATION
+          ============================== */}
+      <div className="row mb-4 mt-4">
+        <div className="col-12">
+          <h6 className="my_title_color fw-bold mb-3">ADDRESS</h6>
         </div>
       </div>
+
+      <div className="row g-3">
+        <div className="col-md-12">
+          <label className="form-label my_title_color">Street Address*</label>
+          <input 
+            className={`form-control ${styles.input}`}
+            name="street_address" 
+            value={form.street_address} 
+            onChange={handleChange} 
+            required
+          />
+        </div>
+      </div>
+
+      <div className="row g-3">
+        <div className="col-md-4">
+          <label className="form-label my_title_color">City*</label>
+          <input 
+            className={`form-control ${styles.input}`}
+            name="city" 
+            value={form.city} 
+            onChange={handleChange} 
+            required
+          />
+        </div>
+        <div className="col-md-4">
+          <label className="form-label my_title_color">State*</label>
+          <select 
+            className={`form-control ${styles.input}`}
+            name="state" 
+            value={form.state} 
+            onChange={handleChange}
+            required
+          >
+            <option value="">Seleccione...</option>
+            <option value="AL">Alabama</option>
+            <option value="AK">Alaska</option>
+            <option value="AZ">Arizona</option>
+            <option value="AR">Arkansas</option>
+            <option value="CA">California</option>
+            <option value="CO">Colorado</option>
+            <option value="CT">Connecticut</option>
+            <option value="DE">Delaware</option>
+            <option value="FL">Florida</option>
+            <option value="GA">Georgia</option>
+            <option value="HI">Hawaii</option>
+            <option value="ID">Idaho</option>
+            <option value="IL">Illinois</option>
+            <option value="IN">Indiana</option>
+            <option value="IA">Iowa</option>
+            <option value="KS">Kansas</option>
+            <option value="KY">Kentucky</option>
+            <option value="LA">Louisiana</option>
+            <option value="ME">Maine</option>
+            <option value="MD">Maryland</option>
+            <option value="MA">Massachusetts</option>
+            <option value="MI">Michigan</option>
+            <option value="MN">Minnesota</option>
+            <option value="MS">Mississippi</option>
+            <option value="MO">Missouri</option>
+            <option value="MT">Montana</option>
+            <option value="NE">Nebraska</option>
+            <option value="NV">Nevada</option>
+            <option value="NH">New Hampshire</option>
+            <option value="NJ">New Jersey</option>
+            <option value="NM">New Mexico</option>
+            <option value="NY">New York</option>
+            <option value="NC">North Carolina</option>
+            <option value="ND">North Dakota</option>
+            <option value="OH">Ohio</option>
+            <option value="OK">Oklahoma</option>
+            <option value="OR">Oregon</option>
+            <option value="PA">Pennsylvania</option>
+            <option value="RI">Rhode Island</option>
+            <option value="SC">South Carolina</option>
+            <option value="SD">South Dakota</option>
+            <option value="TN">Tennessee</option>
+            <option value="TX">Texas</option>
+            <option value="UT">Utah</option>
+            <option value="VT">Vermont</option>
+            <option value="VA">Virginia</option>
+            <option value="WA">Washington</option>
+            <option value="WV">West Virginia</option>
+            <option value="WI">Wisconsin</option>
+            <option value="WY">Wyoming</option>
+          </select>
+        </div>
+        <div className="col-md-4">
+          <label className="form-label my_title_color">Zip*</label>
+          <input 
+            className={`form-control ${styles.input}`}
+            name="zip" 
+            value={form.zip} 
+            onChange={handleChange} 
+            required
+          />
+        </div>
+      </div>
+
+      <div className="row g-3 mt-2">
+        <div className="col-md-12">
+          <div className="form-check">
+            <input 
+              className="form-check-input" 
+              type="checkbox" 
+              name="lived_less_than_2_years"
+              checked={form.lived_less_than_2_years}
+              onChange={handleChange}
+              id="lived_less_than_2_years"
+            />
+            <label className="form-check-label my_title_color mb-4" htmlFor="lived_less_than_2_years">
+              I have lived at my current address for less than 2 years
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Previous Address Fields - Only show when checkbox is checked */}
+      {form.lived_less_than_2_years && (
+        <div className="row g-3 mt-3">
+          <div className="col-12">
+            <h6 className="my_title_color fw-bold mb-3">PREVIOUS ADDRESS</h6>
+          </div>
+        </div>
+      )}
+
+      {form.lived_less_than_2_years && (
+        <div className="row g-3">
+          <div className="col-md-12">
+            <label className="form-label my_title_color">Previous Street Address*</label>
+            <input 
+                className={`form-control ${styles.input}`}
+              name="previous_street_address" 
+              value={form.previous_street_address} 
+              onChange={handleChange} 
+              required
+            />
+          </div>
+        </div>
+      )}
+
+      {form.lived_less_than_2_years && (
+        <div className="row g-3">
+          <div className="col-md-4">
+            <label className="form-label my_title_color">Previous City*</label>
+            <input 
+                className={`form-control ${styles.input}`}
+              name="previous_city" 
+              value={form.previous_city} 
+              onChange={handleChange} 
+              required
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label my_title_color">Previous State*</label>
+            <select 
+                className={`form-control ${styles.input}`}
+              name="previous_state" 
+              value={form.previous_state} 
+              onChange={handleChange}
+              required
+            >
+              <option value="">Seleccione...</option>
+              <option value="AL">Alabama</option>
+              <option value="AK">Alaska</option>
+              <option value="AZ">Arizona</option>
+              <option value="AR">Arkansas</option>
+              <option value="CA">California</option>
+              <option value="CO">Colorado</option>
+              <option value="CT">Connecticut</option>
+              <option value="DE">Delaware</option>
+              <option value="FL">Florida</option>
+              <option value="GA">Georgia</option>
+              <option value="HI">Hawaii</option>
+              <option value="ID">Idaho</option>
+              <option value="IL">Illinois</option>
+              <option value="IN">Indiana</option>
+              <option value="IA">Iowa</option>
+              <option value="KS">Kansas</option>
+              <option value="KY">Kentucky</option>
+              <option value="LA">Louisiana</option>
+              <option value="ME">Maine</option>
+              <option value="MD">Maryland</option>
+              <option value="MA">Massachusetts</option>
+              <option value="MI">Michigan</option>
+              <option value="MN">Minnesota</option>
+              <option value="MS">Mississippi</option>
+              <option value="MO">Missouri</option>
+              <option value="MT">Montana</option>
+              <option value="NE">Nebraska</option>
+              <option value="NV">Nevada</option>
+              <option value="NH">New Hampshire</option>
+              <option value="NJ">New Jersey</option>
+              <option value="NM">New Mexico</option>
+              <option value="NY">New York</option>
+              <option value="NC">North Carolina</option>
+              <option value="ND">North Dakota</option>
+              <option value="OH">Ohio</option>
+              <option value="OK">Oklahoma</option>
+              <option value="OR">Oregon</option>
+              <option value="PA">Pennsylvania</option>
+              <option value="RI">Rhode Island</option>
+              <option value="SC">South Carolina</option>
+              <option value="SD">South Dakota</option>
+              <option value="TN">Tennessee</option>
+              <option value="TX">Texas</option>
+              <option value="UT">Utah</option>
+              <option value="VT">Vermont</option>
+              <option value="VA">Virginia</option>
+              <option value="WA">Washington</option>
+              <option value="WV">West Virginia</option>
+              <option value="WI">Wisconsin</option>
+              <option value="WY">Wyoming</option>
+            </select>
+          </div>
+          <div className="col-md-4">
+            <label className="form-label my_title_color">Previous Zip*</label>
+            <input 
+                className={`form-control ${styles.input}`}
+              name="previous_zip" 
+              value={form.previous_zip} 
+              onChange={handleChange} 
+              required
+            />
+          </div>
+        </div>
+      )}
 
       <div className="row g-3">
         <div className="col-md-6">
@@ -348,7 +606,20 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
             onChange={handleChange} 
           />
         </div>
+        <div className="col-md-6">
+          <label className="form-label my_title_color">LOAN TERM (YEARS)</label>
+          <input
+            type="text"
+            className={`form-control ${styles.input}`}
+            name="loan_term"
+            value={form.loan_term}
+            onChange={handleChange}
+            placeholder="Enter loan term in years"
+          />
+        </div>
+      </div>
 
+      <div className="row g-3">
         {/* Land or Acquisition Cost */}
         <div className="col-md-6">
           <label className="form-label my_title_color">Estimated After Completion Value</label>
@@ -358,11 +629,11 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
             value={form.estimated_after_completion_value} 
             onValueChange={({ value }) => handleNumberFormat("estimated_after_completion_value", value)} 
             thousandSeparator="," 
-            prefix="$" 
-            decimalScale={2} 
-            fixedDecimalScale 
-            allowNegative={false} 
-            inputMode="decimal" 
+            prefix="$"
+            decimalScale={2}
+            fixedDecimalScale
+            allowNegative={false}
+            inputMode="decimal"
           />
         </div>
 
@@ -377,44 +648,42 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
             value={form.construction_rehab_budget} 
             onValueChange={({ value }) => handleNumberFormat("construction_rehab_budget", value)} 
             thousandSeparator="," 
-            prefix="$" 
-            decimalScale={2} 
-            fixedDecimalScale 
-            allowNegative={false} 
-            inputMode="decimal" 
+            prefix="$"
+            decimalScale={2}
+            fixedDecimalScale
+            allowNegative={false}
+            inputMode="decimal"
           />
         </div>
 
-
-      {/* Estimated After Completion Value */}
+   
         <div className="col-md-6">
           <label className="form-label my_title_color">Land or Acquisition Cost</label>
-          <NumericFormat 
+          <NumericFormat
             className={`form-control ${styles.input}`}
             name="land_acquisition_cost" 
             value={form.land_acquisition_cost} 
             onValueChange={({ value }) => handleNumberFormat("land_acquisition_cost", value)} 
-            thousandSeparator="," 
-            prefix="$" 
-            decimalScale={2} 
-            fixedDecimalScale 
-            allowNegative={false} 
-            inputMode="decimal" 
+            thousandSeparator=","
+            prefix="$"
+            decimalScale={2}
+            fixedDecimalScale
+            allowNegative={false}
+            inputMode="decimal"
           />
         </div>
-   
       </div>
 
       <div className="row g-3">
         <div className="col-md-6">
           <label className="form-label my_title_color">Total Cost</label>
-          <input 
+          <input
             className={`form-control ${styles.input}`}
             value={`$${computeTotalCost().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             disabled 
             style={{ backgroundColor: '#f8f9fa' }}
           />
-      </div>
+        </div>
       </div>
 
       {feedback && (
@@ -425,11 +694,26 @@ const FixflipForm = ({ client_id, goToDocumentsTab }) => {
 
       <div className="row">
         <div className="col-12 mt-4">
-          <button type="submit" className="btn btn-primary px-4 py-2" style={{ minWidth: "200px" }} disabled={loading}>
-            {loading ? "CREANDO..." : "Guardar"}
+          <button
+            type="submit"
+            className="btn btn-primary"
+            style={{ minWidth: "200px" }}
+            disabled={loading}
+          >
+            {loading ? "CREANDO..." : "CREAR FIXFLIP"}
           </button>
         </div>
-      </div>
+        </div>
+
+      {externalLink && (
+        <div className="alert alert-info mt-3">
+          <strong>Enlace externo generado:</strong>
+          <br />
+          <a href={externalLink} target="_blank" rel="noopener noreferrer">
+            {externalLink}
+          </a>
+        </div>
+      )}
     </form>
   );
 };

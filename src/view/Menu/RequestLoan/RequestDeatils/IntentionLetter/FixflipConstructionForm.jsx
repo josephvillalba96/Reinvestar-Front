@@ -28,6 +28,17 @@ const FixflipConstructionForm = ({
     issued_date: "",
     property_address: "",
     estimated_fico_score: "",
+    
+    // Address Information
+    street_address: "",
+    city: "",
+    state: "",
+    zip: "",
+    lived_less_than_2_years: false,
+    previous_street_address: "",
+    previous_city: "",
+    previous_state: "",
+    previous_zip: "",
 
     //LOAN DETAILS
     loan_type: "",
@@ -165,6 +176,17 @@ const FixflipConstructionForm = ({
             updatedForm[key] = mapped[key];
           }
         });
+        
+        // Asegurar que los campos de address se carguen correctamente
+        updatedForm.street_address = mapped.street_address || "";
+        updatedForm.city = mapped.city || "";
+        updatedForm.state = mapped.state || "";
+        updatedForm.zip = mapped.zip || "";
+        updatedForm.lived_less_than_2_years = Boolean(mapped.lived_less_than_2_years);
+        updatedForm.previous_street_address = mapped.previous_street_address || "";
+        updatedForm.previous_city = mapped.previous_city || "";
+        updatedForm.previous_state = mapped.previous_state || "";
+        updatedForm.previous_zip = mapped.previous_zip || "";
         
         // Debugging específico para verificar qué campos se están actualizando
         console.log('[FixflipConstruction] initialData - FIELDS BEING UPDATED:', {
@@ -326,6 +348,17 @@ const FixflipConstructionForm = ({
               issued_date: mapped.issued_date || prev.issued_date,
               property_address: mapped.property_address || prev.property_address,
               estimated_fico_score: mapped.estimated_fico_score ?? mapped.fico_score ?? prev.estimated_fico_score,
+              
+              // Address Information - Asegurar que se carguen correctamente
+              street_address: mapped.street_address || "",
+              city: mapped.city || "",
+              state: mapped.state || "",
+              zip: mapped.zip || "",
+              lived_less_than_2_years: Boolean(mapped.lived_less_than_2_years),
+              previous_street_address: mapped.previous_street_address || "",
+              previous_city: mapped.previous_city || "",
+              previous_state: mapped.previous_state || "",
+              previous_zip: mapped.previous_zip || "",
               loan_type: mapped.loan_type || prev.loan_type,
               property_type: mapped.property_type || prev.property_type,
               closing_date: mapped.closing_date || mapped.estimated_closing_date || prev.closing_date,
@@ -462,6 +495,19 @@ const FixflipConstructionForm = ({
         return String(value).trim();
       };
 
+      // Campos de address que SÍ deben considerarse para validación de cambios
+      const addressFields = [
+        'street_address',
+        'city',
+        'state',
+        'zip',
+        'lived_less_than_2_years',
+        'previous_street_address',
+        'previous_city',
+        'previous_state',
+        'previous_zip'
+      ];
+
       // Comparar campos relevantes uno por uno
       const changedFields = [];
       const hasChanges = Object.keys(form).some(key => {
@@ -473,7 +519,8 @@ const FixflipConstructionForm = ({
           changedFields.push({
             field: key,
             current: currentValue,
-            original: originalValue
+            original: originalValue,
+            isAddressField: addressFields.includes(key)
           });
         }
         
@@ -484,8 +531,10 @@ const FixflipConstructionForm = ({
         hasChanges,
         changedFields: changedFields.slice(0, 5), // Mostrar solo los primeros 5 campos cambiados
         totalChangedFields: changedFields.length,
+        addressFieldsChanged: changedFields.filter(f => f.isAddressField).length,
         formKeys: Object.keys(form).length,
-        originalKeys: Object.keys(originalFormData).length
+        originalKeys: Object.keys(originalFormData).length,
+        addressFields: addressFields
       });
 
       setHasUnsavedChanges(hasChanges);
@@ -593,6 +642,17 @@ const FixflipConstructionForm = ({
       legal_status: form.legal_status || "",
       property_address: form.property_address || "",
       estimated_fico_score: Number(form.estimated_fico_score || 0),
+
+      // Address Information
+      street_address: form.street_address || "",
+      city: form.city || "",
+      state: form.state || "",
+      zip: form.zip || "",
+      lived_less_than_2_years: Boolean(form.lived_less_than_2_years),
+      previous_street_address: form.previous_street_address || "",
+      previous_city: form.previous_city || "",
+      previous_state: form.previous_state || "",
+      previous_zip: form.previous_zip || "",
       loan_type: form.loan_type || "",
       property_type: form.property_type || "",
       interest_rate_structure: form.interest_rate_structure || "",
@@ -924,6 +984,251 @@ const FixflipConstructionForm = ({
           </div>
         </div>
 
+        {/* ADDRESS INFORMATION */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <h5 className="fw-bold text-primary mb-3">
+              <i className="fas fa-map-marker-alt me-2"></i>
+              ADDRESS
+            </h5>
+          </div>
+          <div className="col-12">
+            <div className="row g-3">
+              <div className="col-md-12">
+                <label className="form-label fw-bold">Street Address*</label>
+                <input
+                  type="text"
+                  name="street_address"
+                  className="form-control"
+                  value={form.street_address}
+                  onChange={handleChange}
+                  disabled={!editable}
+                  required
+                />
+              </div>
+              <div className="col-md-4">
+                <label className="form-label fw-bold">City*</label>
+                <input
+                  type="text"
+                  name="city"
+                  className="form-control"
+                  value={form.city}
+                  onChange={handleChange}
+                  disabled={!editable}
+                  required
+                />
+              </div>
+              <div className="col-md-4">
+                <label className="form-label fw-bold">State*</label>
+                <select
+                  name="state"
+                  className="form-control"
+                  value={form.state}
+                  onChange={handleChange}
+                  disabled={!editable}
+                  required
+                >
+                  <option value="">Seleccione...</option>
+                  <option value="AL">Alabama</option>
+                  <option value="AK">Alaska</option>
+                  <option value="AZ">Arizona</option>
+                  <option value="AR">Arkansas</option>
+                  <option value="CA">California</option>
+                  <option value="CO">Colorado</option>
+                  <option value="CT">Connecticut</option>
+                  <option value="DE">Delaware</option>
+                  <option value="FL">Florida</option>
+                  <option value="GA">Georgia</option>
+                  <option value="HI">Hawaii</option>
+                  <option value="ID">Idaho</option>
+                  <option value="IL">Illinois</option>
+                  <option value="IN">Indiana</option>
+                  <option value="IA">Iowa</option>
+                  <option value="KS">Kansas</option>
+                  <option value="KY">Kentucky</option>
+                  <option value="LA">Louisiana</option>
+                  <option value="ME">Maine</option>
+                  <option value="MD">Maryland</option>
+                  <option value="MA">Massachusetts</option>
+                  <option value="MI">Michigan</option>
+                  <option value="MN">Minnesota</option>
+                  <option value="MS">Mississippi</option>
+                  <option value="MO">Missouri</option>
+                  <option value="MT">Montana</option>
+                  <option value="NE">Nebraska</option>
+                  <option value="NV">Nevada</option>
+                  <option value="NH">New Hampshire</option>
+                  <option value="NJ">New Jersey</option>
+                  <option value="NM">New Mexico</option>
+                  <option value="NY">New York</option>
+                  <option value="NC">North Carolina</option>
+                  <option value="ND">North Dakota</option>
+                  <option value="OH">Ohio</option>
+                  <option value="OK">Oklahoma</option>
+                  <option value="OR">Oregon</option>
+                  <option value="PA">Pennsylvania</option>
+                  <option value="RI">Rhode Island</option>
+                  <option value="SC">South Carolina</option>
+                  <option value="SD">South Dakota</option>
+                  <option value="TN">Tennessee</option>
+                  <option value="TX">Texas</option>
+                  <option value="UT">Utah</option>
+                  <option value="VT">Vermont</option>
+                  <option value="VA">Virginia</option>
+                  <option value="WA">Washington</option>
+                  <option value="WV">West Virginia</option>
+                  <option value="WI">Wisconsin</option>
+                  <option value="WY">Wyoming</option>
+                </select>
+              </div>
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Zip*</label>
+                <input
+                  type="text"
+                  name="zip"
+                  className="form-control"
+                  value={form.zip}
+                  onChange={handleChange}
+                  disabled={!editable}
+                  required
+                />
+              </div>
+              <div className="col-md-12">
+                <div className="form-check">
+                <div className="col-12">
+              <h5 className="fw-bold text-primary mb-3">
+                <i className="fas fa-history me-2"></i>
+                PREVIOUS ADDRESS
+              </h5>
+            </div>
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="lived_less_than_2_years"
+                    checked={form.lived_less_than_2_years}
+                    onChange={handleChange}
+                    disabled={!editable}
+                    id="lived_less_than_2_years"
+                  />
+                  <label className="form-check-label fw-bold" htmlFor="lived_less_than_2_years">
+                    I have lived at my current address for less than 2 years
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Previous Address Fields - Only show when checkbox is checked */}
+        {form.lived_less_than_2_years && (
+          <div className="row mb-4">
+         
+            <div className="col-12">
+              <div className="row g-3">
+                <div className="col-md-12">
+                  <label className="form-label fw-bold">Previous Street Address*</label>
+                  <input
+                    type="text"
+                    name="previous_street_address"
+                    className="form-control"
+                    value={form.previous_street_address}
+                    onChange={handleChange}
+                    disabled={!editable}
+                    required
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-bold">Previous City*</label>
+                  <input
+                    type="text"
+                    name="previous_city"
+                    className="form-control"
+                    value={form.previous_city}
+                    onChange={handleChange}
+                    disabled={!editable}
+                    required
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-bold">Previous State*</label>
+                  <select
+                    name="previous_state"
+                    className="form-control"
+                    value={form.previous_state}
+                    onChange={handleChange}
+                    disabled={!editable}
+                    required
+                  >
+                    <option value="">Seleccione...</option>
+                    <option value="AL">Alabama</option>
+                    <option value="AK">Alaska</option>
+                    <option value="AZ">Arizona</option>
+                    <option value="AR">Arkansas</option>
+                    <option value="CA">California</option>
+                    <option value="CO">Colorado</option>
+                    <option value="CT">Connecticut</option>
+                    <option value="DE">Delaware</option>
+                    <option value="FL">Florida</option>
+                    <option value="GA">Georgia</option>
+                    <option value="HI">Hawaii</option>
+                    <option value="ID">Idaho</option>
+                    <option value="IL">Illinois</option>
+                    <option value="IN">Indiana</option>
+                    <option value="IA">Iowa</option>
+                    <option value="KS">Kansas</option>
+                    <option value="KY">Kentucky</option>
+                    <option value="LA">Louisiana</option>
+                    <option value="ME">Maine</option>
+                    <option value="MD">Maryland</option>
+                    <option value="MA">Massachusetts</option>
+                    <option value="MI">Michigan</option>
+                    <option value="MN">Minnesota</option>
+                    <option value="MS">Mississippi</option>
+                    <option value="MO">Missouri</option>
+                    <option value="MT">Montana</option>
+                    <option value="NE">Nebraska</option>
+                    <option value="NV">Nevada</option>
+                    <option value="NH">New Hampshire</option>
+                    <option value="NJ">New Jersey</option>
+                    <option value="NM">New Mexico</option>
+                    <option value="NY">New York</option>
+                    <option value="NC">North Carolina</option>
+                    <option value="ND">North Dakota</option>
+                    <option value="OH">Ohio</option>
+                    <option value="OK">Oklahoma</option>
+                    <option value="OR">Oregon</option>
+                    <option value="PA">Pennsylvania</option>
+                    <option value="RI">Rhode Island</option>
+                    <option value="SC">South Carolina</option>
+                    <option value="SD">South Dakota</option>
+                    <option value="TN">Tennessee</option>
+                    <option value="TX">Texas</option>
+                    <option value="UT">Utah</option>
+                    <option value="VT">Vermont</option>
+                    <option value="VA">Virginia</option>
+                    <option value="WA">Washington</option>
+                    <option value="WV">West Virginia</option>
+                    <option value="WI">Wisconsin</option>
+                    <option value="WY">Wyoming</option>
+                  </select>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-bold">Previous Zip*</label>
+                  <input
+                    type="text"
+                    name="previous_zip"
+                    className="form-control"
+                    value={form.previous_zip}
+                    onChange={handleChange}
+                    disabled={!editable}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 1. LOAN DETAILS */}
         <div className="row mb-4">
           <div className="col-12"><h5 className="fw-bold text-primary mb-3">1. LOAN DETAILS</h5></div>
@@ -1029,9 +1334,44 @@ const FixflipConstructionForm = ({
           </div>
         </div>
 
-        {/* 4. LOAN CLOSING COST */}
-        <div className="row mb-4">
-          <div className="col-12"><h5 className="fw-bold text-primary mb-3">4. LOAN CLOSING COST</h5></div>
+             {/* 4. LOAN SUMMRY */}
+             <div className="row mb-4">
+          <div className="col-12"><h5 className="fw-bold text-primary mb-3">4. LOAN SUMARY</h5></div>
+          <div className="col-12">
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label fw-bold">TOTAL LOAN AMOUNT (subject to appraisal value)</label>
+                <NumericFormat name="total_loan_amount" className="form-control" value={form.total_loan_amount || 0} onValueChange={({ value }) => {
+                  console.log('[FixflipConstruction] total_loan_amount changed:', value);
+                  setForm(prev => ({ ...prev, total_loan_amount: Number(value || 0) }));
+                }} thousandSeparator="," prefix="$" disabled={!editable} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-bold">LOAN AMOUNT</label>
+                <NumericFormat name="loan_amount" className="form-control" value={form.loan_amount || 0} onValueChange={({ value }) => setForm(prev => ({ ...prev, loan_amount: Number(value || 0) }))} thousandSeparator="," prefix="$" disabled={!editable} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-bold">ANNUAL INTEREST RATE (*)</label>
+                <NumericFormat name="annual_interest_rate" className="form-control" value={form.annual_interest_rate || 0} onValueChange={({ value }) => setForm(prev => ({ ...prev, annual_interest_rate: Number(value || 0) }))} decimalScale={2} suffix="%" disabled={!editable} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-bold">REQUESTED LEVERAGE</label>
+                <NumericFormat name="requested_leverage" className="form-control" value={form.requested_leverage || 0} onValueChange={({ value }) => {
+                  console.log('[FixflipConstruction] requested_leverage changed:', value);
+                  setForm(prev => ({ ...prev, requested_leverage: Number(value || 0) }));
+                }} decimalScale={2} suffix="%" disabled={!editable} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-bold">APPROX. MONTHLY INTEREST PAYMENT</label>
+                <NumericFormat name="monthly_interest_payment" className="form-control" value={form.monthly_interest_payment || 0} onValueChange={({ value }) => setForm(prev => ({ ...prev, monthly_interest_payment: Number(value || 0) }))} thousandSeparator="," prefix="$" disabled={!editable} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+            {/* 5. LOAN CLOSING COST */}
+            <div className="row mb-4">
+          <div className="col-12"><h5 className="fw-bold text-primary mb-3">5. LOAN CLOSING COST</h5></div>
           <div className="col-12">
             <div className="row g-3">
               <div className="col-md-6">
@@ -1072,9 +1412,9 @@ const FixflipConstructionForm = ({
           </div>
         </div>
 
-        {/* 5. OTHER EXPENSES (Estimated) */}
+        {/* 6. OTHER EXPENSES (Estimated) */}
         <div className="row mb-4">
-          <div className="col-12"><h5 className="fw-bold text-primary mb-3">5. OTHER EXPENSES (Estimated)</h5></div>
+          <div className="col-12"><h5 className="fw-bold text-primary mb-3">6. OTHER EXPENSES (Estimated)</h5></div>
           <div className="col-12">
             <div className="row g-3">
               <div className="col-md-6">
@@ -1097,41 +1437,6 @@ const FixflipConstructionForm = ({
                   console.log('[FixflipConstruction] transaction_management_fee changed:', value);
                   setForm(prev => ({ ...prev, transaction_management_fee: Number(value || 0) }));
                 }} thousandSeparator="," prefix="$" disabled={!editable} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 6. LOAN SUMMRY */}
-        <div className="row mb-4">
-          <div className="col-12"><h5 className="fw-bold text-primary mb-3">6. LOAN SUMARY</h5></div>
-          <div className="col-12">
-            <div className="row g-3">
-              <div className="col-md-6">
-                <label className="form-label fw-bold">TOTAL LOAN AMOUNT (subject to appraisal value)</label>
-                <NumericFormat name="total_loan_amount" className="form-control" value={form.total_loan_amount || 0} onValueChange={({ value }) => {
-                  console.log('[FixflipConstruction] total_loan_amount changed:', value);
-                  setForm(prev => ({ ...prev, total_loan_amount: Number(value || 0) }));
-                }} thousandSeparator="," prefix="$" disabled={!editable} />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-bold">LOAN AMOUNT</label>
-                <NumericFormat name="loan_amount" className="form-control" value={form.loan_amount || 0} onValueChange={({ value }) => setForm(prev => ({ ...prev, loan_amount: Number(value || 0) }))} thousandSeparator="," prefix="$" disabled={!editable} />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-bold">ANNUAL INTEREST RATE (*)</label>
-                <NumericFormat name="annual_interest_rate" className="form-control" value={form.annual_interest_rate || 0} onValueChange={({ value }) => setForm(prev => ({ ...prev, annual_interest_rate: Number(value || 0) }))} decimalScale={2} suffix="%" disabled={!editable} />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-bold">REQUESTED LEVERAGE</label>
-                <NumericFormat name="requested_leverage" className="form-control" value={form.requested_leverage || 0} onValueChange={({ value }) => {
-                  console.log('[FixflipConstruction] requested_leverage changed:', value);
-                  setForm(prev => ({ ...prev, requested_leverage: Number(value || 0) }));
-                }} decimalScale={2} suffix="%" disabled={!editable} />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-bold">APPROX. MONTHLY INTEREST PAYMENT</label>
-                <NumericFormat name="monthly_interest_payment" className="form-control" value={form.monthly_interest_payment || 0} onValueChange={({ value }) => setForm(prev => ({ ...prev, monthly_interest_payment: Number(value || 0) }))} thousandSeparator="," prefix="$" disabled={!editable} />
               </div>
             </div>
           </div>
