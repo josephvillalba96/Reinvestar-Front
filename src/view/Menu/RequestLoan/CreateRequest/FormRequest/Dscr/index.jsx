@@ -449,8 +449,7 @@ const DscrForm = ({ client_id, goToDocumentsTab }) => {
             className={`form-control ${styles.input}`}
             name="street_address" 
             value={form.street_address} 
-            onChange={handleChange} 
-            required
+            onChange={handleChange}
           />
         </div>
       </div>
@@ -462,8 +461,7 @@ const DscrForm = ({ client_id, goToDocumentsTab }) => {
             className={`form-control ${styles.input}`}
             name="city" 
             value={form.city} 
-            onChange={handleChange} 
-            required
+            onChange={handleChange}
           />
         </div>
         <div className="col-md-4">
@@ -473,7 +471,6 @@ const DscrForm = ({ client_id, goToDocumentsTab }) => {
             name="state" 
             value={form.state} 
             onChange={handleChange}
-            required
           >
             <option value="">Seleccione...</option>
             <option value="AL">Alabama</option>
@@ -534,8 +531,7 @@ const DscrForm = ({ client_id, goToDocumentsTab }) => {
             className={`form-control ${styles.input}`}
             name="zip" 
             value={form.zip} 
-            onChange={handleChange} 
-            required
+            onChange={handleChange}
           />
         </div>
       </div>
@@ -575,8 +571,7 @@ const DscrForm = ({ client_id, goToDocumentsTab }) => {
               className={`form-control ${styles.input}`}
               name="previous_street_address" 
               value={form.previous_street_address} 
-              onChange={handleChange} 
-              required
+              onChange={handleChange}
             />
           </div>
         </div>
@@ -590,8 +585,7 @@ const DscrForm = ({ client_id, goToDocumentsTab }) => {
               className={`form-control ${styles.input}`}
               name="previous_city" 
               value={form.previous_city} 
-              onChange={handleChange} 
-              required
+              onChange={handleChange}
             />
           </div>
           <div className="col-md-4">
@@ -601,7 +595,6 @@ const DscrForm = ({ client_id, goToDocumentsTab }) => {
               name="previous_state" 
               value={form.previous_state} 
               onChange={handleChange}
-              required
             >
               <option value="">Seleccione...</option>
               <option value="AL">Alabama</option>
@@ -662,8 +655,7 @@ const DscrForm = ({ client_id, goToDocumentsTab }) => {
               className={`form-control ${styles.input}`}
               name="previous_zip" 
               value={form.previous_zip} 
-              onChange={handleChange} 
-              required
+              onChange={handleChange}
             />
           </div>
         </div>
